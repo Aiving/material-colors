@@ -7,7 +7,7 @@ documentation = "https://docs.rs/material-colors"
 homepage = "https://github.com/Aiving/material-colors"
 repository = "https://github.com/Aiving/material-colors"
 readme = "README.md"
-license = "Apache License 2.0"
+license = "Apache-2.0"
 keywords = ["palette", "color-scheme", "material-you"]
 
 [dependencies]
