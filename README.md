@@ -10,7 +10,7 @@ There are also a relatively large number of unused variables and functions (45 w
 
 From HEX color:
 
-```rs
+```rust
 use material_colors::theme_from_source_color;
 use material_colors::argb_from_hex;
 
@@ -23,7 +23,7 @@ fn main() {
 
 From image:
 
-```rs
+```rust
 use material_colors::theme_from_source_color;
 use material_colors::source_color_from_image;
 
