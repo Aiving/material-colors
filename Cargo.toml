@@ -13,3 +13,9 @@ keywords = ["palette", "color-scheme", "material-you"]
 [dependencies]
 ahash = "0.8.6"
 rand = "0.8.5"
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+opt-level = 3
