@@ -10,20 +10,20 @@ use super::tonal::TonalPalette;
 /// An intermediate concept between the key color for a UI theme, and a full
 /// color scheme. 5 tonal palettes are generated, all except one use the same
 /// hue as the key color, and all vary in chroma.
-pub(crate) struct CorePalette {
-    pub(crate) primary: TonalPalette,
-    pub(crate) secondary: TonalPalette,
-    pub(crate) tertiary: TonalPalette,
-    pub(crate) neutral: TonalPalette,
-    pub(crate) neutral_variant: TonalPalette,
-    pub(crate) error: TonalPalette,
+pub struct CorePalette {
+    pub primary: TonalPalette,
+    pub secondary: TonalPalette,
+    pub tertiary: TonalPalette,
+    pub neutral: TonalPalette,
+    pub neutral_variant: TonalPalette,
+    pub error: TonalPalette,
 }
 
 impl CorePalette {
     /// The number of generated tonal palettes.
-    pub(crate) const SIZE: usize = 5;
+    pub const SIZE: usize = 5;
 
-    pub(crate) fn new(
+    pub fn new(
         primary: TonalPalette,
         secondary: TonalPalette,
         tertiary: TonalPalette,
@@ -42,7 +42,7 @@ impl CorePalette {
     }
 
     /// Create a [CorePalette] from a source Argb color.
-    pub(crate) fn of(argb: Argb) -> CorePalette {
+    pub fn of(argb: Argb) -> CorePalette {
         let cam = Cam16::from(argb);
 
         CorePalette::_of(cam.hue, cam.chroma)
@@ -60,7 +60,7 @@ impl CorePalette {
     }
 
     /// Create a content [CorePalette] from a source Argb color.
-    pub(crate) fn content_of(argb: Argb) -> CorePalette {
+    pub fn content_of(argb: Argb) -> CorePalette {
         let cam = Cam16::from(argb);
 
         CorePalette::_content_of(cam.hue, cam.chroma)

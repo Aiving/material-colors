@@ -7,7 +7,7 @@ use super::quantizer::Quantizer;
 use super::quantizer::QuantizerResult;
 
 #[derive(Default)]
-pub(crate) struct QuantizerMap;
+pub struct QuantizerMap;
 
 impl Quantizer for QuantizerMap {
     fn quantize(

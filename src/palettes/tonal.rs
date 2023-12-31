@@ -25,19 +25,19 @@ impl TonalPalette {
     /// Commonly-used tone values.
     const COMMON_TONES: [i32; 13] = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 100];
 
-    pub(crate) fn common_size() -> usize {
+    pub fn common_size() -> usize {
         Self::COMMON_TONES.len()
     }
 
-    pub(crate) fn hue(&self) -> f64 {
+    pub fn hue(&self) -> f64 {
         self._hue
     }
 
-    pub(crate) fn chroma(&self) -> f64 {
+    pub fn chroma(&self) -> f64 {
         self._chroma
     }
 
-    pub(crate) fn key_color(&self) -> Hct {
+    pub fn key_color(&self) -> Hct {
         self._key_color
     }
 
@@ -50,12 +50,12 @@ impl TonalPalette {
     }
 
     /// Create a Tonal Palette from hue and chroma of [hct].
-    pub(crate) fn from_hct(hct: Hct) -> Self {
+    pub fn from_hct(hct: Hct) -> Self {
         Self::new(hct.get_hue(), hct.get_chroma(), hct)
     }
 
     /// Create a Tonal Palette from hue and chroma, which generates a key color.
-    pub(crate) fn from_hue_and_chroma(hue: f64, chroma: f64) -> Self {
+    pub fn from_hue_and_chroma(hue: f64, chroma: f64) -> Self {
         Self::new(
             hue,
             chroma,
@@ -64,14 +64,14 @@ impl TonalPalette {
     }
 
     /// Create colors using [hue] and [chroma].
-    pub(crate) fn of(hue: f64, chroma: f64) -> Self {
+    pub fn of(hue: f64, chroma: f64) -> Self {
         TonalPalette::from_hue_and_chroma(hue, chroma)
     }
 
     /// Creates a key color from a [hue] and a [chroma].
     /// The key color is the first tone, starting from T50, matching the given hue and chroma.
     /// Key color [Hct]
-    pub(crate) fn create_key_color(hue: f64, chroma: f64) -> Hct {
+    pub fn create_key_color(hue: f64, chroma: f64) -> Hct {
         let start_tone = 50.0;
         let mut smallest_delta_hct = Hct::from(hue, chroma, start_tone);
         let mut smallest_delta = (smallest_delta_hct.get_chroma() - chroma).abs();
@@ -117,11 +117,11 @@ impl TonalPalette {
     /// color with corresponding [tone].
     /// If the class was instantiated from a fixed-size list of color ints, [tone]
     /// must be in [commonTones].
-    pub(crate) fn tone(&self, tone: i32) -> Argb {
+    pub fn tone(&self, tone: i32) -> Argb {
         Hct::from(self.hue(), self.chroma(), tone as f64).into()
     }
 
-    pub(crate) fn get_hct(&self, tone: f64) -> Hct {        
+    pub fn get_hct(&self, tone: f64) -> Hct {        
         Hct::from(self.hue(), self.chroma(), tone)
     }
 }

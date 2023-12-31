@@ -15,32 +15,32 @@ use crate::utils::math::lerp;
 ///
 /// This class caches intermediate values of the CAM16 conversion process that
 /// depend only on viewing conditions, enabling speed ups.
-pub(crate) struct ViewingConditions {
-    pub(crate) white_point: [f64; 3],
-    pub(crate) adapting_luminance: f64,
-    pub(crate) background_lstar: f64,
-    pub(crate) surround: f64,
-    pub(crate) discounting_illuminant: bool,
+pub struct ViewingConditions {
+    pub white_point: [f64; 3],
+    pub adapting_luminance: f64,
+    pub background_lstar: f64,
+    pub surround: f64,
+    pub discounting_illuminant: bool,
 
-    pub(crate) background_ytowhite_point_y: f64,
-    pub(crate) aw: f64,
-    pub(crate) nbb: f64,
-    pub(crate) ncb: f64,
-    pub(crate) c: f64,
-    pub(crate) n_c: f64,
-    pub(crate) drgb_inverse: [f64; 3],
-    pub(crate) rgb_d: [f64; 3],
-    pub(crate) fl: f64,
-    pub(crate) f_lroot: f64,
-    pub(crate) z: f64,
+    pub background_ytowhite_point_y: f64,
+    pub aw: f64,
+    pub nbb: f64,
+    pub ncb: f64,
+    pub c: f64,
+    pub n_c: f64,
+    pub drgb_inverse: [f64; 3],
+    pub rgb_d: [f64; 3],
+    pub fl: f64,
+    pub f_lroot: f64,
+    pub z: f64,
 }
 
 impl ViewingConditions {
-    pub(crate) fn standard() -> Self {
+    pub fn standard() -> Self {
         ViewingConditions::s_rgb()
     }
 
-    pub(crate) fn s_rgb() -> Self {
+    pub fn s_rgb() -> Self {
         ViewingConditions::make(None, None, None, None, None)
     }
 
@@ -52,7 +52,7 @@ impl ViewingConditions {
     /// * `backgroundLstar` - average luminance of 10 degrees around color.
     /// * `surround` - brightness of the entire environment.
     /// * `discountingIlluminant` - whether eyes have adjusted to lighting.
-    pub(crate) fn make(
+    pub fn make(
         white_point: Option<[f64; 3]>,
         adapting_luminance: Option<f64>,
         background_lstar: Option<f64>,

@@ -1,5 +1,5 @@
-pub(crate) mod color;
-pub(crate) mod image;
-pub(crate) mod math;
-pub(crate) mod string;
-pub(crate) mod theme;
+pub mod color;
+pub mod image;
+pub mod math;
+pub mod string;
+pub mod theme;

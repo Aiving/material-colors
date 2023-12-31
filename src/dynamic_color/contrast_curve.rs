@@ -5,11 +5,11 @@ use crate::utils::math::lerp;
 /// Usually represents the contrast requirements for a dynamic color on its
 /// background. The four values correspond to values for contrast levels
 /// -1.0, 0.0, 0.5, and 1.0, respectively.
-pub(crate) struct ContrastCurve {
-    pub(crate) low: f64,
-    pub(crate) normal: f64,
-    pub(crate) medium: f64,
-    pub(crate) high: f64,
+pub struct ContrastCurve {
+    pub low: f64,
+    pub normal: f64,
+    pub medium: f64,
+    pub high: f64,
 }
 
 impl ContrastCurve {
@@ -19,7 +19,7 @@ impl ContrastCurve {
     ///   -1.0 is the lowest; 1.0 is the highest.
     ///
     /// - Returns: The value. For contrast ratios, a number between 1.0 and 21.0.
-    pub(crate) fn get(&self, contrast_level: f64) -> f64 {
+    pub fn get(&self, contrast_level: f64) -> f64 {
         match contrast_level {
             contrast_level if contrast_level <= -1.0 => self.low,
             contrast_level if contrast_level < 0.0 => {

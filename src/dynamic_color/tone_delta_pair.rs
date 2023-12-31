@@ -4,7 +4,7 @@ use super::DynamicColor;
 /// the tones at standard contrast are examined and the polarity of those is
 /// attempted to be maintained.
 #[derive(PartialEq, Eq)]
-pub(crate) enum TonePolarity {
+pub enum TonePolarity {
     Darker,
     Lighter,
     Nearer,
@@ -16,12 +16,12 @@ pub(crate) enum TonePolarity {
 /// background, this is for special cases when designers want tonal distance,
 /// literally contrast, between two colors that don't have a background /
 /// foreground relationship or a contrast guarantee.
-pub(crate) struct ToneDeltaPair {
-    pub(crate) subject: DynamicColor,
-    pub(crate) basis: DynamicColor,
-    pub(crate) delta: f64,
-    pub(crate) polarity: TonePolarity,
-    pub(crate) stay_together: bool,
+pub struct ToneDeltaPair {
+    pub subject: DynamicColor,
+    pub basis: DynamicColor,
+    pub delta: f64,
+    pub polarity: TonePolarity,
+    pub stay_together: bool,
 }
 
 impl ToneDeltaPair {
@@ -48,7 +48,7 @@ impl ToneDeltaPair {
     /// * `stayTogether`: Whether these two roles should stay on the same side of
     ///   the "awkward zone" (T50-59). This is necessary for certain cases where
     ///   one role has two backgrounds.
-    pub(crate) fn new(
+    pub fn new(
         subject: DynamicColor,
         basis: DynamicColor,
         delta: f64,

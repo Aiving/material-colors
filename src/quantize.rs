@@ -1,7 +1,7 @@
-pub(crate) mod point_provider;
-pub(crate) mod point_provider_lab;
-pub(crate) mod quantizer;
-pub(crate) mod quantizer_celebi;
-pub(crate) mod quantizer_map;
-pub(crate) mod quantizer_wsmeans;
-pub(crate) mod quantizer_wu;
+pub mod point_provider;
+pub mod point_provider_lab;
+pub mod quantizer;
+pub mod quantizer_celebi;
+pub mod quantizer_map;
+pub mod quantizer_wsmeans;
+pub mod quantizer_wu;

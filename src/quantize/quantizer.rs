@@ -2,7 +2,7 @@ use ahash::HashMap;
 
 use crate::utils::color::Argb;
 
-pub(crate) trait Quantizer {
+pub trait Quantizer {
     fn quantize(
         &mut self,
         pixels: &[Argb],
@@ -11,7 +11,7 @@ pub(crate) trait Quantizer {
     ) -> QuantizerResult;
 }
 
-pub(crate) struct QuantizerResult {
-    pub(crate) color_to_count: HashMap<Argb, u32>,
-    pub(crate) input_pixel_to_cluster_pixel: HashMap<Argb, Argb>,
+pub struct QuantizerResult {
+    pub color_to_count: HashMap<Argb, u32>,
+    pub input_pixel_to_cluster_pixel: HashMap<Argb, Argb>,
 }

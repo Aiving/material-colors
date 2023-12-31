@@ -4,7 +4,7 @@ use crate::utils::math::difference_degrees;
 use crate::utils::math::rotate_direction;
 use crate::utils::math::sanitize_degrees_double;
 
-pub(crate) fn harmonize(design_color: Argb, source_color: Argb) -> Argb {
+pub fn harmonize(design_color: Argb, source_color: Argb) -> Argb {
     let from_hct: Hct = design_color.into();
     let to_hct: Hct = source_color.into();
 

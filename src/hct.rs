@@ -10,9 +10,9 @@ use self::cam16::Cam16;
 use self::solver::HctSolver;
 use self::viewing_conditions::ViewingConditions;
 
-pub(crate) mod cam16;
-pub(crate) mod solver;
-pub(crate) mod viewing_conditions;
+pub mod cam16;
+pub mod solver;
+pub mod viewing_conditions;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Hct {
@@ -31,7 +31,7 @@ impl Hct {
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
-    pub(crate) fn get_hue(&self) -> f64 {
+    pub fn get_hue(&self) -> f64 {
         self._hue
     }
 
@@ -43,7 +43,7 @@ impl Hct {
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
-    pub(crate) fn set_hue(&mut self, value: f64) {
+    pub fn set_hue(&mut self, value: f64) {
         self._argb = HctSolver::solve_to_int(value, self.get_chroma(), self.get_tone());
 
         let cam16 = Cam16::from(self._argb);
@@ -58,7 +58,7 @@ impl Hct {
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
-    pub(crate) fn get_chroma(&self) -> f64 {
+    pub fn get_chroma(&self) -> f64 {
         self._chroma
     }
 
@@ -67,7 +67,7 @@ impl Hct {
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
-    pub(crate) fn set_chroma(&mut self, value: f64) {
+    pub fn set_chroma(&mut self, value: f64) {
         self._argb = HctSolver::solve_to_int(self.get_hue(), value, self.get_tone());
 
         let cam16 = Cam16::from(self._argb);
@@ -84,7 +84,7 @@ impl Hct {
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
-    pub(crate) fn get_tone(&self) -> f64 {
+    pub fn get_tone(&self) -> f64 {
         self._tone
     }
 
@@ -95,7 +95,7 @@ impl Hct {
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
-    pub(crate) fn set_tone(&mut self, value: f64) {
+    pub fn set_tone(&mut self, value: f64) {
         self._argb = HctSolver::solve_to_int(self.get_hue(), self.get_chroma(), value);
 
         let cam16 = Cam16::from(self._argb);
@@ -127,7 +127,7 @@ impl Hct {
     ///    lower than the requested chroma. Chroma has a different maximum for any
     ///    given hue and tone.
     /// 0 <= [tone] <= 100; informally, lightness. Invalid values are corrected.
-    pub(crate) fn from(hue: f64, chroma: f64, tone: f64) -> Hct {
+    pub fn from(hue: f64, chroma: f64, tone: f64) -> Hct {
         let argb = HctSolver::solve_to_int(hue, chroma, tone);
 
         Hct::new(argb)
@@ -145,7 +145,7 @@ impl Hct {
     /// CAM16, a color appearance model, and uses it to make these calculations.
     ///
     /// See [ViewingConditions.make] for parameters affecting color appearance.
-    pub(crate) fn in_viewing_conditions(self, vc: ViewingConditions) -> Hct {
+    pub fn in_viewing_conditions(self, vc: ViewingConditions) -> Hct {
         // 1. Use CAM16 to find Xyz coordinates of color in specified VC.
         let cam16 = Cam16::from(Argb::from(self));
         let viewed_in_vc = cam16.xyz_in_viewing_conditions(vc);

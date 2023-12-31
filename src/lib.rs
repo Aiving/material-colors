@@ -1,14 +1,16 @@
-pub(crate) mod blend;
-pub(crate) mod contrast;
-pub(crate) mod dislike;
-pub(crate) mod dynamic_color;
-pub(crate) mod hct;
-pub(crate) mod palettes;
-pub(crate) mod quantize;
-pub(crate) mod scheme;
-pub(crate) mod score;
-pub(crate) mod temperature;
-pub(crate) mod utils;
+pub mod blend;
+pub mod contrast;
+pub mod dislike;
+pub mod dynamic_color;
+pub mod hct;
+pub mod palettes;
+pub mod quantize;
+pub mod scheme;
+pub mod score;
+pub mod temperature;
+pub mod utils;
+
+pub use hct::Hct;
 
 pub use scheme::content::SchemeContent;
 pub use scheme::expressive::SchemeExpressive;
@@ -21,6 +23,12 @@ pub use scheme::tonal_spot::SchemeTonalSpot;
 pub use scheme::vibrant::SchemeVibrant;
 pub use scheme::Scheme;
 
+pub use utils::color::Argb;
+pub use utils::color::Rgb;
 pub use utils::image::source_color_from_image;
 pub use utils::string::argb_from_hex;
+pub use utils::string::hex_from_argb;
 pub use utils::theme::theme_from_source_color;
+
+pub use palettes::core::CorePalette;
+pub use palettes::tonal::TonalPalette;

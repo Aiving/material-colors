@@ -1,2 +1,2 @@
-pub(crate) mod core;
-pub(crate) mod tonal;
+pub mod core;
+pub mod tonal;

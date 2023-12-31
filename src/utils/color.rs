@@ -1,11 +1,11 @@
 use super::math::matrix_multiply;
 
-pub(crate) const SRGB_TO_XYZ: [[f64; 3]; 3] = [
+pub const SRGB_TO_XYZ: [[f64; 3]; 3] = [
     [0.41233895, 0.35762064, 0.18051042],
     [0.2126, 0.7152, 0.0722],
     [0.01932141, 0.11916382, 0.95034478],
 ];
-pub(crate) const XYZ_TO_SRGB: [[f64; 3]; 3] = [
+pub const XYZ_TO_SRGB: [[f64; 3]; 3] = [
     [
         3.2413774792388685,
         -1.5376652402851851,
@@ -18,21 +18,21 @@ pub(crate) const XYZ_TO_SRGB: [[f64; 3]; 3] = [
         1.0571799111220335,
     ],
 ];
-pub(crate) const WHITE_POINT_D65: [f64; 3] = [95.047, 100.0, 108.883];
+pub const WHITE_POINT_D65: [f64; 3] = [95.047, 100.0, 108.883];
 
-pub(crate) type Rgb = [u8; 3];
-pub(crate) type Argb = [u8; 4];
-pub(crate) type LinearRgb = [f64; 3];
-pub(crate) type Xyz = [f64; 3];
-pub(crate) type Lab = [f64; 3];
+pub type Rgb = [u8; 3];
+pub type Argb = [u8; 4];
+pub type LinearRgb = [f64; 3];
+pub type Xyz = [f64; 3];
+pub type Lab = [f64; 3];
 
 /** Converts a color from Rgb components to Argb format. */
-pub(crate) fn argb_from_rgb([r, g, b]: Rgb) -> Argb {
+pub fn argb_from_rgb([r, g, b]: Rgb) -> Argb {
     [255, r, g, b]
 }
 
 /** Converts a color from linear Rgb components to Argb format. */
-pub(crate) fn argb_from_linrgb([r, g, b]: LinearRgb) -> Argb {
+pub fn argb_from_linrgb([r, g, b]: LinearRgb) -> Argb {
     let r = delinearized(r);
     let g = delinearized(g);
     let b = delinearized(b);
@@ -41,32 +41,32 @@ pub(crate) fn argb_from_linrgb([r, g, b]: LinearRgb) -> Argb {
 }
 
 /** Returns the alpha component of a color in Argb format. */
-pub(crate) fn alpha_from_argb([alpha, _, _, _]: Argb) -> u8 {
+pub fn alpha_from_argb([alpha, _, _, _]: Argb) -> u8 {
     alpha
 }
 
 /** Returns the red component of a color in Argb format. */
-pub(crate) fn red_from_argb([_, red, _, _]: Argb) -> u8 {
+pub fn red_from_argb([_, red, _, _]: Argb) -> u8 {
     red
 }
 
 /** Returns the green component of a color in Argb format. */
-pub(crate) fn green_from_argb([_, _, green, _]: Argb) -> u8 {
+pub fn green_from_argb([_, _, green, _]: Argb) -> u8 {
     green
 }
 
 /** Returns the blue component of a color in Argb format. */
-pub(crate) fn blue_from_argb([_, _, _, blue]: Argb) -> u8 {
+pub fn blue_from_argb([_, _, _, blue]: Argb) -> u8 {
     blue
 }
 
 /** Returns whether a color in Argb format is opaque. */
-//pub(crate) fn is_opaque(argb: Argb) -> bool {
+//pub fn is_opaque(argb: Argb) -> bool {
 //     alpha_from_argb(argb) >= 255
 // }
 
 /** Converts a color from Argb to Xyz. */
-pub(crate) fn argb_from_xyz([x, y, z]: Xyz) -> Argb {
+pub fn argb_from_xyz([x, y, z]: Xyz) -> Argb {
     let matrix = XYZ_TO_SRGB;
 
     let linear_r = matrix[0][0] * x + matrix[0][1] * y + matrix[0][2] * z;
@@ -81,7 +81,7 @@ pub(crate) fn argb_from_xyz([x, y, z]: Xyz) -> Argb {
 }
 
 /** Converts a color from Xyz to Argb. */
-pub(crate) fn xyz_from_argb(argb: Argb) -> Xyz {
+pub fn xyz_from_argb(argb: Argb) -> Xyz {
     let r = linearized(red_from_argb(argb));
     let g = linearized(green_from_argb(argb));
     let b = linearized(blue_from_argb(argb));
@@ -90,7 +90,7 @@ pub(crate) fn xyz_from_argb(argb: Argb) -> Xyz {
 }
 
 /** Converts a color represented in Lab color space into an Argb integer. */
-pub(crate) fn argb_from_lab([l, a, b]: Lab) -> Argb {
+pub fn argb_from_lab([l, a, b]: Lab) -> Argb {
     let white_point = WHITE_POINT_D65;
 
     let fy = (l + 16.0) / 116.0;
@@ -114,7 +114,7 @@ pub(crate) fn argb_from_lab([l, a, b]: Lab) -> Argb {
  * @param argb the Argb representation of a color
  * @return a Lab object representing the color
  */
-pub(crate) fn lab_from_argb(argb: Argb) -> Lab {
+pub fn lab_from_argb(argb: Argb) -> Lab {
     let linear_r = linearized(red_from_argb(argb));
     let linear_g = linearized(green_from_argb(argb));
     let linear_b = linearized(blue_from_argb(argb));
@@ -148,7 +148,7 @@ pub(crate) fn lab_from_argb(argb: Argb) -> Lab {
  * @param lstar L* in L*a*b*
  * @return Argb representation of grayscale color with lightness matching L*
  */
-pub(crate) fn argb_from_lstar(lstar: f64) -> Argb {
+pub fn argb_from_lstar(lstar: f64) -> Argb {
     let y = y_from_lstar(lstar);
     let component = delinearized(y);
 
@@ -161,7 +161,7 @@ pub(crate) fn argb_from_lstar(lstar: f64) -> Argb {
  * @param argb Argb representation of a color
  * @return L*, from L*a*b*, coordinate of the color
  */
-pub(crate) fn lstar_from_argb(argb: Argb) -> f64 {
+pub fn lstar_from_argb(argb: Argb) -> f64 {
     let y = xyz_from_argb(argb)[1];
 
     116.0 * lab_f(y / 100.0) - 16.0
@@ -178,7 +178,7 @@ pub(crate) fn lstar_from_argb(argb: Argb) -> f64 {
  * @param lstar L* in L*a*b*
  * @return Y in Xyz
  */
-pub(crate) fn y_from_lstar(lstar: f64) -> f64 {
+pub fn y_from_lstar(lstar: f64) -> f64 {
     100.0 * lab_invf((lstar + 16.0) / 116.0)
 }
 
@@ -193,7 +193,7 @@ pub(crate) fn y_from_lstar(lstar: f64) -> f64 {
  * @param y Y in Xyz
  * @return L* in L*a*b*
  */
-pub(crate) fn lstar_from_y(y: f64) -> f64 {
+pub fn lstar_from_y(y: f64) -> f64 {
     lab_f(y / 100.0) * 116.0 - 16.0
 }
 
@@ -203,7 +203,7 @@ pub(crate) fn lstar_from_y(y: f64) -> f64 {
  * @param rgbComponent 0 <= rgb_component <= 255, represents R/G/B channel
  * @return 0.0 <= output <= 100.0, color channel converted to linear Rgb space
  */
-pub(crate) fn linearized(rgb_component: u8) -> f64 {
+pub fn linearized(rgb_component: u8) -> f64 {
     let normalized = rgb_component as f64 / 255.0;
 
     if normalized <= 0.040449936 {
@@ -219,7 +219,7 @@ pub(crate) fn linearized(rgb_component: u8) -> f64 {
  * @param rgbComponent 0.0 <= rgb_component <= 100.0, represents linear R/G/B channel
  * @return 0 <= output <= 255, color channel converted to regular Rgb space
  */
-pub(crate) fn delinearized(rgb_component: f64) -> u8 {
+pub fn delinearized(rgb_component: f64) -> u8 {
     let normalized = rgb_component / 100.0;
     let delinearized = if normalized <= 0.0031308 {
         normalized * 12.92

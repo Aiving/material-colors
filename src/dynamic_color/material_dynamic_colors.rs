@@ -127,7 +127,7 @@ macro_rules! define_key {
 pub struct MaterialDynamicColors;
 
 impl MaterialDynamicColors {
-    pub(crate) const CONTENT_ACCENT_TONE_DELTA: f64 = 15.0;
+    pub const CONTENT_ACCENT_TONE_DELTA: f64 = 15.0;
 
     fn highest_surface(scheme: &DynamicScheme) -> DynamicColor {
         if scheme.is_dark {

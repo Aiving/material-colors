@@ -4,7 +4,7 @@ use crate::utils::color::y_from_lstar;
 /// Returns a contrast ratio, which ranges from 1 to 21.
 /// [toneA] Tone between 0 and 100. Values outside will be clamped.
 /// [toneB] Tone between 0 and 100. Values outside will be clamped.
-pub(crate) fn ratio_of_tones(tone_a: f64, tone_b: f64) -> f64 {
+pub fn ratio_of_tones(tone_a: f64, tone_b: f64) -> f64 {
     let tone_a = tone_a.clamp(0.0, 100.0);
     let tone_b = tone_b.clamp(0.0, 100.0);
 
@@ -26,7 +26,7 @@ fn ratio_of_ys(y1: f64, y2: f64) -> f64 {
 /// Range is 0 to 100. Invalid values will result in -1 being returned.
 /// [ratio] Contrast ratio of return value and [tone].
 /// Range is 1 to 21, invalid values have undefined behavior.
-pub(crate) fn lighter(tone: f64, ratio: f64) -> f64 {
+pub fn lighter(tone: f64, ratio: f64) -> f64 {
     if !(0.0..=100.0).contains(&tone) {
         return -1.0;
     }
@@ -59,7 +59,7 @@ pub(crate) fn lighter(tone: f64, ratio: f64) -> f64 {
 /// Range is 0 to 100. Invalid values will result in -1 being returned.
 /// [ratio] Contrast ratio of return value and [tone].
 /// Range is 1 to 21, invalid values have undefined behavior.
-pub(crate) fn darker(tone: f64, ratio: f64) -> f64 {
+pub fn darker(tone: f64, ratio: f64) -> f64 {
     if !(0.0..=100.0).contains(&tone) {
         return -1.0;
     }
@@ -97,7 +97,7 @@ pub(crate) fn darker(tone: f64, ratio: f64) -> f64 {
 /// Range is 0 to 100. Invalid values will result in 100 being returned.
 /// [ratio] Desired contrast ratio of return value and tone parameter.
 /// Range is 1 to 21, invalid values have undefined behavior.
-pub(crate) fn lighter_unsafe(tone: f64, ratio: f64) -> f64 {
+pub fn lighter_unsafe(tone: f64, ratio: f64) -> f64 {
     let lighter_safe = lighter(tone, ratio);
 
     if lighter_safe < 0.0 {
@@ -119,7 +119,7 @@ pub(crate) fn lighter_unsafe(tone: f64, ratio: f64) -> f64 {
 /// Range is 0 to 100. Invalid values will result in 0 being returned.
 /// [ratio] Desired contrast ratio of return value and tone parameter.
 /// Range is 1 to 21, invalid values have undefined behavior.
-pub(crate) fn darker_unsafe(tone: f64, ratio: f64) -> f64 {
+pub fn darker_unsafe(tone: f64, ratio: f64) -> f64 {
     let darker_safe = darker(tone, ratio);
 
     if darker_safe < 0.0 {

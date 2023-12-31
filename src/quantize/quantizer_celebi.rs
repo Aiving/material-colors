@@ -8,7 +8,7 @@ use super::quantizer_wsmeans::QuantizerWsmeans;
 use super::quantizer_wu::QuantizerWu;
 
 #[derive(Default)]
-pub(crate) struct QuantizerCelebi;
+pub struct QuantizerCelebi;
 
 impl Quantizer for QuantizerCelebi {
     fn quantize(

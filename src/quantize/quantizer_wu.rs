@@ -25,7 +25,7 @@ const SIDE_LENGTH: usize = 33;
 const TOTAL_SIZE: usize = 35937;
 
 #[derive(Default)]
-pub(crate) struct QuantizerWu {
+pub struct QuantizerWu {
     weights: Vec<u32>,
     moments_r: Vec<u32>,
     moments_g: Vec<u32>,
@@ -62,7 +62,7 @@ impl Quantizer for QuantizerWu {
 }
 
 impl QuantizerWu {
-    pub(crate) fn get_index(r: u8, g: u8, b: u8) -> usize {
+    pub fn get_index(r: u8, g: u8, b: u8) -> usize {
         let red = (r as usize) << (INDEX_BITS * 2);
         let green = (r as usize) << (INDEX_BITS + 1);
         let blue = (g as usize) << INDEX_BITS;
@@ -70,7 +70,7 @@ impl QuantizerWu {
         red + green + blue + r as usize + g as usize + b as usize
     }
 
-    pub(crate) fn construct_histogram(&mut self, pixels: HashMap<Argb, u32>) {
+    pub fn construct_histogram(&mut self, pixels: HashMap<Argb, u32>) {
         self.weights = vec![0; TOTAL_SIZE];
         self.moments_r = vec![0; TOTAL_SIZE];
         self.moments_g = vec![0; TOTAL_SIZE];
@@ -99,7 +99,7 @@ impl QuantizerWu {
         }
     }
 
-    pub(crate) fn compute_moments(&mut self) {
+    pub fn compute_moments(&mut self) {
         for r in 1..SIDE_LENGTH {
             let mut area = [0; SIDE_LENGTH];
             let mut area_r = [0; SIDE_LENGTH];
@@ -143,7 +143,7 @@ impl QuantizerWu {
         }
     }
 
-    pub(crate) fn create_boxes(&mut self, max_color_count: usize) -> CreateBoxesResult {
+    pub fn create_boxes(&mut self, max_color_count: usize) -> CreateBoxesResult {
         self.cubes = vec![];
 
         for _ in 0..max_color_count {
@@ -209,7 +209,7 @@ impl QuantizerWu {
         }
     }
 
-    pub(crate) fn create_result(&self, color_count: usize) -> Vec<Argb> {
+    pub fn create_result(&self, color_count: usize) -> Vec<Argb> {
         Vec::from_iter((0..color_count).filter_map(|i| {
             let cube = self.cubes[i];
             let weight = Self::volume(cube, &self.weights);
@@ -228,7 +228,7 @@ impl QuantizerWu {
         }))
     }
 
-    pub(crate) fn variance(&self, cube: Cube) -> f64 {
+    pub fn variance(&self, cube: Cube) -> f64 {
         let dr = Self::volume(cube, &self.moments_r);
         let dg = Self::volume(cube, &self.moments_g);
         let db = Self::volume(cube, &self.moments_b);
@@ -250,7 +250,7 @@ impl QuantizerWu {
         xx - (hypotenuse / volume_) as f64
     }
 
-    pub(crate) fn cut(&self, mut one: Cube, mut two: Cube) -> bool {
+    pub fn cut(&self, mut one: Cube, mut two: Cube) -> bool {
         let whole_r = Self::volume(one, &self.moments_r);
         let whole_g = Self::volume(one, &self.moments_g);
         let whole_b = Self::volume(one, &self.moments_b);
@@ -340,7 +340,7 @@ impl QuantizerWu {
         true
     }
 
-    pub(crate) fn maximize(
+    pub fn maximize(
         &self,
         cube: Cube,
         direction: Direction,
@@ -399,7 +399,7 @@ impl QuantizerWu {
         }
     }
 
-    pub(crate) fn volume(cube: Cube, moment: &[u32]) -> i64 {
+    pub fn volume(cube: Cube, moment: &[u32]) -> i64 {
         let [[r0, g0, b0], [r1, g1, b1]] = cube.pixels;
 
         moment[Self::get_index(r1, g1, b1)] as i64
@@ -412,7 +412,7 @@ impl QuantizerWu {
             - moment[Self::get_index(r0, g0, b0)] as i64
     }
 
-    pub(crate) fn bottom(cube: Cube, direction: &Direction, moment: &[u32]) -> i64 {
+    pub fn bottom(cube: Cube, direction: &Direction, moment: &[u32]) -> i64 {
         let [[r0, g0, b0], [r1, g1, b1]] = cube.pixels;
 
         match direction {
@@ -437,7 +437,7 @@ impl QuantizerWu {
         }
     }
 
-    pub(crate) fn top(cube: Cube, direction: &Direction, position: u8, moment: &[u32]) -> i64 {
+    pub fn top(cube: Cube, direction: &Direction, position: u8, moment: &[u32]) -> i64 {
         let [[r0, g0, b0], [r1, g1, b1]] = cube.pixels;
 
         match direction {
@@ -463,27 +463,27 @@ impl QuantizerWu {
     }
 }
 
-pub(crate) enum Direction {
+pub enum Direction {
     Red,
     Green,
     Blue,
 }
 
-pub(crate) struct MaximizeResult {
+pub struct MaximizeResult {
     // < 0 if cut impossible
-    pub(crate) cut_location: Option<u8>,
-    pub(crate) maximum: f64,
+    pub cut_location: Option<u8>,
+    pub maximum: f64,
 }
 
-pub(crate) struct CreateBoxesResult {
-    pub(crate) requested_count: i32,
-    pub(crate) result_count: i32,
+pub struct CreateBoxesResult {
+    pub requested_count: i32,
+    pub result_count: i32,
 }
 
 #[derive(Clone, Copy)]
-pub(crate) struct Cube {
-    pub(crate) pixels: [Rgb; 2],
-    pub(crate) vol: u16,
+pub struct Cube {
+    pub pixels: [Rgb; 2],
+    pub vol: u16,
 }
 
 impl Display for Cube {

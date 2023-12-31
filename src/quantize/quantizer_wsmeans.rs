@@ -10,9 +10,9 @@ use crate::utils::color::Argb;
 use super::point_provider::PointProvider;
 use super::quantizer::QuantizerResult;
 
-pub(crate) struct DistanceAndIndex {
-    pub(crate) distance: f64,
-    pub(crate) index: usize,
+pub struct DistanceAndIndex {
+    pub distance: f64,
+    pub index: usize,
 }
 
 impl PartialEq for DistanceAndIndex {
@@ -48,12 +48,12 @@ macro_rules! default_value {
 }
 
 #[derive(Default)]
-pub(crate) struct QuantizerWsmeans;
+pub struct QuantizerWsmeans;
 
 impl QuantizerWsmeans {
     const DEBUG: bool = false;
 
-    pub(crate) fn debug_log<T: Into<String>>(log: T) {
+    pub fn debug_log<T: Into<String>>(log: T) {
         let log: String = log.into();
 
         if QuantizerWsmeans::DEBUG {
@@ -61,7 +61,7 @@ impl QuantizerWsmeans {
         }
     }
 
-    pub(crate) fn quantize(
+    pub fn quantize(
         input_pixels: &[Argb],
         max_colors: i32,
         starting_clusters: Option<Vec<Argb>>,

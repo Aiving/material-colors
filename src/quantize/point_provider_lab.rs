@@ -5,7 +5,7 @@ use crate::utils::color::lab_from_argb;
 
 use super::point_provider::PointProvider;
 
-pub(crate) struct PointProviderLab;
+pub struct PointProviderLab;
 
 impl PointProvider for PointProviderLab {
     fn lab_from_int(&self, argb: Argb) -> Lab {

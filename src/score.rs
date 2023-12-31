@@ -16,7 +16,7 @@ struct ScoredHCT {
 /// Enables use of a high cluster count for image quantization, thus ensuring
 /// colors aren't muddied, while curating the high cluster count to a much
 ///  smaller number of appropriate choices.
-pub(crate) struct Score {}
+pub struct Score;
 
 impl Score {
     const TARGET_CHROMA: f64 = 48.0; // A1 Chroma
@@ -42,7 +42,7 @@ impl Score {
     ///   a theme, a default fallback color will be provided, Google Blue. The
     ///   default number of colors returned is 4, simply because thats the # of
     ///   colors display in Android 12's wallpaper picker.
-    pub(crate) fn score(
+    pub fn score(
         colors_to_population: HashMap<Argb, u32>,
         desired: Option<i32>,
         fallback_color_argb: Option<Argb>,

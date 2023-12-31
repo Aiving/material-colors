@@ -295,7 +295,7 @@ const CRITICAL_PLANES: [f64; 255] = [
     99.55452497210776,
 ];
 
-pub(crate) struct HctSolver;
+pub struct HctSolver;
 
 impl HctSolver {
     /// Sanitizes a small enough angle in radians.
@@ -646,7 +646,7 @@ impl HctSolver {
     /// [lstar], respectively. If it is impossible to satisfy all three
     /// constraints, the hue and L* will be sufficiently close, and the
     /// chroma will be maximized.
-    pub(crate) fn solve_to_int(hue_degrees: f64, chroma: f64, lstar: f64) -> Argb {
+    pub fn solve_to_int(hue_degrees: f64, chroma: f64, lstar: f64) -> Argb {
         if chroma < 0.0001 || !(0.0001..=99.9999).contains(&lstar) {
             return argb_from_lstar(lstar);
         }
@@ -675,7 +675,7 @@ impl HctSolver {
     /// [lstar], respectively. If it is impossible to satisfy all three
     /// constraints, the hue and L* will be sufficiently close, and the
     /// chroma will be maximized.
-    pub(crate) fn solve_to_cam(hue_degrees: f64, chroma: f64, lstar: f64) -> Cam16 {
+    pub fn solve_to_cam(hue_degrees: f64, chroma: f64, lstar: f64) -> Cam16 {
         Cam16::from(Self::solve_to_int(hue_degrees, chroma, lstar))
     }
 }

@@ -16,11 +16,11 @@ use self::dynamic_scheme::DynamicScheme;
 use self::tone_delta_pair::ToneDeltaPair;
 use self::tone_delta_pair::TonePolarity;
 
-pub(crate) mod contrast_curve;
-pub(crate) mod dynamic_scheme;
-pub(crate) mod material_dynamic_colors;
-pub(crate) mod tone_delta_pair;
-pub(crate) mod variant;
+pub mod contrast_curve;
+pub mod dynamic_scheme;
+pub mod material_dynamic_colors;
+pub mod tone_delta_pair;
+pub mod variant;
 
 type DynamicSchemeFn<T> = fn(&DynamicScheme) -> T;
 type DynamicSchemeFnRef<T> = fn(&DynamicScheme) -> &T;
@@ -92,7 +92,7 @@ impl DynamicColor {
     /// don't want to have a formal relationship or a principled value for their
     /// tone distance based on common contrast / tone delta values, yet, want
     /// tone distance.
-    pub(crate) fn new<T: Into<String>>(
+    pub fn new<T: Into<String>>(
         name: T,
         palette: fn(&DynamicScheme) -> &TonalPalette,
         tone: fn(&DynamicScheme) -> f64,
@@ -150,7 +150,7 @@ impl DynamicColor {
     ///   contrast level is.
     /// - Returns: a tone, T in the HCT color space, that this `DynamicColor` is under
     ///   the conditions in `scheme`.
-    pub(crate) fn get_tone(&self, scheme: &DynamicScheme) -> f64 {
+    pub fn get_tone(&self, scheme: &DynamicScheme) -> f64 {
         let decreasing_contrast = scheme.contrast_level < 0.0;
 
         // Case 1: dual foreground, pair of colors with delta constraint.
@@ -358,7 +358,7 @@ impl DynamicColor {
     ///   - ratio: The contrast ratio desired between `bgTone` and the return value.
     ///
     /// - Returns: The desired foreground tone.
-    pub(crate) fn foreground_tone(bg_tone: f64, ratio: f64) -> f64 {
+    pub fn foreground_tone(bg_tone: f64, ratio: f64) -> f64 {
         let lighter_tone = lighter_unsafe(bg_tone, ratio);
         let darker_tone = darker_unsafe(bg_tone, ratio);
         let lighter_ratio = ratio_of_tones(lighter_tone, bg_tone);
@@ -394,7 +394,7 @@ impl DynamicColor {
     /// reasonably close to supporting it.
     /// - Parameter tone: The tone to be adjusted.
     /// - Returns: The (possibly updated) tone.
-    pub(crate) fn enable_light_foreground(tone: f64) -> f64 {
+    pub fn enable_light_foreground(tone: f64) -> f64 {
         if Self::tone_prefers_light_foreground(tone) && !Self::tone_allows_light_foreground(tone) {
             return 49.0;
         }
@@ -415,7 +415,7 @@ impl DynamicColor {
     ///
     /// - Parameter tone: The tone to be judged.
     /// - Returns: whether `tone` prefers a light foreground.
-    pub(crate) fn tone_prefers_light_foreground(tone: f64) -> bool {
+    pub fn tone_prefers_light_foreground(tone: f64) -> bool {
         tone.round() < 60.0
     }
 
@@ -424,7 +424,7 @@ impl DynamicColor {
     ///
     /// - Parameter tone: The tone to be judged.
     /// - Returns: whether `tone` allows a light foreground.
-    pub(crate) fn tone_allows_light_foreground(tone: f64) -> bool {
+    pub fn tone_allows_light_foreground(tone: f64) -> bool {
         tone.round() <= 49.0
     }
 }

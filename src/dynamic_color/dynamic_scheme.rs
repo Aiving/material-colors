@@ -35,33 +35,33 @@ pub struct DynamicScheme {
 
     /// Given a tone, produces a color. Hue and chroma of the color are specified
     /// in the design specification of the variant. Usually colorful.
-    pub(crate) primary_palette: TonalPalette,
+    pub primary_palette: TonalPalette,
 
     /// Given a tone, produces a color. Hue and chroma of the color are specified
     /// in the design specification of the variant. Usually less colorful.
-    pub(crate) secondary_palette: TonalPalette,
+    pub secondary_palette: TonalPalette,
 
     /// Given a tone, produces a color. Hue and chroma of the color are specified
     /// in the design specification of the variant. Usually a different hue from
     /// primary and colorful.
-    pub(crate) tertiary_palette: TonalPalette,
+    pub tertiary_palette: TonalPalette,
 
     /// Given a tone, produces a color. Hue and chroma of the color are specified
     /// in the design specification of the variant. Usually not colorful at all,
     /// intended for background & surface colors.
-    pub(crate) neutral_palette: TonalPalette,
+    pub neutral_palette: TonalPalette,
 
     /// Given a tone, produces a color. Hue and chroma of the color are specified
     /// in the design specification of the variant. Usually not colorful, but
     /// slightly more colorful than Neutral. Intended for backgrounds & surfaces.
-    pub(crate) neutral_variant_palette: TonalPalette,
+    pub neutral_variant_palette: TonalPalette,
 
     /// Given a tone, produces a reddish, colorful, color.
-    pub(crate) error_palette: TonalPalette,
+    pub error_palette: TonalPalette,
 }
 
 impl DynamicScheme {
-    pub(crate) fn new(
+    pub fn new(
         source_color_argb: Argb,
         source_color_hct: Option<Hct>,
         variant: Variant,
@@ -89,7 +89,7 @@ impl DynamicScheme {
         }
     }
 
-    pub(crate) fn get_rotated_hue(source_color: Hct, hues: Vec<f64>, rotations: Vec<f64>) -> f64 {
+    pub fn get_rotated_hue(source_color: Hct, hues: Vec<f64>, rotations: Vec<f64>) -> f64 {
         let source_hue = source_color.get_hue();
 
         assert!(hues.len() == rotations.len());
@@ -117,166 +117,166 @@ impl DynamicScheme {
         source_hue
     }
 
-    pub(crate) fn primary_palette_key_color(&self) -> Argb {
+    pub fn primary_palette_key_color(&self) -> Argb {
         MaterialDynamicColors::primary_palette_key_color().get_argb(self)
     }
-    pub(crate) fn secondary_palette_key_color(&self) -> Argb {
+    pub fn secondary_palette_key_color(&self) -> Argb {
         MaterialDynamicColors::secondary_palette_key_color().get_argb(self)
     }
-    pub(crate) fn tertiary_palette_key_color(&self) -> Argb {
+    pub fn tertiary_palette_key_color(&self) -> Argb {
         MaterialDynamicColors::tertiary_palette_key_color().get_argb(self)
     }
-    pub(crate) fn neutral_palette_key_color(&self) -> Argb {
+    pub fn neutral_palette_key_color(&self) -> Argb {
         MaterialDynamicColors::neutral_palette_key_color().get_argb(self)
     }
-    pub(crate) fn neutral_variant_palette_key_color(&self) -> Argb {
+    pub fn neutral_variant_palette_key_color(&self) -> Argb {
         MaterialDynamicColors::neutral_palette_key_color().get_argb(self)
     }
-    pub(crate) fn background(&self) -> Argb {
+    pub fn background(&self) -> Argb {
         MaterialDynamicColors::background().get_argb(self)
     }
-    pub(crate) fn on_background(&self) -> Argb {
+    pub fn on_background(&self) -> Argb {
         MaterialDynamicColors::on_background().get_argb(self)
     }
-    pub(crate) fn surface(&self) -> Argb {
+    pub fn surface(&self) -> Argb {
         MaterialDynamicColors::surface().get_argb(self)
     }
-    pub(crate) fn surface_dim(&self) -> Argb {
+    pub fn surface_dim(&self) -> Argb {
         MaterialDynamicColors::surface_dim().get_argb(self)
     }
-    pub(crate) fn surface_bright(&self) -> Argb {
+    pub fn surface_bright(&self) -> Argb {
         MaterialDynamicColors::surface_bright().get_argb(self)
     }
-    pub(crate) fn surface_container_lowest(&self) -> Argb {
+    pub fn surface_container_lowest(&self) -> Argb {
         MaterialDynamicColors::surface_container_lowest().get_argb(self)
     }
-    pub(crate) fn surface_container_low(&self) -> Argb {
+    pub fn surface_container_low(&self) -> Argb {
         MaterialDynamicColors::surface_container_low().get_argb(self)
     }
-    pub(crate) fn surface_container(&self) -> Argb {
+    pub fn surface_container(&self) -> Argb {
         MaterialDynamicColors::surface_container().get_argb(self)
     }
-    pub(crate) fn surface_container_high(&self) -> Argb {
+    pub fn surface_container_high(&self) -> Argb {
         MaterialDynamicColors::surface_container_high().get_argb(self)
     }
-    pub(crate) fn surface_container_highest(&self) -> Argb {
+    pub fn surface_container_highest(&self) -> Argb {
         MaterialDynamicColors::surface_container_highest().get_argb(self)
     }
-    pub(crate) fn on_surface(&self) -> Argb {
+    pub fn on_surface(&self) -> Argb {
         MaterialDynamicColors::on_surface().get_argb(self)
     }
-    pub(crate) fn surface_variant(&self) -> Argb {
+    pub fn surface_variant(&self) -> Argb {
         MaterialDynamicColors::surface_variant().get_argb(self)
     }
-    pub(crate) fn on_surface_variant(&self) -> Argb {
+    pub fn on_surface_variant(&self) -> Argb {
         MaterialDynamicColors::on_surface_variant().get_argb(self)
     }
-    pub(crate) fn inverse_surface(&self) -> Argb {
+    pub fn inverse_surface(&self) -> Argb {
         MaterialDynamicColors::inverse_surface().get_argb(self)
     }
-    pub(crate) fn inverse_on_surface(&self) -> Argb {
+    pub fn inverse_on_surface(&self) -> Argb {
         MaterialDynamicColors::inverse_on_surface().get_argb(self)
     }
-    pub(crate) fn outline(&self) -> Argb {
+    pub fn outline(&self) -> Argb {
         MaterialDynamicColors::outline().get_argb(self)
     }
-    pub(crate) fn outline_variant(&self) -> Argb {
+    pub fn outline_variant(&self) -> Argb {
         MaterialDynamicColors::outline_variant().get_argb(self)
     }
-    pub(crate) fn shadow(&self) -> Argb {
+    pub fn shadow(&self) -> Argb {
         MaterialDynamicColors::shadow().get_argb(self)
     }
-    pub(crate) fn scrim(&self) -> Argb {
+    pub fn scrim(&self) -> Argb {
         MaterialDynamicColors::scrim().get_argb(self)
     }
-    pub(crate) fn surface_tint(&self) -> Argb {
+    pub fn surface_tint(&self) -> Argb {
         MaterialDynamicColors::surface_tint().get_argb(self)
     }
-    pub(crate) fn primary(&self) -> Argb {
+    pub fn primary(&self) -> Argb {
         MaterialDynamicColors::primary().get_argb(self)
     }
-    pub(crate) fn on_primary(&self) -> Argb {
+    pub fn on_primary(&self) -> Argb {
         MaterialDynamicColors::on_primary().get_argb(self)
     }
-    pub(crate) fn primary_container(&self) -> Argb {
+    pub fn primary_container(&self) -> Argb {
         MaterialDynamicColors::primary_container().get_argb(self)
     }
-    pub(crate) fn on_primary_container(&self) -> Argb {
+    pub fn on_primary_container(&self) -> Argb {
         MaterialDynamicColors::on_primary_container().get_argb(self)
     }
-    pub(crate) fn inverse_primary(&self) -> Argb {
+    pub fn inverse_primary(&self) -> Argb {
         MaterialDynamicColors::inverse_primary().get_argb(self)
     }
-    pub(crate) fn secondary(&self) -> Argb {
+    pub fn secondary(&self) -> Argb {
         MaterialDynamicColors::secondary().get_argb(self)
     }
-    pub(crate) fn on_secondary(&self) -> Argb {
+    pub fn on_secondary(&self) -> Argb {
         MaterialDynamicColors::on_secondary().get_argb(self)
     }
-    pub(crate) fn secondary_container(&self) -> Argb {
+    pub fn secondary_container(&self) -> Argb {
         MaterialDynamicColors::secondary_container().get_argb(self)
     }
-    pub(crate) fn on_secondary_container(&self) -> Argb {
+    pub fn on_secondary_container(&self) -> Argb {
         MaterialDynamicColors::on_secondary_container().get_argb(self)
     }
-    pub(crate) fn tertiary(&self) -> Argb {
+    pub fn tertiary(&self) -> Argb {
         MaterialDynamicColors::tertiary().get_argb(self)
     }
-    pub(crate) fn on_tertiary(&self) -> Argb {
+    pub fn on_tertiary(&self) -> Argb {
         MaterialDynamicColors::on_tertiary().get_argb(self)
     }
-    pub(crate) fn tertiary_container(&self) -> Argb {
+    pub fn tertiary_container(&self) -> Argb {
         MaterialDynamicColors::tertiary_container().get_argb(self)
     }
-    pub(crate) fn on_tertiary_container(&self) -> Argb {
+    pub fn on_tertiary_container(&self) -> Argb {
         MaterialDynamicColors::on_tertiary_container().get_argb(self)
     }
-    pub(crate) fn error(&self) -> Argb {
+    pub fn error(&self) -> Argb {
         MaterialDynamicColors::error().get_argb(self)
     }
-    pub(crate) fn on_error(&self) -> Argb {
+    pub fn on_error(&self) -> Argb {
         MaterialDynamicColors::on_error().get_argb(self)
     }
-    pub(crate) fn error_container(&self) -> Argb {
+    pub fn error_container(&self) -> Argb {
         MaterialDynamicColors::error_container().get_argb(self)
     }
-    pub(crate) fn on_error_container(&self) -> Argb {
+    pub fn on_error_container(&self) -> Argb {
         MaterialDynamicColors::on_error_container().get_argb(self)
     }
-    pub(crate) fn primary_fixed(&self) -> Argb {
+    pub fn primary_fixed(&self) -> Argb {
         MaterialDynamicColors::primary_fixed().get_argb(self)
     }
-    pub(crate) fn primary_fixed_dim(&self) -> Argb {
+    pub fn primary_fixed_dim(&self) -> Argb {
         MaterialDynamicColors::primary_fixed_dim().get_argb(self)
     }
-    pub(crate) fn on_primary_fixed(&self) -> Argb {
+    pub fn on_primary_fixed(&self) -> Argb {
         MaterialDynamicColors::on_primary_fixed().get_argb(self)
     }
-    pub(crate) fn on_primary_fixed_variant(&self) -> Argb {
+    pub fn on_primary_fixed_variant(&self) -> Argb {
         MaterialDynamicColors::on_primary_fixed_variant().get_argb(self)
     }
-    pub(crate) fn secondary_fixed(&self) -> Argb {
+    pub fn secondary_fixed(&self) -> Argb {
         MaterialDynamicColors::secondary_fixed().get_argb(self)
     }
-    pub(crate) fn secondary_fixed_dim(&self) -> Argb {
+    pub fn secondary_fixed_dim(&self) -> Argb {
         MaterialDynamicColors::secondary_fixed_dim().get_argb(self)
     }
-    pub(crate) fn on_secondary_fixed(&self) -> Argb {
+    pub fn on_secondary_fixed(&self) -> Argb {
         MaterialDynamicColors::on_secondary_fixed().get_argb(self)
     }
-    pub(crate) fn on_secondary_fixed_variant(&self) -> Argb {
+    pub fn on_secondary_fixed_variant(&self) -> Argb {
         MaterialDynamicColors::on_secondary_fixed_variant().get_argb(self)
     }
-    pub(crate) fn tertiary_fixed(&self) -> Argb {
+    pub fn tertiary_fixed(&self) -> Argb {
         MaterialDynamicColors::tertiary_fixed().get_argb(self)
     }
-    pub(crate) fn tertiary_fixed_dim(&self) -> Argb {
+    pub fn tertiary_fixed_dim(&self) -> Argb {
         MaterialDynamicColors::tertiary_fixed_dim().get_argb(self)
     }
-    pub(crate) fn on_tertiary_fixed(&self) -> Argb {
+    pub fn on_tertiary_fixed(&self) -> Argb {
         MaterialDynamicColors::on_tertiary_fixed().get_argb(self)
     }
-    pub(crate) fn on_tertiary_fixed_variant(&self) -> Argb {
+    pub fn on_tertiary_fixed_variant(&self) -> Argb {
         MaterialDynamicColors::on_tertiary_fixed_variant().get_argb(self)
     }
 }

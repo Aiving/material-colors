@@ -7,17 +7,17 @@ use crate::dynamic_color::dynamic_scheme::DynamicScheme;
 use crate::utils::color::Argb;
 use crate::utils::string::hex_from_argb;
 
-pub(crate) mod content;
-pub(crate) mod expressive;
-pub(crate) mod fidelity;
-pub(crate) mod fruit_salad;
-pub(crate) mod monochrome;
-pub(crate) mod neutral;
-pub(crate) mod rainbow;
-pub(crate) mod tonal_spot;
-pub(crate) mod vibrant;
+pub mod content;
+pub mod expressive;
+pub mod fidelity;
+pub mod fruit_salad;
+pub mod monochrome;
+pub mod neutral;
+pub mod rainbow;
+pub mod tonal_spot;
+pub mod vibrant;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Scheme {
     pub primary: Argb,
     pub on_primary: Argb,
@@ -71,102 +71,178 @@ pub struct Scheme {
 
 impl Display for Scheme {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "Scheme {{")?;
-        writeln!(f, "  primary = #{}", hex_from_argb(self.primary))?;
-        writeln!(f, "  on_primary = #{}", hex_from_argb(self.on_primary))?;
-        writeln!(
-            f,
-            "  primary_container = #{}",
-            hex_from_argb(self.primary_container)
-        )?;
-        writeln!(
-            f,
-            "  on_primary_container = {}",
-            hex_from_argb(self.on_primary_container)
-        )?;
-        writeln!(f, "  secondary = #{}", hex_from_argb(self.secondary))?;
-        writeln!(f, "  on_secondary = #{}", hex_from_argb(self.on_secondary))?;
-        writeln!(
-            f,
-            "  secondary_container = #{}",
-            hex_from_argb(self.secondary_container)
-        )?;
-        writeln!(
-            f,
-            "  on_secondary_container = #{}",
-            hex_from_argb(self.on_secondary_container)
-        )?;
-        writeln!(f, "  tertiary = #{}", hex_from_argb(self.tertiary))?;
-        writeln!(f, "  on_tertiary = #{}", hex_from_argb(self.on_tertiary))?;
-        writeln!(
-            f,
-            "  tertiary_container = #{}",
-            hex_from_argb(self.tertiary_container)
-        )?;
-        writeln!(
-            f,
-            "  on_tertiary_container = #{}",
-            hex_from_argb(self.on_tertiary_container)
-        )?;
-        writeln!(f, "  error = #{}", hex_from_argb(self.error))?;
-        writeln!(f, "  on_error = #{}", hex_from_argb(self.on_error))?;
-        writeln!(
-            f,
-            "  error_container = #{}",
-            hex_from_argb(self.error_container)
-        )?;
-        writeln!(
-            f,
-            "  on_error_container = #{}",
-            hex_from_argb(self.on_error_container)
-        )?;
-        writeln!(f, "  background = #{}", hex_from_argb(self.background))?;
-        writeln!(
-            f,
-            "  on_background = #{}",
-            hex_from_argb(self.on_background)
-        )?;
-        writeln!(f, "  surface = #{}", hex_from_argb(self.surface))?;
-        writeln!(f, "  on_surface = #{}", hex_from_argb(self.on_surface))?;
-        writeln!(
-            f,
-            "  surface_variant = #{}",
-            hex_from_argb(self.surface_variant)
-        )?;
-        writeln!(
-            f,
-            "  on_surface_variant = #{}",
-            hex_from_argb(self.on_surface_variant)
-        )?;
-        writeln!(f, "  outline = #{}", hex_from_argb(self.outline))?;
-        writeln!(
-            f,
-            "  outline_variant = #{}",
-            hex_from_argb(self.outline_variant)
-        )?;
-        writeln!(f, "  shadow = #{}", hex_from_argb(self.shadow))?;
-        writeln!(f, "  scrim = #{}", hex_from_argb(self.scrim))?;
-        writeln!(
-            f,
-            "  inverse_surface = #{}",
-            hex_from_argb(self.inverse_surface)
-        )?;
-        writeln!(
-            f,
-            "  inverse_on_surface = #{}",
-            hex_from_argb(self.inverse_on_surface)
-        )?;
-        writeln!(
-            f,
-            "  inverse_primary = #{}",
-            hex_from_argb(self.inverse_primary)
-        )?;
-        writeln!(f, "}}")
+        f.debug_struct("Scheme")
+            .field("primary", &format!("#{}", hex_from_argb(self.primary)))
+            .field(
+                "on_primary",
+                &format!("#{}", hex_from_argb(self.on_primary)),
+            )
+            .field(
+                "primary_container",
+                &format!("#{}", hex_from_argb(self.primary_container)),
+            )
+            .field(
+                "on_primary_container",
+                &format!("#{}", hex_from_argb(self.on_primary_container)),
+            )
+            .field(
+                "inverse_primary",
+                &format!("#{}", hex_from_argb(self.inverse_primary)),
+            )
+            .field(
+                "primary_fixed",
+                &format!("#{}", hex_from_argb(self.primary_fixed)),
+            )
+            .field(
+                "primary_fixed_dim",
+                &format!("#{}", hex_from_argb(self.primary_fixed_dim)),
+            )
+            .field(
+                "on_primary_fixed",
+                &format!("#{}", hex_from_argb(self.on_primary_fixed)),
+            )
+            .field(
+                "on_primary_fixed_variant",
+                &format!("#{}", hex_from_argb(self.on_primary_fixed_variant)),
+            )
+            .field("secondary", &format!("#{}", hex_from_argb(self.secondary)))
+            .field(
+                "on_secondary",
+                &format!("#{}", hex_from_argb(self.on_secondary)),
+            )
+            .field(
+                "secondary_container",
+                &format!("#{}", hex_from_argb(self.secondary_container)),
+            )
+            .field(
+                "on_secondary_container",
+                &format!("#{}", hex_from_argb(self.on_secondary_container)),
+            )
+            .field(
+                "secondary_fixed",
+                &format!("#{}", hex_from_argb(self.secondary_fixed)),
+            )
+            .field(
+                "secondary_fixed_dim",
+                &format!("#{}", hex_from_argb(self.secondary_fixed_dim)),
+            )
+            .field(
+                "on_secondary_fixed",
+                &format!("#{}", hex_from_argb(self.on_secondary_fixed)),
+            )
+            .field(
+                "on_secondary_fixed_variant",
+                &format!("#{}", hex_from_argb(self.on_secondary_fixed_variant)),
+            )
+            .field("tertiary", &format!("#{}", hex_from_argb(self.tertiary)))
+            .field(
+                "on_tertiary",
+                &format!("#{}", hex_from_argb(self.on_tertiary)),
+            )
+            .field(
+                "tertiary_container",
+                &format!("#{}", hex_from_argb(self.tertiary_container)),
+            )
+            .field(
+                "on_tertiary_container",
+                &format!("#{}", hex_from_argb(self.on_tertiary_container)),
+            )
+            .field(
+                "tertiary_fixed",
+                &format!("#{}", hex_from_argb(self.tertiary_fixed)),
+            )
+            .field(
+                "tertiary_fixed_dim",
+                &format!("#{}", hex_from_argb(self.tertiary_fixed_dim)),
+            )
+            .field(
+                "on_tertiary_fixed",
+                &format!("#{}", hex_from_argb(self.on_tertiary_fixed)),
+            )
+            .field(
+                "on_tertiary_fixed_variant",
+                &format!("#{}", hex_from_argb(self.on_tertiary_fixed_variant)),
+            )
+            .field("error", &format!("#{}", hex_from_argb(self.error)))
+            .field("on_error", &format!("#{}", hex_from_argb(self.on_error)))
+            .field(
+                "error_container",
+                &format!("#{}", hex_from_argb(self.error_container)),
+            )
+            .field(
+                "on_error_container",
+                &format!("#{}", hex_from_argb(self.on_error_container)),
+            )
+            .field(
+                "surface_dim",
+                &format!("#{}", hex_from_argb(self.surface_dim)),
+            )
+            .field("surface", &format!("#{}", hex_from_argb(self.surface)))
+            .field(
+                "surface_bright",
+                &format!("#{}", hex_from_argb(self.surface_bright)),
+            )
+            .field(
+                "surface_container_lowest",
+                &format!("#{}", hex_from_argb(self.surface_container_lowest)),
+            )
+            .field(
+                "surface_container_low",
+                &format!("#{}", hex_from_argb(self.surface_container_low)),
+            )
+            .field(
+                "surface_container",
+                &format!("#{}", hex_from_argb(self.surface_container)),
+            )
+            .field(
+                "surface_container_high",
+                &format!("#{}", hex_from_argb(self.surface_container_high)),
+            )
+            .field(
+                "surface_container_highest",
+                &format!("#{}", hex_from_argb(self.surface_container_highest)),
+            )
+            .field(
+                "on_surface",
+                &format!("#{}", hex_from_argb(self.on_surface)),
+            )
+            .field(
+                "on_surface_variant",
+                &format!("#{}", hex_from_argb(self.on_surface_variant)),
+            )
+            .field("outline", &format!("#{}", hex_from_argb(self.outline)))
+            .field(
+                "outline_variant",
+                &format!("#{}", hex_from_argb(self.outline_variant)),
+            )
+            .field(
+                "inverse_surface",
+                &format!("#{}", hex_from_argb(self.inverse_surface)),
+            )
+            .field(
+                "inverse_on_surface",
+                &format!("#{}", hex_from_argb(self.inverse_on_surface)),
+            )
+            .field(
+                "surface_variant",
+                &format!("#{}", hex_from_argb(self.surface_variant)),
+            )
+            .field(
+                "background",
+                &format!("#{}", hex_from_argb(self.background)),
+            )
+            .field(
+                "on_background",
+                &format!("#{}", hex_from_argb(self.on_background)),
+            )
+            .field("shadow", &format!("#{}", hex_from_argb(self.shadow)))
+            .field("scrim", &format!("#{}", hex_from_argb(self.scrim)))
+            .finish()
     }
 }
 
 impl Scheme {
-    pub(crate) fn new(
+    pub fn new(
         primary: Argb,
         on_primary: Argb,
         primary_container: Argb,

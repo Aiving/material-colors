@@ -1,7 +1,7 @@
 use crate::utils::color::Argb;
 use crate::utils::color::Lab;
 
-pub(crate) trait PointProvider {
+pub trait PointProvider {
     fn new() -> Self
     where
         Self: Sized;

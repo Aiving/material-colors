@@ -37,41 +37,41 @@ use super::viewing_conditions::ViewingConditions;
 /// For example, white under the traditional assumption of a midday sun white
 /// point is accurately measured as a slightly chromatic blue by
 /// (roughly, hue 203, chroma 3, lightness 100)
-pub(crate) struct Cam16 {
+pub struct Cam16 {
     /// Like red, orange, yellow, green, etc.
-    pub(crate) hue: f64,
+    pub hue: f64,
 
     /// Informally, colorfulness / color intensity. Like saturation in HSL,
     /// except perceptually accurate.
-    pub(crate) chroma: f64,
+    pub chroma: f64,
 
     /// Lightness
-    pub(crate) j: f64,
+    pub j: f64,
 
     /// Brightness; ratio of lightness to white point's lightness
-    pub(crate) q: f64,
+    pub q: f64,
 
     /// Colorfulness
-    pub(crate) m: f64,
+    pub m: f64,
 
     /// Saturation; ratio of chroma to white point's chroma
-    pub(crate) s: f64,
+    pub s: f64,
 
     /// CAM16-UCS J coordinate
-    pub(crate) jstar: f64,
+    pub jstar: f64,
 
     /// CAM16-UCS a coordinate
-    pub(crate) astar: f64,
+    pub astar: f64,
 
     /// CAM16-UCS b coordinate
-    pub(crate) bstar: f64,
+    pub bstar: f64,
 }
 
 impl Cam16 {
     /// CAM16 instances also have coordinates in the CAM16-UCS space, called J*,
     /// a*, b*, or jstar, astar, bstar in code. CAM16-UCS is included in the CAM16
     /// specification, and should be used when measuring distances between colors.
-    pub(crate) fn distance(&self, other: Cam16) -> f64 {
+    pub fn distance(&self, other: Cam16) -> f64 {
         let d_j = self.jstar - other.jstar;
         let d_a = self.astar - other.astar;
         let d_b = self.bstar - other.bstar;
@@ -81,7 +81,7 @@ impl Cam16 {
     }
 
     /// Given [viewing_conditions], convert [argb] to
-    pub(crate) fn fromi32_in_viewing_conditions(
+    pub fn fromi32_in_viewing_conditions(
         argb: Argb,
         viewing_conditions: ViewingConditions,
     ) -> Cam16 {
@@ -96,7 +96,7 @@ impl Cam16 {
 
     /// Given color expressed in Xyz and viewed in [viewing_conditions], convert to
     ///
-    pub(crate) fn from_xyz_in_viewing_conditions(
+    pub fn from_xyz_in_viewing_conditions(
         x: f64,
         y: f64,
         z: f64,
@@ -186,13 +186,13 @@ impl Cam16 {
 
     /// Create a CAM16 color from lightness [j], chroma [c], and hue [h],
     /// assuming the color was viewed in default viewing conditions.
-    pub(crate) fn from_jch(j: f64, c: f64, h: f64) -> Self {
+    pub fn from_jch(j: f64, c: f64, h: f64) -> Self {
         Cam16::from_jch_in_viewing_conditions(j, c, h, ViewingConditions::s_rgb())
     }
 
     /// Create a CAM16 color from lightness [j], chroma [c], and hue [h],
     /// in [viewing_conditions].
-    pub(crate) fn from_jch_in_viewing_conditions(
+    pub fn from_jch_in_viewing_conditions(
         j: f64,
         c: f64,
         h: f64,
@@ -227,13 +227,13 @@ impl Cam16 {
 
     /// Create a CAM16 color from CAM16-UCS coordinates [jstar], [astar], [bstar].
     /// assuming the color was viewed in default viewing conditions.
-    pub(crate) fn from_ucs(jstar: f64, astar: f64, bstar: f64) -> Cam16 {
+    pub fn from_ucs(jstar: f64, astar: f64, bstar: f64) -> Cam16 {
         Cam16::from_ucs_in_viewing_conditions(jstar, astar, bstar, ViewingConditions::standard())
     }
 
     /// Create a CAM16 color from CAM16-UCS coordinates [jstar], [astar], [bstar].
     /// in [viewing_conditions].
-    pub(crate) fn from_ucs_in_viewing_conditions(
+    pub fn from_ucs_in_viewing_conditions(
         jstar: f64,
         astar: f64,
         bstar: f64,
@@ -256,14 +256,14 @@ impl Cam16 {
 
     /// Argb representation of a color, given the color was viewed in
     /// [viewing_conditions]
-    pub(crate) fn viewed(&self, viewing_conditions: ViewingConditions) -> Argb {
+    pub fn viewed(&self, viewing_conditions: ViewingConditions) -> Argb {
         let xyz = self.xyz_in_viewing_conditions(viewing_conditions);
 
         argb_from_xyz(xyz)
     }
 
     /// Xyz representation of CAM16 seen in [viewing_conditions].
-    pub(crate) fn xyz_in_viewing_conditions(&self, viewing_conditions: ViewingConditions) -> Xyz {
+    pub fn xyz_in_viewing_conditions(&self, viewing_conditions: ViewingConditions) -> Xyz {
         let alpha = if self.chroma == 0.0 || self.j == 0.0 {
             0.0
         } else {

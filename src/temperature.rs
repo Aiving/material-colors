@@ -10,7 +10,7 @@ use crate::utils::math::sanitize_degrees_double;
 ///
 /// Analogous colors, complementary color, and cache to efficiently, lazily,
 /// generate data for calculations when needed.
-pub(crate) struct TemperatureCache {
+pub struct TemperatureCache {
     input: Hct,
 
     _hcts_by_temp: Vec<Hct>,
@@ -21,19 +21,19 @@ pub(crate) struct TemperatureCache {
 }
 
 impl TemperatureCache {
-    pub(crate) fn warmest(&mut self) -> Hct {
+    pub fn warmest(&mut self) -> Hct {
         let hcts = self.hcts_by_temp();
 
         return *hcts.last().unwrap();
     }
 
-    pub(crate) fn coldest(&mut self) -> Hct {
+    pub fn coldest(&mut self) -> Hct {
         let hcts = self.hcts_by_temp();
 
         return *hcts.first().unwrap();
     }
 
-    pub(crate) fn new(input: Hct) -> Self {
+    pub fn new(input: Hct) -> Self {
         Self {
             input,
             _hcts_by_temp: vec![],
@@ -55,7 +55,7 @@ impl TemperatureCache {
     ///
     /// [count] The number of colors to return, includes the input color.
     /// [divisions] The number of divisions on the color wheel.
-    pub(crate) fn analogous(&mut self, count: Option<i32>, divisions: Option<i32>) -> Vec<Hct> {
+    pub fn analogous(&mut self, count: Option<i32>, divisions: Option<i32>) -> Vec<Hct> {
         let count = count.unwrap_or(5);
         let divisions = divisions.unwrap_or(12);
         let start_hue = self.input.get_hue().round() as i32;
@@ -169,7 +169,7 @@ impl TemperatureCache {
     /// In art, this is usually described as being across the color wheel.
     /// History of this shows intent as a color that is just as cool-warm as the
     /// input color is warm-cool.
-    pub(crate) fn complement(&mut self) -> Hct {
+    pub fn complement(&mut self) -> Hct {
         if let Some(_complement) = &self._complement {
             return *_complement;
         }
@@ -226,7 +226,7 @@ impl TemperatureCache {
 
     /// Temperature relative to all colors with the same chroma and tone.
     /// Value on a scale from 0 to 1.
-    pub(crate) fn relative_temperature(&mut self, hct: &Hct) -> f64 {
+    pub fn relative_temperature(&mut self, hct: &Hct) -> f64 {
         let range = self.temps_by_hct()[&self.warmest()] - self.temps_by_hct()[&self.coldest()];
         let difference_from_coldest =
             self.temps_by_hct()[hct] - self.temps_by_hct()[&self.coldest()];
@@ -241,7 +241,7 @@ impl TemperatureCache {
     }
 
     /// Relative temperature of the input color. See [relativeTemperature].
-    pub(crate) fn input_relative_temperature(&mut self) -> f64 {
+    pub fn input_relative_temperature(&mut self) -> f64 {
         if self._input_relative_temperature >= 0.0 {
             return self._input_relative_temperature;
         }
@@ -263,7 +263,7 @@ impl TemperatureCache {
 
     /// HCTs for all hues, with the same chroma/tone as the input.
     /// Sorted from coldest first to warmest last.
-    pub(crate) fn hcts_by_temp(&mut self) -> Vec<Hct> {
+    pub fn hcts_by_temp(&mut self) -> Vec<Hct> {
         if !self._hcts_by_temp.is_empty() {
             return self._hcts_by_temp.clone();
         }
@@ -286,7 +286,7 @@ impl TemperatureCache {
     }
 
     /// A Map with keys of HCTs in [hctsByTemp], values of raw temperature.
-    pub(crate) fn temps_by_hct(&mut self) -> HashMap<Hct, f64> {
+    pub fn temps_by_hct(&mut self) -> HashMap<Hct, f64> {
         if !self._temps_by_hct.is_empty() {
             return self._temps_by_hct.clone();
         }
@@ -308,7 +308,7 @@ impl TemperatureCache {
 
     /// HCTs for all hues, with the same chroma/tone as the input.
     /// Sorted ascending, hue 0 to 360.
-    pub(crate) fn hcts_by_hue(&mut self) -> Vec<Hct> {
+    pub fn hcts_by_hue(&mut self) -> Vec<Hct> {
         if !self._hcts_by_hue.is_empty() {
             return self._hcts_by_hue.clone();
         }
@@ -328,7 +328,7 @@ impl TemperatureCache {
     }
 
     /// Determines if an angle is between two other angles, rotating clockwise.
-    pub(crate) fn is_between(angle: f64, a: f64, b: f64) -> bool {
+    pub fn is_between(angle: f64, a: f64, b: f64) -> bool {
         if a < b {
             a <= angle && angle <= b
         } else {
@@ -353,7 +353,7 @@ impl TemperatureCache {
     ///   Assuming max of 130 chroma, -9.66.
     /// - Upper bound: -0.52 + (chroma ^ 1.07 / 20). L*a*b* chroma is infinite.
     ///   Assuming max of 130 chroma, 8.61.
-    pub(crate) fn raw_temperature(color: Hct) -> f64 {
+    pub fn raw_temperature(color: Hct) -> f64 {
         let lab = lab_from_argb(color.into());
         let hue = sanitize_degrees_double(lab[2].atan2(lab[1]) * 180.0 / PI);
         let chroma = ((lab[1] * lab[1]) + (lab[2] * lab[2])).sqrt();
