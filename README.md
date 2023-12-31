@@ -6,6 +6,10 @@ Most of the code was taken from the Swift version of material-color-utilities, a
 
 There are also a relatively large number of unused variables and functions (45 warnings!). I do not know for what reason they are not used in the original code (apart from a few tests), but I decided to leave them for the future.
 
+## Small F.A.Q: Why does it require std?
+
+I tried to rewrite everything so that the use of std was optional, but I ran into one specific problem. **Using rand::thread_rng is not possible without std**. So, unfortunately, this library still requires std.
+
 ## Examples
 
 From HEX color:
