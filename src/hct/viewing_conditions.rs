@@ -1,4 +1,4 @@
-use std::f64::consts::PI;
+use core::f64::consts::PI;
 
 use crate::utils::color::y_from_lstar;
 use crate::utils::color::WHITE_POINT_D65;

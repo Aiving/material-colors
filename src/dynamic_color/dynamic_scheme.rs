@@ -1,6 +1,6 @@
-use std::fmt::Display;
-use std::hash::Hash;
-use std::hash::Hasher;
+use core::fmt;
+use core::hash::Hash;
+use core::hash::Hasher;
 
 use crate::hct::Hct;
 use crate::palettes::tonal::TonalPalette;
@@ -15,7 +15,7 @@ use super::variant::Variant;
 /// whether or not its dark theme, what the theme style is, etc.), and
 /// provides a set of [TonalPalette]s that can create colors that fit in
 /// with the theme style. Used by [DynamicColor] to resolve into a color.
-#[derive(Clone)]
+#[derive(Clone, PartialOrd)]
 pub struct DynamicScheme {
     /// The source color of the theme as an Argb integer.
     pub source_color_argb: Argb,
@@ -297,8 +297,8 @@ impl PartialEq for DynamicScheme {
     }
 }
 
-impl Display for DynamicScheme {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for DynamicScheme {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Scheme {{")?;
         writeln!(f, "  primary = #{}", hex_from_argb(self.primary()))?;
         writeln!(f, "  on_primary = #{}", hex_from_argb(self.on_primary()))?;

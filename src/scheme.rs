@@ -1,7 +1,8 @@
 #![allow(clippy::too_many_arguments)]
 
+use core::fmt;
+
 use ahash::HashMap;
-use std::fmt::Display;
 
 use crate::dynamic_color::dynamic_scheme::DynamicScheme;
 use crate::utils::color::Argb;
@@ -69,8 +70,8 @@ pub struct Scheme {
     pub scrim: Argb,
 }
 
-impl Display for Scheme {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Scheme {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Scheme")
             .field("primary", &format!("#{}", hex_from_argb(self.primary)))
             .field(

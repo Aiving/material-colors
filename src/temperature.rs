@@ -1,6 +1,6 @@
-use std::cmp::Ordering;
 use ahash::HashMap;
-use std::f64::consts::PI;
+use core::cmp::Ordering;
+use core::f64::consts::PI;
 
 use crate::hct::Hct;
 use crate::utils::color::lab_from_argb;

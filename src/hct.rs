@@ -1,6 +1,7 @@
-use std::fmt::Display;
-use std::hash::Hash;
-use std::hash::Hasher;
+use core::fmt;
+
+use core::hash::Hash;
+use core::hash::Hasher;
 
 use crate::utils::color::lstar_from_argb;
 use crate::utils::color::lstar_from_y;
@@ -14,7 +15,7 @@ pub mod cam16;
 pub mod solver;
 pub mod viewing_conditions;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialOrd)]
 pub struct Hct {
     _hue: f64,
     _chroma: f64,
@@ -169,8 +170,8 @@ impl Hct {
     }
 }
 
-impl Display for Hct {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Hct {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "H{} C{} T{}",

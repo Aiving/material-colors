@@ -1,4 +1,4 @@
-use std::f64::consts::PI;
+use core::f64::consts::PI;
 
 use crate::utils::color::argb_from_linrgb;
 use crate::utils::color::argb_from_lstar;

@@ -1,7 +1,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use ahash::HashMap;
-use std::fmt::Display;
+use core::fmt;
 
 use crate::utils::color::argb_from_rgb;
 use crate::utils::color::blue_from_argb;
@@ -24,14 +24,26 @@ const MAX_INDEX: u8 = 32;
 const SIDE_LENGTH: usize = 33;
 const TOTAL_SIZE: usize = 35937;
 
-#[derive(Default)]
 pub struct QuantizerWu {
-    weights: Vec<u32>,
-    moments_r: Vec<u32>,
-    moments_g: Vec<u32>,
-    moments_b: Vec<u32>,
-    moments: Vec<f64>,
+    weights: [u32; TOTAL_SIZE],
+    moments_r: [u32; TOTAL_SIZE],
+    moments_g: [u32; TOTAL_SIZE],
+    moments_b: [u32; TOTAL_SIZE],
+    moments: [f64; TOTAL_SIZE],
     cubes: Vec<Cube>,
+}
+
+impl Default for QuantizerWu {
+    fn default() -> Self {
+        Self {
+            weights: [0; TOTAL_SIZE],
+            moments_r: [0; TOTAL_SIZE],
+            moments_g: [0; TOTAL_SIZE],
+            moments_b: [0; TOTAL_SIZE],
+            moments: [0.0; TOTAL_SIZE],
+            cubes: vec![],
+        }
+    }
 }
 
 impl Quantizer for QuantizerWu {
@@ -71,11 +83,11 @@ impl QuantizerWu {
     }
 
     pub fn construct_histogram(&mut self, pixels: HashMap<Argb, u32>) {
-        self.weights = vec![0; TOTAL_SIZE];
-        self.moments_r = vec![0; TOTAL_SIZE];
-        self.moments_g = vec![0; TOTAL_SIZE];
-        self.moments_b = vec![0; TOTAL_SIZE];
-        self.moments = vec![0.0; TOTAL_SIZE];
+        self.weights = [0; TOTAL_SIZE];
+        self.moments_r = [0; TOTAL_SIZE];
+        self.moments_g = [0; TOTAL_SIZE];
+        self.moments_b = [0; TOTAL_SIZE];
+        self.moments = [0.0; TOTAL_SIZE];
 
         for (argb, count) in pixels {
             let red = red_from_argb(argb);
@@ -105,7 +117,7 @@ impl QuantizerWu {
             let mut area_r = [0; SIDE_LENGTH];
             let mut area_g = [0; SIDE_LENGTH];
             let mut area_b = [0; SIDE_LENGTH];
-            let mut area2 = vec![0.0; SIDE_LENGTH];
+            let mut area2 = [0.0; SIDE_LENGTH];
 
             for g in 1..SIDE_LENGTH {
                 let mut line = 0;
@@ -486,8 +498,8 @@ pub struct Cube {
     pub vol: u16,
 }
 
-impl Display for Cube {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Cube {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "Box R {} -> {} G {} -> {} B {} -> {} VOL = {}",

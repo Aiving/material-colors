@@ -1,4 +1,4 @@
-use std::f64::consts::PI;
+use core::f64::consts::PI;
 
 use crate::utils::color::argb_from_xyz;
 use crate::utils::color::xyz_from_argb;

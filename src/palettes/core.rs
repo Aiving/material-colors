@@ -1,6 +1,4 @@
-use std::fmt;
-use std::fmt::Display;
-use std::fmt::Formatter;
+use core::fmt;
 
 use crate::hct::cam16::Cam16;
 use crate::utils::color::Argb;
@@ -78,8 +76,8 @@ impl CorePalette {
     }
 }
 
-impl Display for CorePalette {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+impl fmt::Display for CorePalette {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "primary{} secondary{} tertiary{} neutral{} neutralVariant{}",

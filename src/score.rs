@@ -43,7 +43,7 @@ impl Score {
     ///   default number of colors returned is 4, simply because thats the # of
     ///   colors display in Android 12's wallpaper picker.
     pub fn score(
-        colors_to_population: HashMap<Argb, u32>,
+        colors_to_population: &HashMap<Argb, u32>,
         desired: Option<i32>,
         fallback_color_argb: Option<Argb>,
         filter: Option<bool>,
@@ -54,7 +54,7 @@ impl Score {
         // Get the HCT color for each Argb value, while finding the per hue count and
         // total count.
         let mut colors_hct = vec![];
-        let mut hue_population = vec![0; 360];
+        let mut hue_population = [0; 360];
         let mut population_sum = 0.0;
 
         for argb in colors_to_population.keys() {
@@ -70,7 +70,7 @@ impl Score {
         }
 
         // Hues with more usage in neighboring 30 degree slice get a larger number.
-        let mut hue_excited_proportions = vec![0.0; 360];
+        let mut hue_excited_proportions = [0.0; 360];
 
         for hue in hue_population.into_iter().take(360) {
             let proportion = hue as f64 / population_sum;

@@ -1,6 +1,4 @@
-use std::fmt;
-use std::fmt::Display;
-use std::fmt::Formatter;
+use core::fmt;
 
 use crate::hct::Hct;
 use crate::utils::color::Argb;
@@ -14,7 +12,7 @@ use crate::utils::color::Argb;
 /// representing ARBG colors. Correctness (constant hue and chroma) of the input
 /// is not enforced. [get] will only return the input colors, corresponding to
 /// [commonTones].
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialOrd)]
 pub struct TonalPalette {
     _hue: f64,
     _chroma: f64,
@@ -132,8 +130,8 @@ impl PartialEq for TonalPalette {
     }
 }
 
-impl Display for TonalPalette {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+impl fmt::Display for TonalPalette {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "TonalPalette.of({}, {})", self.hue(), self.chroma())
     }
 }
