@@ -28,8 +28,13 @@ fn main() {
 From image:
 
 ```rust
+use std::io::Cursor;
+
+use material_colors::Argb;
 use material_colors::theme_from_source_color;
 use material_colors::source_color_from_image;
+
+use image::io::Reader as ImageReader;
 
 #[tokio::main]
 async fn main() -> Result<(), reqwest::Error> {
@@ -38,7 +43,23 @@ async fn main() -> Result<(), reqwest::Error> {
         .bytes()
         .await?
         .to_vec();
-    let theme = theme_from_source_color(source_color_from_image(&image), Default::default());
+
+    let data = ImageReader::open(Cursor::new(image))
+        .expect("failed to open image")
+        .with_guessed_format()
+        .expect("failed to guess format")
+        .decode()
+        .expect("failed to decode image")
+        .into_rgba8();
+
+    let pixels: Vec<Argb> = data.pixels().fold(vec![], |mut pixels, pixel| {
+        // creating ARGB from RGBA
+        pixels.push([pixel[3], pixel[0], pixel[1], pixel[2]]);
+
+        pixels
+   });
+
+    let theme = theme_from_source_color(source_color_from_image(&pixels), Default:default())
 
     // Do whatever you want...
 
