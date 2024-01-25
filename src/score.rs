@@ -75,7 +75,7 @@ impl Score {
         for hue in hue_population.into_iter().take(360) {
             let proportion = hue as f64 / population_sum;
 
-            for i in (hue - 14)..(hue + 16) {
+            for i in ((hue as i32) - 14)..((hue as i32) + 16) {
                 let neighbor_hue = sanitize_degrees_int(i as i32);
 
                 hue_excited_proportions[neighbor_hue as usize] += proportion;

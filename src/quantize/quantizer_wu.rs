@@ -107,7 +107,7 @@ impl QuantizerWu {
             self.moments_b[index] += blue as u32 * count;
 
             self.moments[index] +=
-                count as f64 * ((red * red) + (green * green) + (blue * blue)) as f64;
+                count as f64 * ((red as f64).powi(2) + (green as f64).powi(2) + (blue as f64).powi(2));
         }
     }
 
