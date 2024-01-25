@@ -4,7 +4,7 @@ pub fn lerp(start: f64, stop: f64, amount: f64) -> f64 {
 
 pub fn sanitize_degrees_int(degrees: i32) -> u32 {
     match degrees {
-        value if value < 0 => (value + 36) as u32,
+        value if value < 0 => (value + 360) as u32,
         value => value as u32 % 360,
     }
 }
