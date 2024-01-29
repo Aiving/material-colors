@@ -27,7 +27,7 @@ impl PointProvider for PointProviderLab {
 
         // This relatively minor optimization is helpful because this method is
         // called at least once for each pixel in an image.
-        d_l * d_l + d_a * d_a + d_b * d_b
+        d_l.powi(2) + d_a.powi(2) + d_b.powi(2)
     }
 
     fn new() -> Self {

@@ -1,6 +1,5 @@
-use std::cmp::Ordering;
 use ahash::HashMap;
-use std::time::Instant;
+use std::cmp::Ordering;
 
 use rand::Rng;
 
@@ -52,6 +51,7 @@ pub struct QuantizerWsmeans;
 
 impl QuantizerWsmeans {
     const DEBUG: bool = false;
+    const MIN_MOVEMENT_DISTANCE: f64 = 3.0;
 
     pub fn debug_log<T: Into<String>>(log: T) {
         let log: String = log.into();
@@ -67,13 +67,14 @@ impl QuantizerWsmeans {
         starting_clusters: Option<Vec<Argb>>,
         point_provider: Option<PointProviderLab>,
         max_iterations: Option<i32>,
-        return_input_pixel_to_cluster_pixel: Option<bool>,
+        // Currently unused...
+        _return_input_pixel_to_cluster_pixel: Option<bool>,
     ) -> QuantizerResult {
         default_value! {
             starting_clusters: Vec<Argb> = vec![];
             point_provider: PointProviderLab = PointProviderLab::new();
             max_iterations: i32 = 5;
-            return_input_pixel_to_cluster_pixel: bool = false;
+            _return_input_pixel_to_cluster_pixel: bool = false;
         };
 
         let mut pixel_to_count: HashMap<Argb, u32> = Default::default();
@@ -239,8 +240,13 @@ impl QuantizerWsmeans {
                 }
 
                 if new_cluster_index != -1 {
-                    points_moved += 1;
-                    cluster_indices[i] = new_cluster_index as usize;
+                    let distance_change =
+                        (minimum_distance.sqrt() - previous_distance.sqrt()).abs();
+
+                    if distance_change > Self::MIN_MOVEMENT_DISTANCE {
+                        points_moved += 1;
+                        cluster_indices[i] = new_cluster_index as usize;
+                    }
                 }
             }
 
@@ -261,9 +267,7 @@ impl QuantizerWsmeans {
             let mut component_bsums = vec![0.0; cluster_count];
             let mut component_csums = vec![0.0; cluster_count];
 
-            for sum in pixel_count_sums.iter_mut().take(cluster_count) {
-                *sum = 0;
-            }
+            pixel_count_sums.fill(0);
 
             for i in 0..point_count {
                 let cluster_index = cluster_indices[i] as usize;
@@ -293,8 +297,7 @@ impl QuantizerWsmeans {
             }
         }
 
-        let mut cluster_argbs: Vec<Argb> = vec![];
-        let mut cluster_populations: Vec<u32> = vec![];
+        let mut argb_to_population: HashMap<Argb, u32> = Default::default();
 
         for i in 0..cluster_count {
             let count = pixel_count_sums[i];
@@ -305,52 +308,17 @@ impl QuantizerWsmeans {
 
             let possible_new_cluster = point_provider.lab_to_int(clusters[i]);
 
-            if cluster_argbs.contains(&possible_new_cluster) {
+            if argb_to_population.contains_key(&possible_new_cluster) {
                 continue;
             }
 
-            cluster_argbs.push(possible_new_cluster);
-            cluster_populations.push(count);
+            argb_to_population.insert(possible_new_cluster, count);
         }
 
-        QuantizerWsmeans::debug_log(format!(
-            "kmeans finished and generated {} clusters; {cluster_count} were requested",
-            cluster_argbs.len()
-        ));
-
-        let mut input_pixel_to_cluster_pixel: HashMap<Argb, Argb> = Default::default();
-
-        if return_input_pixel_to_cluster_pixel {
-            let start_time = Instant::now();
-
-            for i in 0..pixels.len() {
-                let input_pixel = pixels[i];
-                let cluster_index = cluster_indices[i];
-                let cluster = clusters[cluster_index];
-                let cluster_pixel = point_provider.lab_to_int(cluster);
-
-                input_pixel_to_cluster_pixel.insert(input_pixel, cluster_pixel);
-            }
-
-            let time_elapsed = start_time.elapsed().as_millis();
-
-            QuantizerWsmeans::debug_log(format!(
-                "took {time_elapsed} ms to create input to cluster map"
-            ));
-        }
-
-        let mut color_to_count: HashMap<Argb, u32> = Default::default();
-
-        for i in 0..cluster_argbs.len() {
-            let key = cluster_argbs[i];
-            let value = cluster_populations[i];
-
-            color_to_count.insert(key, value);
-        }
 
         QuantizerResult {
-            color_to_count,
-            input_pixel_to_cluster_pixel,
+            color_to_count: argb_to_population,
+            input_pixel_to_cluster_pixel: Default::default(),
         }
     }
 }

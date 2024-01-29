@@ -19,3 +19,8 @@ opt-level = 1
 
 [profile.release]
 opt-level = 3
+
+[dev-dependencies]
+image = "0.24.8"
+reqwest = "0.11.23"
+tokio = { version = "1.35.1", features = ["rt", "macros"] }

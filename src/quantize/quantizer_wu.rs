@@ -21,8 +21,8 @@ use super::quantizer_map::QuantizerMap;
 const INDEX_BITS: u8 = 5;
 const BITS_TO_REMOVE: u8 = 8 - INDEX_BITS;
 const MAX_INDEX: u8 = 32;
-const SIDE_LENGTH: usize = 33;
-const TOTAL_SIZE: usize = 35937;
+const SIDE_LENGTH: usize = (1 << INDEX_BITS) + 1;
+const TOTAL_SIZE: usize = SIDE_LENGTH.pow(3);
 
 pub struct QuantizerWu {
     weights: [u32; TOTAL_SIZE],
@@ -74,12 +74,8 @@ impl Quantizer for QuantizerWu {
 }
 
 impl QuantizerWu {
-    pub fn get_index(r: u8, g: u8, b: u8) -> usize {
-        let red = (r as usize) << (INDEX_BITS * 2);
-        let green = (r as usize) << (INDEX_BITS + 1);
-        let blue = (g as usize) << INDEX_BITS;
-
-        red + green + blue + r as usize + g as usize + b as usize
+    pub fn get_index(r: usize, g: usize, b: usize) -> usize {
+        (r << (INDEX_BITS * 2)) + (r << (INDEX_BITS + 1)) + r + (g << INDEX_BITS) + g + b
     }
 
     pub fn construct_histogram(&mut self, pixels: HashMap<Argb, u32>) {
@@ -98,7 +94,7 @@ impl QuantizerWu {
             let i_g = (green >> BITS_TO_REMOVE) + 1;
             let i_b = (blue >> BITS_TO_REMOVE) + 1;
 
-            let index = Self::get_index(i_r, i_g, i_b);
+            let index = Self::get_index(i_r as usize, i_g as usize, i_b as usize);
 
             self.weights[index] += count;
 
@@ -106,8 +102,8 @@ impl QuantizerWu {
             self.moments_g[index] += green as u32 * count;
             self.moments_b[index] += blue as u32 * count;
 
-            self.moments[index] +=
-                count as f64 * ((red as f64).powi(2) + (green as f64).powi(2) + (blue as f64).powi(2));
+            self.moments[index] += count as f64
+                * ((red as f64).powi(2) + (green as f64).powi(2) + (blue as f64).powi(2));
         }
     }
 
@@ -127,7 +123,7 @@ impl QuantizerWu {
                 let mut line2 = 0.0;
 
                 for b in 1..SIDE_LENGTH {
-                    let index = Self::get_index(r as u8, g as u8, b as u8);
+                    let index = Self::get_index(r, g, b);
 
                     line += self.weights[index];
                     line_r += self.moments_r[index];
@@ -141,7 +137,7 @@ impl QuantizerWu {
                     area_b[b] += line_b;
                     area2[b] += line2;
 
-                    let previous_index = Self::get_index((r - 1) as u8, g as u8, b as u8);
+                    let previous_index = Self::get_index(r - 1, g, b);
 
                     self.weights[index] = self.weights[previous_index] + area[b];
 
@@ -156,14 +152,13 @@ impl QuantizerWu {
     }
 
     pub fn create_boxes(&mut self, max_color_count: usize) -> CreateBoxesResult {
-        self.cubes = vec![];
-
-        for _ in 0..max_color_count {
-            self.cubes.push(Cube {
+        self.cubes = vec![
+            Cube {
                 pixels: [[0, 0, 0], [0, 0, 0]],
-                vol: 0,
-            })
-        }
+                vol: 0
+            };
+            max_color_count
+        ];
 
         self.cubes[0] = Cube {
             pixels: [[0, 0, 0], [MAX_INDEX, MAX_INDEX, MAX_INDEX]],
@@ -176,19 +171,23 @@ impl QuantizerWu {
         let mut i = 1;
 
         while i < max_color_count {
-            if self.cut(self.cubes[next], self.cubes[i]) {
+            if self.cut(next, i) {
+                if i == 1 { println!("{} : {}", self.cubes[next].vol, self.cubes[i].vol); }
+
                 volume_variance[next] = if self.cubes[next].vol > 1 {
-                    self.variance(self.cubes[next])
+                    self.variance(&self.cubes[next])
                 } else {
                     0.0
                 };
+
                 volume_variance[i] = if self.cubes[i].vol > 1 {
-                    self.variance(self.cubes[i])
+                    self.variance(&self.cubes[i])
                 } else {
                     0.0
                 };
             } else {
                 volume_variance[next] = 0.0;
+
                 i -= 1;
             }
 
@@ -223,7 +222,7 @@ impl QuantizerWu {
 
     pub fn create_result(&self, color_count: usize) -> Vec<Argb> {
         Vec::from_iter((0..color_count).filter_map(|i| {
-            let cube = self.cubes[i];
+            let cube = &self.cubes[i];
             let weight = Self::volume(cube, &self.weights);
 
             if weight > 0 {
@@ -240,36 +239,38 @@ impl QuantizerWu {
         }))
     }
 
-    pub fn variance(&self, cube: Cube) -> f64 {
+    pub fn variance(&self, cube: &Cube) -> f64 {
         let dr = Self::volume(cube, &self.moments_r);
         let dg = Self::volume(cube, &self.moments_g);
         let db = Self::volume(cube, &self.moments_b);
 
         let [[r0, g0, b0], [r1, g1, b1]] = cube.pixels;
 
-        let xx = self.moments[Self::get_index(r1, g1, b1)]
-            - self.moments[Self::get_index(r1, g1, b0)]
-            - self.moments[Self::get_index(r1, g0, b1)]
-            + self.moments[Self::get_index(r1, g0, b0)]
-            - self.moments[Self::get_index(r0, g1, b1)]
-            + self.moments[Self::get_index(r0, g1, b0)]
-            + self.moments[Self::get_index(r0, g0, b1)]
-            - self.moments[Self::get_index(r0, g0, b0)];
+        let xx = self.moments[Self::get_index(r1 as usize, g1 as usize, b1 as usize)]
+            - self.moments[Self::get_index(r1 as usize, g1 as usize, b0 as usize)]
+            - self.moments[Self::get_index(r1 as usize, g0 as usize, b1 as usize)]
+            + self.moments[Self::get_index(r1 as usize, g0 as usize, b0 as usize)]
+            - self.moments[Self::get_index(r0 as usize, g1 as usize, b1 as usize)]
+            + self.moments[Self::get_index(r0 as usize, g1 as usize, b0 as usize)]
+            + self.moments[Self::get_index(r0 as usize, g0 as usize, b1 as usize)]
+            - self.moments[Self::get_index(r0 as usize, g0 as usize, b0 as usize)];
 
-        let hypotenuse = dr * dr + dg * dg + db * db;
+        let hypotenuse = dr.wrapping_pow(2).wrapping_add(dg.wrapping_pow(2)).wrapping_add(db.wrapping_pow(2));
         let volume_ = Self::volume(cube, &self.weights);
 
         xx - (hypotenuse / volume_) as f64
     }
 
-    pub fn cut(&self, mut one: Cube, mut two: Cube) -> bool {
-        let whole_r = Self::volume(one, &self.moments_r);
-        let whole_g = Self::volume(one, &self.moments_g);
-        let whole_b = Self::volume(one, &self.moments_b);
-        let whole_w = Self::volume(one, &self.weights);
+    pub fn cut(&mut self, next: usize, i: usize) -> bool {
+        let (mut one, mut two) = (self.cubes[next].clone(), self.cubes[i].clone());
+
+        let whole_r = Self::volume(&one, &self.moments_r);
+        let whole_g = Self::volume(&one, &self.moments_g);
+        let whole_b = Self::volume(&one, &self.moments_b);
+        let whole_w = Self::volume(&one, &self.weights);
 
         let max_rresult = self.maximize(
-            one,
+            &one,
             Direction::Red,
             one.pixels[0][0] + 1,
             one.pixels[1][0],
@@ -279,7 +280,7 @@ impl QuantizerWu {
             whole_w,
         );
         let max_gresult = self.maximize(
-            one,
+            &one,
             Direction::Green,
             one.pixels[0][1] + 1,
             one.pixels[1][1],
@@ -289,7 +290,7 @@ impl QuantizerWu {
             whole_w,
         );
         let max_bresult = self.maximize(
-            one,
+            &one,
             Direction::Blue,
             one.pixels[0][2] + 1,
             one.pixels[1][2],
@@ -308,7 +309,7 @@ impl QuantizerWu {
         if max_r >= max_g && max_r >= max_b {
             cut_direction = Direction::Red;
 
-            if max_rresult.cut_location < Some(0) {
+            if max_rresult.cut_location.is_none() {
                 return false;
             }
         } else if max_g >= max_r && max_g >= max_b {
@@ -342,26 +343,30 @@ impl QuantizerWu {
             }
         }
 
-        one.vol = (one.pixels[1][0] - one.pixels[0][0]) as u16
-            * (one.pixels[1][1] - one.pixels[0][1]) as u16
-            * (one.pixels[1][2] - one.pixels[0][2]) as u16;
-        two.vol = (two.pixels[1][0] - two.pixels[0][0]) as u16
-            * (two.pixels[1][1] - two.pixels[0][1]) as u16
-            * (two.pixels[1][2] - two.pixels[0][2]) as u16;
+        one.vol = (one.pixels[1][0] - one.pixels[0][0]) as i32
+            * (one.pixels[1][1] - one.pixels[0][1]) as i32
+            * (one.pixels[1][2] - one.pixels[0][2]) as i32;
+        two.vol = (two.pixels[1][0] - two.pixels[0][0]) as i32
+            * (two.pixels[1][1] - two.pixels[0][1]) as i32
+            * (two.pixels[1][2] - two.pixels[0][2]) as i32;
+
+        
+        self.cubes[next] = one;
+        self.cubes[i] = two;
 
         true
     }
 
     pub fn maximize(
         &self,
-        cube: Cube,
+        cube: &Cube,
         direction: Direction,
         first: u8,
         last: u8,
-        whole_r: i64,
-        whole_g: i64,
-        whole_b: i64,
-        whole_w: i64,
+        whole_r: i32,
+        whole_g: i32,
+        whole_b: i32,
+        whole_w: i32,
     ) -> MaximizeResult {
         let bottom_r = Self::bottom(cube, &direction, &self.moments_r);
         let bottom_g = Self::bottom(cube, &direction, &self.moments_g);
@@ -381,8 +386,10 @@ impl QuantizerWu {
                 continue;
             }
 
-            let mut temp_numerator =
-                ((half_r * half_r) + (half_g * half_g) + (half_b * half_b)) as f64;
+            let mut temp_numerator = half_r
+                .wrapping_pow(2)
+                .wrapping_add(half_g.wrapping_pow(2))
+                .wrapping_add(half_b.wrapping_pow(2)) as f64;
             let mut temp_denominator = half_w as f64;
             let mut temp = temp_numerator / temp_denominator;
 
@@ -395,7 +402,10 @@ impl QuantizerWu {
                 continue;
             }
 
-            temp_numerator = ((half_r * half_r) + (half_g * half_g) + (half_b * half_b)) as f64;
+            temp_numerator = half_r
+                .wrapping_pow(2)
+                .wrapping_add(half_g.wrapping_pow(2))
+                .wrapping_add(half_b.wrapping_pow(2)) as f64;
             temp_denominator = half_w as f64;
             temp += temp_numerator / temp_denominator;
 
@@ -411,65 +421,65 @@ impl QuantizerWu {
         }
     }
 
-    pub fn volume(cube: Cube, moment: &[u32]) -> i64 {
+    pub fn volume(cube: &Cube, moment: &[u32]) -> i32 {
         let [[r0, g0, b0], [r1, g1, b1]] = cube.pixels;
 
-        moment[Self::get_index(r1, g1, b1)] as i64
-            - moment[Self::get_index(r1, g1, b0)] as i64
-            - moment[Self::get_index(r1, g0, b1)] as i64
-            + moment[Self::get_index(r1, g0, b0)] as i64
-            - moment[Self::get_index(r0, g1, b1)] as i64
-            + moment[Self::get_index(r0, g1, b0)] as i64
-            + moment[Self::get_index(r0, g0, b1)] as i64
-            - moment[Self::get_index(r0, g0, b0)] as i64
+        moment[Self::get_index(r1 as usize, g1 as usize, b1 as usize)] as i32
+            - moment[Self::get_index(r1 as usize, g1 as usize, b0 as usize)] as i32
+            - moment[Self::get_index(r1 as usize, g0 as usize, b1 as usize)] as i32
+            + moment[Self::get_index(r1 as usize, g0 as usize, b0 as usize)] as i32
+            - moment[Self::get_index(r0 as usize, g1 as usize, b1 as usize)] as i32
+            + moment[Self::get_index(r0 as usize, g1 as usize, b0 as usize)] as i32
+            + moment[Self::get_index(r0 as usize, g0 as usize, b1 as usize)] as i32
+            - moment[Self::get_index(r0 as usize, g0 as usize, b0 as usize)] as i32
     }
 
-    pub fn bottom(cube: Cube, direction: &Direction, moment: &[u32]) -> i64 {
+    pub fn bottom(cube: &Cube, direction: &Direction, moment: &[u32]) -> i32 {
         let [[r0, g0, b0], [r1, g1, b1]] = cube.pixels;
 
         match direction {
             Direction::Red => {
-                -(moment[Self::get_index(r0, g1, b1)] as i64)
-                    + moment[Self::get_index(r0, g1, b0)] as i64
-                    + moment[Self::get_index(r0, g0, b1)] as i64
-                    - moment[Self::get_index(r0, g0, b0)] as i64
+                -(moment[Self::get_index(r0 as usize, g1 as usize, b1 as usize)] as i32)
+                    + moment[Self::get_index(r0 as usize, g1 as usize, b0 as usize)] as i32
+                    + moment[Self::get_index(r0 as usize, g0 as usize, b1 as usize)] as i32
+                    - moment[Self::get_index(r0 as usize, g0 as usize, b0 as usize)] as i32
             }
             Direction::Green => {
-                -(moment[Self::get_index(r1, g0, b1)] as i64)
-                    + moment[Self::get_index(r1, g0, b0)] as i64
-                    + moment[Self::get_index(r0, g0, b1)] as i64
-                    - moment[Self::get_index(r0, g0, b0)] as i64
+                -(moment[Self::get_index(r1 as usize, g0 as usize, b1 as usize)] as i32)
+                    + moment[Self::get_index(r1 as usize, g0 as usize, b0 as usize)] as i32
+                    + moment[Self::get_index(r0 as usize, g0 as usize, b1 as usize)] as i32
+                    - moment[Self::get_index(r0 as usize, g0 as usize, b0 as usize)] as i32
             }
             Direction::Blue => {
-                -(moment[Self::get_index(r1, g1, b0)] as i64)
-                    + moment[Self::get_index(r1, g0, b0)] as i64
-                    + moment[Self::get_index(r0, g1, b0)] as i64
-                    - moment[Self::get_index(r0, g0, b0)] as i64
+                -(moment[Self::get_index(r1 as usize, g1 as usize, b0 as usize)] as i32)
+                    + moment[Self::get_index(r1 as usize, g0 as usize, b0 as usize)] as i32
+                    + moment[Self::get_index(r0 as usize, g1 as usize, b0 as usize)] as i32
+                    - moment[Self::get_index(r0 as usize, g0 as usize, b0 as usize)] as i32
             }
         }
     }
 
-    pub fn top(cube: Cube, direction: &Direction, position: u8, moment: &[u32]) -> i64 {
+    pub fn top(cube: &Cube, direction: &Direction, position: u8, moment: &[u32]) -> i32 {
         let [[r0, g0, b0], [r1, g1, b1]] = cube.pixels;
 
         match direction {
             Direction::Red => {
-                moment[Self::get_index(position, g1, b1)] as i64
-                    - moment[Self::get_index(position, g1, b0)] as i64
-                    - moment[Self::get_index(position, g0, b1)] as i64
-                    + moment[Self::get_index(position, g0, b0)] as i64
+                moment[Self::get_index(position as usize, g1 as usize, b1 as usize)] as i32
+                    - moment[Self::get_index(position as usize, g1 as usize, b0 as usize)] as i32
+                    - moment[Self::get_index(position as usize, g0 as usize, b1 as usize)] as i32
+                    + moment[Self::get_index(position as usize, g0 as usize, b0 as usize)] as i32
             }
             Direction::Green => {
-                moment[Self::get_index(r1, position, b1)] as i64
-                    - moment[Self::get_index(r1, position, b0)] as i64
-                    - moment[Self::get_index(r0, position, b1)] as i64
-                    + moment[Self::get_index(r0, position, b0)] as i64
+                moment[Self::get_index(r1 as usize, position as usize, b1 as usize)] as i32
+                    - moment[Self::get_index(r1 as usize, position as usize, b0 as usize)] as i32
+                    - moment[Self::get_index(r0 as usize, position as usize, b1 as usize)] as i32
+                    + moment[Self::get_index(r0 as usize, position as usize, b0 as usize)] as i32
             }
             Direction::Blue => {
-                moment[Self::get_index(r1, g1, position)] as i64
-                    - moment[Self::get_index(r1, g0, position)] as i64
-                    - moment[Self::get_index(r0, g1, position)] as i64
-                    + moment[Self::get_index(r0, g0, position)] as i64
+                moment[Self::get_index(r1 as usize, g1 as usize, position as usize)] as i32
+                    - moment[Self::get_index(r1 as usize, g0 as usize, position as usize)] as i32
+                    - moment[Self::get_index(r0 as usize, g1 as usize, position as usize)] as i32
+                    + moment[Self::get_index(r0 as usize, g0 as usize, position as usize)] as i32
             }
         }
     }
@@ -481,6 +491,7 @@ pub enum Direction {
     Blue,
 }
 
+#[derive(Debug)]
 pub struct MaximizeResult {
     // < 0 if cut impossible
     pub cut_location: Option<u8>,
@@ -492,10 +503,10 @@ pub struct CreateBoxesResult {
     pub result_count: i32,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Cube {
     pub pixels: [Rgb; 2],
-    pub vol: u16,
+    pub vol: i32,
 }
 
 impl fmt::Display for Cube {

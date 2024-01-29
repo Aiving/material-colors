@@ -17,8 +17,6 @@ impl Quantizer for QuantizerCelebi {
         max_colors: i32,
         return_input_pixel_to_cluster_pixel: Option<bool>,
     ) -> QuantizerResult {
-        let return_input_pixel_to_cluster_pixel =
-            return_input_pixel_to_cluster_pixel.unwrap_or(false);
         let wu_result = QuantizerWu::default().quantize(pixels, max_colors, None);
 
         QuantizerWsmeans::quantize(
@@ -27,7 +25,7 @@ impl Quantizer for QuantizerCelebi {
             Some(wu_result.color_to_count.into_keys().collect()),
             Some(PointProviderLab::new()),
             None,
-            Some(return_input_pixel_to_cluster_pixel),
+            return_input_pixel_to_cluster_pixel,
         )
     }
 }
