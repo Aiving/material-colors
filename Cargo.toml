@@ -1,6 +1,6 @@
 [package]
 name = "material-colors"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 description = "Up-to-date material-color-utilities port"
 documentation = "https://docs.rs/material-colors"
@@ -12,6 +12,7 @@ keywords = ["palette", "color-scheme", "material-you"]
 
 [dependencies]
 ahash = "0.8.6"
+indexmap = "2.2.1"
 rand = "0.8.5"
 
 [profile.dev]

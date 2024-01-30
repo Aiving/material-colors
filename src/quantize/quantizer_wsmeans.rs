@@ -1,4 +1,5 @@
 use ahash::HashMap;
+use indexmap::IndexMap;
 use std::cmp::Ordering;
 
 use rand::Rng;
@@ -9,6 +10,7 @@ use crate::utils::color::Argb;
 use super::point_provider::PointProvider;
 use super::quantizer::QuantizerResult;
 
+#[derive(Debug)]
 pub struct DistanceAndIndex {
     pub distance: f64,
     pub index: usize,
@@ -51,7 +53,6 @@ pub struct QuantizerWsmeans;
 
 impl QuantizerWsmeans {
     const DEBUG: bool = false;
-    const MIN_MOVEMENT_DISTANCE: f64 = 3.0;
 
     pub fn debug_log<T: Into<String>>(log: T) {
         let log: String = log.into();
@@ -73,7 +74,7 @@ impl QuantizerWsmeans {
         default_value! {
             starting_clusters: Vec<Argb> = vec![];
             point_provider: PointProviderLab = PointProviderLab::new();
-            max_iterations: i32 = 5;
+            max_iterations: i32 = 10;
             _return_input_pixel_to_cluster_pixel: bool = false;
         };
 
@@ -167,6 +168,7 @@ impl QuantizerWsmeans {
                 distance: 0.0,
             })
         });
+
         let mut pixel_count_sums = vec![0; cluster_count];
 
         for iteration in 0..max_iterations {
@@ -184,9 +186,9 @@ impl QuantizerWsmeans {
 
                 let mut empty_clusters = 0;
 
-                for cluster in pixel_count_sums.iter().take(cluster_count) {
-                    if cluster == &0 {
-                        empty_clusters += 1
+                for item in pixel_count_sums.iter().take(cluster_count) {
+                    if *item == 0 {
+                        empty_clusters += 1;
                     }
                 }
 
@@ -224,14 +226,14 @@ impl QuantizerWsmeans {
                 let mut minimum_distance = previous_distance;
                 let mut new_cluster_index: isize = -1;
 
-                for (j, item) in clusters.iter().enumerate().take(cluster_count) {
+                for (j, cluster) in clusters.iter().enumerate().take(cluster_count) {
                     if distance_to_index_matrix[previous_cluster_index][j].distance
                         >= 4.0 * previous_distance
                     {
                         continue;
                     }
 
-                    let distance = point_provider.distance(point, *item);
+                    let distance = point_provider.distance(point, *cluster);
 
                     if distance < minimum_distance {
                         minimum_distance = distance;
@@ -240,13 +242,8 @@ impl QuantizerWsmeans {
                 }
 
                 if new_cluster_index != -1 {
-                    let distance_change =
-                        (minimum_distance.sqrt() - previous_distance.sqrt()).abs();
-
-                    if distance_change > Self::MIN_MOVEMENT_DISTANCE {
-                        points_moved += 1;
-                        cluster_indices[i] = new_cluster_index as usize;
-                    }
+                    points_moved += 1;
+                    cluster_indices[i] = new_cluster_index as usize;
                 }
             }
 
@@ -267,10 +264,12 @@ impl QuantizerWsmeans {
             let mut component_bsums = vec![0.0; cluster_count];
             let mut component_csums = vec![0.0; cluster_count];
 
-            pixel_count_sums.fill(0);
+            for item in pixel_count_sums.iter_mut().take(cluster_count) {
+                *item = 0;
+            }
 
             for i in 0..point_count {
-                let cluster_index = cluster_indices[i] as usize;
+                let cluster_index = cluster_indices[i];
                 let point = points[i];
                 let count = counts[i];
 
@@ -293,11 +292,11 @@ impl QuantizerWsmeans {
                 let b = component_bsums[i] / count as f64;
                 let c = component_csums[i] / count as f64;
 
-                clusters[i] = [a, b, c];
+                clusters[i] = [a, b, c]
             }
         }
 
-        let mut argb_to_population: HashMap<Argb, u32> = Default::default();
+        let mut argb_to_population: IndexMap<Argb, u32> = Default::default();
 
         for i in 0..cluster_count {
             let count = pixel_count_sums[i];
@@ -314,7 +313,6 @@ impl QuantizerWsmeans {
 
             argb_to_population.insert(possible_new_cluster, count);
         }
-
 
         QuantizerResult {
             color_to_count: argb_to_population,

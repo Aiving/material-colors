@@ -1,4 +1,5 @@
 use ahash::HashMap;
+use indexmap::IndexMap;
 
 use crate::utils::color::Argb;
 
@@ -12,6 +13,6 @@ pub trait Quantizer {
 }
 
 pub struct QuantizerResult {
-    pub color_to_count: HashMap<Argb, u32>,
+    pub color_to_count: IndexMap<Argb, u32>,
     pub input_pixel_to_cluster_pixel: HashMap<Argb, Argb>,
 }

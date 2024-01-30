@@ -27,6 +27,8 @@ fn main() {
 
 From image:
 
+> :warning: Before obtaining an array of ARGB pixels for the image, **it is recommended** to adjust its dimensions to 128x128 (by `resize` function from `image` crate, for example). The reason is described [**here**](https://github.com/material-foundation/material-color-utilities/blob/main/extract_colors.md).
+
 ```rust
 use std::io::Cursor;
 
@@ -54,7 +56,6 @@ async fn main() -> Result<(), reqwest::Error> {
         .expect("failed to decode image")
         .into_rgba8();
 
-    // https://github.com/material-foundation/material-color-utilities/blob/main/extract_colors.md?plain=1#L16
     let data = resize(&data, 128, 128, FilterType::Gaussian);
     let pixels: Vec<Argb> = data
         .pixels()

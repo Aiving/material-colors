@@ -1,4 +1,4 @@
-use ahash::HashMap;
+use indexmap::IndexMap;
 
 use crate::hct::Hct;
 use crate::utils::color::Argb;
@@ -43,7 +43,7 @@ impl Score {
     ///   default number of colors returned is 4, simply because thats the # of
     ///   colors display in Android 12's wallpaper picker.
     pub fn score(
-        colors_to_population: &HashMap<Argb, u32>,
+        colors_to_population: &IndexMap<Argb, u32>,
         desired: Option<i32>,
         fallback_color_argb: Option<Argb>,
         filter: Option<bool>,

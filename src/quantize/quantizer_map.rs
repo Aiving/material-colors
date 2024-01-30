@@ -1,4 +1,4 @@
-use ahash::HashMap;
+use indexmap::IndexMap;
 
 use crate::utils::color::alpha_from_argb;
 use crate::utils::color::Argb;
@@ -16,7 +16,7 @@ impl Quantizer for QuantizerMap {
         _max_colors: i32,
         _return_input_pixel_to_cluster_pixel: Option<bool>,
     ) -> QuantizerResult {
-        let mut count_by_color: HashMap<Argb, u32> = Default::default();
+        let mut color_to_count: IndexMap<Argb, u32> = Default::default();
 
         for pixel in pixels {
             let alpha = alpha_from_argb(*pixel);
@@ -25,14 +25,14 @@ impl Quantizer for QuantizerMap {
                 continue;
             }
 
-            count_by_color
+            color_to_count
                 .entry(*pixel)
                 .and_modify(|count| *count += 1)
                 .or_insert(1);
         }
 
         QuantizerResult {
-            color_to_count: count_by_color,
+            color_to_count,
             input_pixel_to_cluster_pixel: Default::default(),
         }
     }
