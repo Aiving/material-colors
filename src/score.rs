@@ -151,8 +151,6 @@ impl Score {
             colors.push(Argb::from(chosen_hct))
         }
 
-        println!("{colors:?}");
-
         colors
     }
 }
