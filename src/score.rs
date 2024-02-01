@@ -5,6 +5,7 @@ use crate::utils::color::Argb;
 use crate::utils::math::difference_degrees;
 use crate::utils::math::sanitize_degrees_int;
 
+#[derive(Debug)]
 struct ScoredHCT {
     hct: Hct,
     score: f64,
@@ -57,8 +58,7 @@ impl Score {
         let mut hue_population = [0; 360];
         let mut population_sum = 0.0;
 
-        for argb in colors_to_population.keys() {
-            let population = colors_to_population[argb];
+        for (argb, population) in colors_to_population {
             let hct: Hct = (*argb).into();
 
             let hue = hct.get_hue().floor() as i32;
@@ -66,7 +66,7 @@ impl Score {
             colors_hct.push(hct);
 
             hue_population[hue as usize] += population;
-            population_sum += population as f64;
+            population_sum += (*population) as f64;
         }
 
         // Hues with more usage in neighboring 30 degree slice get a larger number.
@@ -110,7 +110,7 @@ impl Score {
         }
 
         // Sorted so that colors with higher scores come first.
-        scored_hcts.sort_by(|a, b| a.score.partial_cmp(&b.score).unwrap());
+        scored_hcts.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
 
         // Iterates through potential hue differences in degrees in order to select
         // the colors with the largest distribution of hues possible. Starting at
@@ -122,11 +122,13 @@ impl Score {
             chosen_colors.clear();
 
             for entry in &scored_hcts {
+                let hct = entry.hct;
+
                 if !chosen_colors.iter().any(|color| {
                     difference_degrees(entry.hct.get_hue(), color.get_hue())
                         < difference_degree as f64
                 }) {
-                    chosen_colors.push(entry.hct)
+                    chosen_colors.push(hct);
                 }
 
                 if chosen_colors.len() >= desired as usize {
@@ -148,6 +150,8 @@ impl Score {
         for chosen_hct in chosen_colors {
             colors.push(Argb::from(chosen_hct))
         }
+
+        println!("{colors:?}");
 
         colors
     }

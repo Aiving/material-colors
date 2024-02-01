@@ -1,4 +1,3 @@
-use ahash::HashMap;
 use indexmap::IndexMap;
 use std::cmp::Ordering;
 
@@ -78,7 +77,7 @@ impl QuantizerWsmeans {
             _return_input_pixel_to_cluster_pixel: bool = false;
         };
 
-        let mut pixel_to_count: HashMap<Argb, u32> = Default::default();
+        let mut pixel_to_count: IndexMap<Argb, u32> = Default::default();
         let mut points: Vec<[f64; 3]> = vec![];
         let mut pixels: Vec<Argb> = vec![];
         let mut point_count = 0;
@@ -313,6 +312,7 @@ impl QuantizerWsmeans {
 
             argb_to_population.insert(possible_new_cluster, count);
         }
+
 
         QuantizerResult {
             color_to_count: argb_to_population,
