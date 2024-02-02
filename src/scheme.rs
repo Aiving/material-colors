@@ -1,5 +1,6 @@
 #![allow(clippy::too_many_arguments)]
 
+use core::array::IntoIter;
 use core::fmt;
 
 use ahash::HashMap;
@@ -401,85 +402,84 @@ impl From<DynamicScheme> for Scheme {
     }
 }
 
-impl From<Scheme> for HashMap<String, Argb> {
-    fn from(value: Scheme) -> Self {
-        HashMap::from_iter([
-            ("primary".into(), value.primary),
-            ("on_primary".into(), value.on_primary),
-            ("primary_container".into(), value.primary_container),
-            ("on_primary_container".into(), value.on_primary_container),
-            ("inverse_primary".into(), value.inverse_primary),
-            ("primary_fixed".into(), value.primary_fixed),
-            ("primary_fixed_dim".into(), value.primary_fixed_dim),
-            ("on_primary_fixed".into(), value.on_primary_fixed),
+impl IntoIterator for Scheme {
+    type Item = (String, Argb);
+
+    type IntoIter = IntoIter<(String, Argb), 48>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        [
+            ("primary".into(), self.primary),
+            ("on_primary".into(), self.on_primary),
+            ("primary_container".into(), self.primary_container),
+            ("on_primary_container".into(), self.on_primary_container),
+            ("inverse_primary".into(), self.inverse_primary),
+            ("primary_fixed".into(), self.primary_fixed),
+            ("primary_fixed_dim".into(), self.primary_fixed_dim),
+            ("on_primary_fixed".into(), self.on_primary_fixed),
             (
                 "on_primary_fixed_variant".into(),
-                value.on_primary_fixed_variant,
+                self.on_primary_fixed_variant,
             ),
-            ("secondary".into(), value.secondary),
-            ("on_secondary".into(), value.on_secondary),
-            ("secondary_container".into(), value.secondary_container),
-            (
-                "on_secondary_container".into(),
-                value.on_secondary_container,
-            ),
-            ("secondary_fixed".into(), value.secondary_fixed),
-            ("secondary_fixed_dim".into(), value.secondary_fixed_dim),
-            ("on_secondary_fixed".into(), value.on_secondary_fixed),
+            ("secondary".into(), self.secondary),
+            ("on_secondary".into(), self.on_secondary),
+            ("secondary_container".into(), self.secondary_container),
+            ("on_secondary_container".into(), self.on_secondary_container),
+            ("secondary_fixed".into(), self.secondary_fixed),
+            ("secondary_fixed_dim".into(), self.secondary_fixed_dim),
+            ("on_secondary_fixed".into(), self.on_secondary_fixed),
             (
                 "on_secondary_fixed_variant".into(),
-                value.on_secondary_fixed_variant,
+                self.on_secondary_fixed_variant,
             ),
-            ("tertiary".into(), value.tertiary),
-            ("on_tertiary".into(), value.on_tertiary),
-            ("tertiary_container".into(), value.tertiary_container),
-            ("on_tertiary_container".into(), value.on_tertiary_container),
-            ("tertiary_fixed".into(), value.tertiary_fixed),
-            ("tertiary_fixed_dim".into(), value.tertiary_fixed_dim),
-            ("on_tertiary_fixed".into(), value.on_tertiary_fixed),
+            ("tertiary".into(), self.tertiary),
+            ("on_tertiary".into(), self.on_tertiary),
+            ("tertiary_container".into(), self.tertiary_container),
+            ("on_tertiary_container".into(), self.on_tertiary_container),
+            ("tertiary_fixed".into(), self.tertiary_fixed),
+            ("tertiary_fixed_dim".into(), self.tertiary_fixed_dim),
+            ("on_tertiary_fixed".into(), self.on_tertiary_fixed),
             (
                 "on_tertiary_fixed_variant".into(),
-                value.on_tertiary_fixed_variant,
+                self.on_tertiary_fixed_variant,
             ),
-            ("error".into(), value.error),
-            ("on_error".into(), value.on_error),
-            ("error_container".into(), value.error_container),
-            ("on_error_container".into(), value.on_error_container),
-            ("surface_dim".into(), value.surface_dim),
-            ("surface".into(), value.surface),
-            ("surface_bright".into(), value.surface_bright),
+            ("error".into(), self.error),
+            ("on_error".into(), self.on_error),
+            ("error_container".into(), self.error_container),
+            ("on_error_container".into(), self.on_error_container),
+            ("surface_dim".into(), self.surface_dim),
+            ("surface".into(), self.surface),
+            ("surface_bright".into(), self.surface_bright),
             (
                 "surface_container_lowest".into(),
-                value.surface_container_lowest,
+                self.surface_container_lowest,
             ),
-            ("surface_container_low".into(), value.surface_container_low),
-            ("surface_container".into(), value.surface_container),
-            (
-                "surface_container_high".into(),
-                value.surface_container_high,
-            ),
+            ("surface_container_low".into(), self.surface_container_low),
+            ("surface_container".into(), self.surface_container),
+            ("surface_container_high".into(), self.surface_container_high),
             (
                 "surface_container_highest".into(),
-                value.surface_container_highest,
+                self.surface_container_highest,
             ),
-            ("on_surface".into(), value.on_surface),
-            ("on_surface_variant".into(), value.on_surface_variant),
-            ("outline".into(), value.outline),
-            ("outline_variant".into(), value.outline_variant),
-            ("inverse_surface".into(), value.inverse_surface),
-            ("inverse_on_surface".into(), value.inverse_on_surface),
-            ("surface_variant".into(), value.surface_variant),
-            ("background".into(), value.background),
-            ("on_background".into(), value.on_background),
-            ("shadow".into(), value.shadow),
-            ("scrim".into(), value.scrim),
-        ])
+            ("on_surface".into(), self.on_surface),
+            ("on_surface_variant".into(), self.on_surface_variant),
+            ("outline".into(), self.outline),
+            ("outline_variant".into(), self.outline_variant),
+            ("inverse_surface".into(), self.inverse_surface),
+            ("inverse_on_surface".into(), self.inverse_on_surface),
+            ("surface_variant".into(), self.surface_variant),
+            ("background".into(), self.background),
+            ("on_background".into(), self.on_background),
+            ("shadow".into(), self.shadow),
+            ("scrim".into(), self.scrim),
+        ]
+        .into_iter()
     }
 }
 
 impl From<Scheme> for HashMap<String, String> {
     fn from(value: Scheme) -> Self {
-        let map: HashMap<String, Argb> = value.into();
+        let map: HashMap<String, Argb> = HashMap::from_iter(value);
 
         map.into_iter()
             .map(|(key, value)| (key, hex_from_argb(&value)))
