@@ -1,4 +1,4 @@
-/// Partial LCG Algorithm realization.
+/// Partial LCG Algorithm implementation.
 pub(crate) struct Random(i64);
 
 impl Random {
