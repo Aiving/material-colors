@@ -52,7 +52,8 @@ async fn main() -> Result<(), reqwest::Error> {
         .expect("failed to decode image")
         .into_rgba8();
 
-    // Lancsoz3 takes a little longer, but provides the best pixels for color extraction. However, if you don't like the results, you can always try other FilterType values.
+    // Lancsoz3 takes a little longer, but provides the best pixels for color extraction.
+    // However, if you don't like the results, you can always try other FilterType values.
     let data = resize(&data, 128, 128, FilterType::Lanczos3);
     let pixels: Vec<Argb> = data
         .pixels()
