@@ -42,7 +42,7 @@ async fn _main() -> Result<(), reqwest::Error> {
 
     // Lancsoz3 takes a little longer, but provides the best pixels for color extraction.
     // However, if you don't like the results, you can always try other FilterType values.
-    data.resize(FilterType::Lanczos3);
+    data.resize(128, 128, FilterType::Lanczos3);
 
     let theme = theme_from_source_color(ImageReader::extract_color(&data), Default::default());
 

@@ -24,8 +24,8 @@ impl Image {
         Self { image }
     }
 
-    pub fn resize(&mut self, filter_type: FilterType) -> &mut Self {
-        self.image = resize(&self.image, 128, 128, filter_type);
+    pub fn resize(&mut self, width: u32, height: u32, filter_type: FilterType) -> &mut Self {
+        self.image = resize(&self.image, width, height, filter_type);
 
         self
     }

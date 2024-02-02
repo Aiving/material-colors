@@ -14,7 +14,7 @@ async fn main() -> Result<(), reqwest::Error> {
 
     let mut data = ImageReader::read(image).expect("failed to read image");
 
-    data.resize(FilterType::Lanczos3);
+    data.resize(128, 128, FilterType::Lanczos3);
 
     let color = ImageReader::extract_color(&data);
 
