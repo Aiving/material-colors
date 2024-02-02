@@ -1,6 +1,6 @@
 [package]
 name = "material-colors"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 description = "Up-to-date material-color-utilities port"
 documentation = "https://docs.rs/material-colors"
