@@ -23,7 +23,7 @@ fn main() {
 
 From image:
 
-> :warning: Before obtaining an array of ARGB pixels for the image, **it is recommended** to adjust its dimensions to 128x128 (by `resize` function from `image` crate, for example). The reason is described [**here**](https://github.com/material-foundation/material-color-utilities/blob/main/extract_colors.md).
+> ⚠️ Before obtaining an array of ARGB pixels for the image, **it is recommended** (but not necessary if your image is already small in size or you just don't mind about execution time) to adjust its dimensions to 128x128 (by `resize` function from `image` crate, for example). The reason is described [**here**](https://github.com/material-foundation/material-color-utilities/blob/main/extract_colors.md).
 
 ```rust
 use std::io::Cursor;
@@ -52,7 +52,8 @@ async fn main() -> Result<(), reqwest::Error> {
         .expect("failed to decode image")
         .into_rgba8();
 
-    let data = resize(&data, 128, 128, FilterType::Gaussian);
+    // Lancsoz3 takes a little longer, but provides the best pixels for color extraction. However, if you don't like the results, you can always try other FilterType values.
+    let data = resize(&data, 128, 128, FilterType::Lanczos3);
     let pixels: Vec<Argb> = data
         .pixels()
         .map(|pixel| u32::from_be_bytes(pixel.0).rotate_right(8).to_be_bytes())
