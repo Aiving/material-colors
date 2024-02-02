@@ -72,8 +72,8 @@ impl Score {
         // Hues with more usage in neighboring 30 degree slice get a larger number.
         let mut hue_excited_proportions = [0.0; 360];
 
-        for hue in hue_population.into_iter().take(360) {
-            let proportion = hue as f64 / population_sum;
+        for (hue, population) in hue_population.into_iter().enumerate().take(360) {
+            let proportion = (population as f64) / population_sum;
 
             for i in ((hue as i32) - 14)..((hue as i32) + 16) {
                 let neighbor_hue = sanitize_degrees_int(i);
