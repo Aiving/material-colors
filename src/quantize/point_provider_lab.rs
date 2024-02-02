@@ -1,22 +1,22 @@
-use crate::utils::color::Argb;
-use crate::utils::color::Lab;
 use crate::utils::color::argb_from_lab;
 use crate::utils::color::lab_from_argb;
+use crate::utils::color::Argb;
+use crate::utils::color::Lab;
 
 use super::point_provider::PointProvider;
 
 pub struct PointProviderLab;
 
 impl PointProvider for PointProviderLab {
-    fn lab_from_int(&self, argb: Argb) -> Lab {
+    fn lab_from_int(&self, argb: &Argb) -> Lab {
         lab_from_argb(argb)
     }
 
-    fn lab_to_int(&self, lab: Lab) -> Argb {
+    fn lab_to_int(&self, lab: &Lab) -> Argb {
         argb_from_lab(lab)
     }
 
-    fn distance(&self, one: Lab, two: Lab) -> f64 {
+    fn distance(&self, one: &Lab, two: &Lab) -> f64 {
         let d_l = one[0] - two[0];
         let d_a = one[1] - two[1];
         let d_b = one[2] - two[2];

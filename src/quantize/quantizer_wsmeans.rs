@@ -1,13 +1,15 @@
 use indexmap::IndexMap;
-use std::cmp::Ordering;
 
-use rand::Rng;
+use std::cmp::Ordering;
 
 use crate::quantize::point_provider_lab::PointProviderLab;
 use crate::utils::color::Argb;
+use crate::utils::random::Random;
 
 use super::point_provider::PointProvider;
 use super::quantizer::QuantizerResult;
+
+const MIN_MOVEMENT_DISTANCE: f64 = 3.0;
 
 #[derive(Debug)]
 pub struct DistanceAndIndex {
@@ -70,6 +72,8 @@ impl QuantizerWsmeans {
         // Currently unused...
         _return_input_pixel_to_cluster_pixel: Option<bool>,
     ) -> QuantizerResult {
+        let mut random = Random::new(0x42688);
+
         default_value! {
             starting_clusters: Vec<Argb> = vec![];
             point_provider: PointProviderLab = PointProviderLab::new();
@@ -96,7 +100,7 @@ impl QuantizerWsmeans {
             if pixel_count.is_some_and(|count| count == 1) {
                 point_count += 1;
 
-                points.push(point_provider.lab_from_int(*input_pixel));
+                points.push(point_provider.lab_from_int(input_pixel));
                 pixels.push(*input_pixel);
             }
         }
@@ -110,15 +114,21 @@ impl QuantizerWsmeans {
             counts[i] = *count.unwrap();
         }
 
-        let cluster_count = (max_colors as usize).min(point_count);
+        let mut cluster_count = (max_colors as usize).min(point_count);
+
+        if !starting_clusters.is_empty() {
+            cluster_count = cluster_count.min(starting_clusters.len());
+        }
 
         let mut clusters = starting_clusters
             .iter()
-            .map(|cluster| point_provider.lab_from_int(*cluster))
+            .map(|cluster| point_provider.lab_from_int(cluster))
             .collect::<Vec<_>>();
+
         let additional_clusters_needed = cluster_count - clusters.len();
 
         if additional_clusters_needed > 0 {
+            let mut random = Random::new(0x42688);
             let mut indices: Vec<usize> = vec![];
 
             for _ in 0..additional_clusters_needed {
@@ -138,10 +148,10 @@ impl QuantizerWsmeans {
                 // Rather than generate random centroids, we'll pick centroids that
                 // are actual pixels in the image, and avoid duplicating centroids.
 
-                let mut index = rand::thread_rng().gen_range(0..points.len());
+                let mut index = random.next_range(points.len() as i32) as usize;
 
                 while indices.contains(&index) {
-                    index = rand::thread_rng().gen_range(0..points.len());
+                    index = random.next_range(points.len() as i32) as usize;
                 }
 
                 indices.push(index);
@@ -158,7 +168,9 @@ impl QuantizerWsmeans {
             points.len()
         ));
 
-        let mut cluster_indices = fill_array(point_count, |index| index % cluster_count);
+        let mut cluster_indices = fill_array(point_count, |_| {
+            random.next_range(cluster_count as i32) as usize
+        });
 
         let mut index_matrix = vec![vec![0; cluster_count]; cluster_count];
         let mut distance_to_index_matrix = fill_array(cluster_count, |_| {
@@ -201,7 +213,7 @@ impl QuantizerWsmeans {
 
             for i in 0..cluster_count {
                 for j in (i + 1)..cluster_count {
-                    let distance = point_provider.distance(clusters[i], clusters[j]);
+                    let distance = point_provider.distance(&clusters[i], &clusters[j]);
 
                     distance_to_index_matrix[j][i].distance = distance;
                     distance_to_index_matrix[j][i].index = i;
@@ -220,10 +232,10 @@ impl QuantizerWsmeans {
                 let point = points[i];
                 let previous_cluster_index = cluster_indices[i];
                 let previous_cluster = clusters[previous_cluster_index];
-                let previous_distance = point_provider.distance(point, previous_cluster);
+                let previous_distance = point_provider.distance(&point, &previous_cluster);
 
                 let mut minimum_distance = previous_distance;
-                let mut new_cluster_index: isize = -1;
+                let mut new_cluster_index: Option<usize> = None;
 
                 for (j, cluster) in clusters.iter().enumerate().take(cluster_count) {
                     if distance_to_index_matrix[previous_cluster_index][j].distance
@@ -232,17 +244,22 @@ impl QuantizerWsmeans {
                         continue;
                     }
 
-                    let distance = point_provider.distance(point, *cluster);
+                    let distance = point_provider.distance(&point, cluster);
 
                     if distance < minimum_distance {
                         minimum_distance = distance;
-                        new_cluster_index = j as isize;
+                        new_cluster_index = Some(j);
                     }
                 }
 
-                if new_cluster_index != -1 {
-                    points_moved += 1;
-                    cluster_indices[i] = new_cluster_index as usize;
+                if let Some(new_cluster_index) = new_cluster_index {
+                    let distance_change =
+                        (minimum_distance.sqrt() - previous_distance.sqrt()).abs();
+
+                    if distance_change > MIN_MOVEMENT_DISTANCE {
+                        points_moved += 1;
+                        cluster_indices[i] = new_cluster_index;
+                    }
                 }
             }
 
@@ -304,7 +321,7 @@ impl QuantizerWsmeans {
                 continue;
             }
 
-            let possible_new_cluster = point_provider.lab_to_int(clusters[i]);
+            let possible_new_cluster = point_provider.lab_to_int(&clusters[i]);
 
             if argb_to_population.contains_key(&possible_new_cluster) {
                 continue;
@@ -313,7 +330,6 @@ impl QuantizerWsmeans {
             argb_to_population.insert(possible_new_cluster, count);
         }
 
-
         QuantizerResult {
             color_to_count: argb_to_population,
             input_pixel_to_cluster_pixel: Default::default(),
@@ -321,9 +337,9 @@ impl QuantizerWsmeans {
     }
 }
 
-fn fill_array<T, F>(count: usize, callback: F) -> Vec<T>
+fn fill_array<T, F>(count: usize, mut callback: F) -> Vec<T>
 where
-    F: Fn(usize) -> T,
+    F: FnMut(usize) -> T,
 {
     let mut results: Vec<T> = vec![];
 

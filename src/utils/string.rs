@@ -17,7 +17,7 @@ fn to_hex(n: u8) -> String {
     }
 }
 
-pub fn hex_from_argb(argb: Argb) -> String {
+pub fn hex_from_argb(argb: &Argb) -> String {
     let red = red_from_argb(argb);
     let blue = blue_from_argb(argb);
     let green = green_from_argb(argb);

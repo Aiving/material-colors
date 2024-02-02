@@ -84,9 +84,9 @@ impl QuantizerWu {
         self.moments = [0.0; TOTAL_SIZE];
 
         for (argb, count) in pixels {
-            let red = red_from_argb(argb);
-            let green = green_from_argb(argb);
-            let blue = blue_from_argb(argb);
+            let red = red_from_argb(&argb);
+            let green = green_from_argb(&argb);
+            let blue = blue_from_argb(&argb);
 
             let i_r = (red >> BITS_TO_REMOVE) + 1;
             let i_g = (green >> BITS_TO_REMOVE) + 1;
@@ -197,6 +197,7 @@ impl QuantizerWu {
             next = 0;
 
             let mut temp = volume_variance[0];
+
             let mut j = 1;
 
             while j <= i {
@@ -224,7 +225,6 @@ impl QuantizerWu {
     }
 
     pub fn create_result(&self, color_count: usize) -> IndexMap<Argb, u32> {
-        let mut order = Vec::new();
         let mut result = IndexMap::new();
 
         for i in 0..color_count {
@@ -239,7 +239,6 @@ impl QuantizerWu {
                 let color = argb_from_rgb([r, g, b]);
 
                 result.insert(color, 0);
-                order.push(i);
             }
         }
 
@@ -433,14 +432,14 @@ impl QuantizerWu {
     pub fn volume(cube: &Cube, moment: &[u32]) -> i32 {
         let [[r0, g0, b0], [r1, g1, b1]] = cube.pixels;
 
-        moment[Self::get_index(r1, g1, b1)] as i32
-            - moment[Self::get_index(r1, g1, b0)] as i32
-            - moment[Self::get_index(r1, g0, b1)] as i32
-            + moment[Self::get_index(r1, g0, b0)] as i32
-            - moment[Self::get_index(r0, g1, b1)] as i32
-            + moment[Self::get_index(r0, g1, b0)] as i32
-            + moment[Self::get_index(r0, g0, b1)] as i32
-            - moment[Self::get_index(r0, g0, b0)] as i32
+        (moment[Self::get_index(r1, g1, b1)] as i32)
+            .wrapping_sub(moment[Self::get_index(r1, g1, b0)] as i32)
+            .wrapping_sub(moment[Self::get_index(r1, g0, b1)] as i32)
+            .wrapping_add(moment[Self::get_index(r1, g0, b0)] as i32)
+            .wrapping_sub(moment[Self::get_index(r0, g1, b1)] as i32)
+            .wrapping_add(moment[Self::get_index(r0, g1, b0)] as i32)
+            .wrapping_add(moment[Self::get_index(r0, g0, b1)] as i32)
+            .wrapping_sub(moment[Self::get_index(r0, g0, b0)] as i32)
     }
 
     pub fn bottom(cube: &Cube, direction: &Direction, moment: &[u32]) -> i32 {
@@ -469,24 +468,18 @@ impl QuantizerWu {
         let [[r0, g0, b0], [r1, g1, b1]] = cube.pixels;
 
         match direction {
-            Direction::Red => {
-                moment[Self::get_index(position, g1, b1)] as i32
-                    - moment[Self::get_index(position, g1, b0)] as i32
-                    - moment[Self::get_index(position, g0, b1)] as i32
-                    + moment[Self::get_index(position, g0, b0)] as i32
-            }
-            Direction::Green => {
-                moment[Self::get_index(r1, position, b1)] as i32
-                    - moment[Self::get_index(r1, position, b0)] as i32
-                    - moment[Self::get_index(r0, position, b1)] as i32
-                    + moment[Self::get_index(r0, position, b0)] as i32
-            }
-            Direction::Blue => {
-                moment[Self::get_index(r1, g1, position)] as i32
-                    - moment[Self::get_index(r1, g0, position)] as i32
-                    - moment[Self::get_index(r0, g1, position)] as i32
-                    + moment[Self::get_index(r0, g0, position)] as i32
-            }
+            Direction::Red => (moment[Self::get_index(position, g1, b1)] as i32)
+                .wrapping_sub(moment[Self::get_index(position, g1, b0)] as i32)
+                .wrapping_sub(moment[Self::get_index(position, g0, b1)] as i32)
+                .wrapping_add(moment[Self::get_index(position, g0, b0)] as i32),
+            Direction::Green => (moment[Self::get_index(r1, position, b1)] as i32)
+                .wrapping_sub(moment[Self::get_index(r1, position, b0)] as i32)
+                .wrapping_sub(moment[Self::get_index(r0, position, b1)] as i32)
+                .wrapping_add(moment[Self::get_index(r0, position, b0)] as i32),
+            Direction::Blue => (moment[Self::get_index(r1, g1, position)] as i32)
+                .wrapping_sub(moment[Self::get_index(r1, g0, position)] as i32)
+                .wrapping_sub(moment[Self::get_index(r0, g1, position)] as i32)
+                .wrapping_add(moment[Self::get_index(r0, g0, position)] as i32),
         }
     }
 }

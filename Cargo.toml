@@ -13,7 +13,6 @@ keywords = ["palette", "color-scheme", "material-you"]
 [dependencies]
 ahash = "0.8.6"
 indexmap = "2.2.1"
-rand = "0.8.5"
 
 [profile.dev]
 opt-level = 1

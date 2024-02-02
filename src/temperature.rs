@@ -354,7 +354,7 @@ impl TemperatureCache {
     /// - Upper bound: -0.52 + (chroma ^ 1.07 / 20). L*a*b* chroma is infinite.
     ///   Assuming max of 130 chroma, 8.61.
     pub fn raw_temperature(color: Hct) -> f64 {
-        let lab = lab_from_argb(color.into());
+        let lab = lab_from_argb(&color.into());
         let hue = sanitize_degrees_double(lab[2].atan2(lab[1]) * 180.0 / PI);
         let chroma = ((lab[1] * lab[1]) + (lab[2] * lab[2])).sqrt();
 

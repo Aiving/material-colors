@@ -32,7 +32,7 @@ async fn main() -> Result<(), reqwest::Error> {
 
     let color = source_color_from_image(&pixels);
 
-    println!("{}", hex_from_argb(color));
+    println!("{}", hex_from_argb(&color));
 
     _ = theme_from_source_color(color, Default::default());
 

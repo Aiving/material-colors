@@ -46,18 +46,18 @@ pub fn alpha_from_argb([alpha, _, _, _]: Argb) -> u8 {
 }
 
 /** Returns the red component of a color in Argb format. */
-pub fn red_from_argb([_, red, _, _]: Argb) -> u8 {
-    red
+pub fn red_from_argb([_, red, _, _]: &Argb) -> u8 {
+    *red
 }
 
 /** Returns the green component of a color in Argb format. */
-pub fn green_from_argb([_, _, green, _]: Argb) -> u8 {
-    green
+pub fn green_from_argb([_, _, green, _]: &Argb) -> u8 {
+    *green
 }
 
 /** Returns the blue component of a color in Argb format. */
-pub fn blue_from_argb([_, _, _, blue]: Argb) -> u8 {
-    blue
+pub fn blue_from_argb([_, _, _, blue]: &Argb) -> u8 {
+    *blue
 }
 
 /** Returns whether a color in Argb format is opaque. */
@@ -81,7 +81,7 @@ pub fn argb_from_xyz([x, y, z]: Xyz) -> Argb {
 }
 
 /** Converts a color from Xyz to Argb. */
-pub fn xyz_from_argb(argb: Argb) -> Xyz {
+pub fn xyz_from_argb(argb: &Argb) -> Xyz {
     let r = linearized(red_from_argb(argb));
     let g = linearized(green_from_argb(argb));
     let b = linearized(blue_from_argb(argb));
@@ -90,7 +90,7 @@ pub fn xyz_from_argb(argb: Argb) -> Xyz {
 }
 
 /** Converts a color represented in Lab color space into an Argb integer. */
-pub fn argb_from_lab([l, a, b]: Lab) -> Argb {
+pub fn argb_from_lab([l, a, b]: &Lab) -> Argb {
     let white_point = WHITE_POINT_D65;
 
     let fy = (l + 16.0) / 116.0;
@@ -114,7 +114,7 @@ pub fn argb_from_lab([l, a, b]: Lab) -> Argb {
  * @param argb the Argb representation of a color
  * @return a Lab object representing the color
  */
-pub fn lab_from_argb(argb: Argb) -> Lab {
+pub fn lab_from_argb(argb: &Argb) -> Lab {
     let linear_r = linearized(red_from_argb(argb));
     let linear_g = linearized(green_from_argb(argb));
     let linear_b = linearized(blue_from_argb(argb));
@@ -161,7 +161,7 @@ pub fn argb_from_lstar(lstar: f64) -> Argb {
  * @param argb Argb representation of a color
  * @return L*, from L*a*b*, coordinate of the color
  */
-pub fn lstar_from_argb(argb: Argb) -> f64 {
+pub fn lstar_from_argb(argb: &Argb) -> f64 {
     let y = xyz_from_argb(argb)[1];
 
     116.0 * lab_f(y / 100.0) - 16.0

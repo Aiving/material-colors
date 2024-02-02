@@ -51,7 +51,7 @@ impl Hct {
 
         self._hue = cam16.hue;
         self._chroma = cam16.chroma;
-        self._tone = lstar_from_argb(self._argb);
+        self._tone = lstar_from_argb(&self._argb);
     }
 
     /// 0 <= [newChroma] <= ?
@@ -75,7 +75,7 @@ impl Hct {
 
         self._hue = cam16.hue;
         self._chroma = cam16.chroma;
-        self._tone = lstar_from_argb(self._argb);
+        self._tone = lstar_from_argb(&self._argb);
     }
 
     /// Lightness. Ranges from 0 to 100.
@@ -103,7 +103,7 @@ impl Hct {
 
         self._hue = cam16.hue;
         self._chroma = cam16.chroma;
-        self._tone = lstar_from_argb(self._argb);
+        self._tone = lstar_from_argb(&self._argb);
     }
 
     pub fn new(argb: Argb) -> Self {
@@ -113,7 +113,7 @@ impl Hct {
 
         let _hue = cam16.hue;
         let _chroma = cam16.chroma;
-        let _tone = lstar_from_argb(argb);
+        let _tone = lstar_from_argb(&argb);
 
         Self {
             _hue,

@@ -86,7 +86,7 @@ impl Cam16 {
         viewing_conditions: ViewingConditions,
     ) -> Cam16 {
         // Transform Argb int to Xyz
-        let xyz = xyz_from_argb(argb);
+        let xyz = xyz_from_argb(&argb);
         let x = xyz[0];
         let y = xyz[1];
         let z = xyz[2];

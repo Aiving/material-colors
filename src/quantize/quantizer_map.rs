@@ -1,6 +1,5 @@
 use indexmap::IndexMap;
 
-use crate::utils::color::alpha_from_argb;
 use crate::utils::color::Argb;
 
 use super::quantizer::Quantizer;
@@ -19,16 +18,13 @@ impl Quantizer for QuantizerMap {
         let mut color_to_count: IndexMap<Argb, u32> = Default::default();
 
         for pixel in pixels {
-            let alpha = alpha_from_argb(*pixel);
+            let current_pixel_count = color_to_count.get_mut(pixel);
 
-            if alpha < 255 {
-                continue;
+            if let Some(current_pixel_count) = current_pixel_count {
+                *current_pixel_count += 1;
+            } else {
+                color_to_count.insert(*pixel, 1);
             }
-
-            color_to_count
-                .entry(*pixel)
-                .and_modify(|count| *count += 1)
-                .or_insert(1);
         }
 
         QuantizerResult {
