@@ -13,6 +13,10 @@ keywords = ["palette", "color-scheme", "material-you"]
 [dependencies]
 ahash = "0.8.6"
 indexmap = "2.2.1"
+image = { version = "0.24.8", optional = true }
+
+[features]
+image = ["dep:image"]
 
 [profile.dev]
 opt-level = 1

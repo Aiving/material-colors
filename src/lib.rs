@@ -25,7 +25,14 @@ pub use scheme::Scheme;
 
 pub use utils::color::Argb;
 pub use utils::color::Rgb;
-pub use utils::image::source_color_from_image;
+
+#[cfg(feature = "image")]
+pub use utils::image::FilterType;
+#[cfg(feature = "image")]
+pub use utils::image::Image;
+#[cfg(feature = "image")]
+pub use utils::image::ImageReader;
+
 pub use utils::string::argb_from_hex;
 pub use utils::string::hex_from_argb;
 pub use utils::theme::theme_from_source_color;
