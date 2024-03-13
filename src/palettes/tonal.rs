@@ -1,4 +1,6 @@
 use core::fmt;
+#[cfg(feature = "serde")]
+use serde::Serialize;
 
 use crate::hct::Hct;
 use crate::utils::color::Argb;
@@ -13,6 +15,7 @@ use crate::utils::color::Argb;
 /// is not enforced. [get] will only return the input colors, corresponding to
 /// [commonTones].
 #[derive(Clone, Copy, Debug, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct TonalPalette {
     _hue: f64,
     _chroma: f64,
@@ -54,11 +57,7 @@ impl TonalPalette {
 
     /// Create a Tonal Palette from hue and chroma, which generates a key color.
     pub fn from_hue_and_chroma(hue: f64, chroma: f64) -> Self {
-        Self::new(
-            hue,
-            chroma,
-            TonalPalette::create_key_color(hue, chroma),
-        )
+        Self::new(hue, chroma, TonalPalette::create_key_color(hue, chroma))
     }
 
     /// Create colors using [hue] and [chroma].
@@ -119,7 +118,7 @@ impl TonalPalette {
         Hct::from(self.hue(), self.chroma(), tone as f64).into()
     }
 
-    pub fn get_hct(&self, tone: f64) -> Hct {        
+    pub fn get_hct(&self, tone: f64) -> Hct {
         Hct::from(self.hue(), self.chroma(), tone)
     }
 }

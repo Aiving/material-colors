@@ -3,11 +3,14 @@ use crate::palettes::core::CorePalette;
 use crate::palettes::tonal::TonalPalette;
 use crate::scheme::tonal_spot::SchemeTonalSpot;
 use crate::scheme::Scheme;
+#[cfg(feature = "serde")]
+use serde::Serialize;
 
 use super::color::Argb;
 
 /// Custom color used to pair with a theme
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct CustomColor {
     pub value: Argb,
     pub name: String,
@@ -16,6 +19,7 @@ pub struct CustomColor {
 
 /// Color group
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct ColorGroup {
     pub color: Argb,
     pub on_color: Argb,
@@ -25,6 +29,7 @@ pub struct ColorGroup {
 
 /// Custom Color Group
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct CustomColorGroup {
     pub color: CustomColor,
     pub value: Argb,
@@ -33,12 +38,14 @@ pub struct CustomColorGroup {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Schemes {
     pub light: Scheme,
     pub dark: Scheme,
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Palettes {
     pub primary: TonalPalette,
     pub secondary: TonalPalette,
@@ -50,6 +57,7 @@ pub struct Palettes {
 
 // Theme
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Theme {
     pub source: Argb,
     pub schemes: Schemes,
