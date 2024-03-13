@@ -22,7 +22,7 @@ fn test_theme() -> Result<(), ParseError> {
             on_primary_fixed_variant: [255, 35, 80, 36],
             secondary: [255, 185, 204, 180],
             on_secondary: [255, 37, 52, 35],
-            secondary_container: [255, 185, 204, 180],
+            secondary_container: [255, 59, 75, 56],
             on_secondary_container: [255, 213, 232, 207],
             secondary_fixed: [255, 213, 232, 207],
             secondary_fixed_dim: [255, 185, 204, 180],
