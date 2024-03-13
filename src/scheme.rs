@@ -1,4 +1,6 @@
 #![allow(clippy::too_many_arguments)]
+#[cfg(feature = "serde")]
+use serde::Serialize;
 
 use core::array::IntoIter;
 use core::fmt;
@@ -20,6 +22,7 @@ pub mod tonal_spot;
 pub mod vibrant;
 
 #[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Scheme {
     pub primary: Argb,
     pub on_primary: Argb,

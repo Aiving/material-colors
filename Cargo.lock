@@ -736,6 +736,7 @@ dependencies = [
  "image",
  "indexmap",
  "reqwest",
+ "serde",
  "tokio",
 ]
 

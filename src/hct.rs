@@ -3,6 +3,9 @@ use core::fmt;
 use core::hash::Hash;
 use core::hash::Hasher;
 
+#[cfg(feature = "serde")]
+use serde::Serialize;
+
 use crate::utils::color::lstar_from_argb;
 use crate::utils::color::lstar_from_y;
 use crate::utils::color::Argb;
@@ -16,6 +19,7 @@ pub mod solver;
 pub mod viewing_conditions;
 
 #[derive(Clone, Copy, Debug, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Hct {
     _hue: f64,
     _chroma: f64,

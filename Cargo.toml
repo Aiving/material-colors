@@ -14,9 +14,11 @@ keywords = ["palette", "color-scheme", "material-you"]
 ahash = "0.8.11"
 indexmap = "2.2.5"
 image = { version = "0.25.0", optional = true }
+serde = { version = "1.0.197", features = ["derive"], optional = true }
 
 [features]
 image = ["dep:image"]
+serde = ["dep:serde"]
 
 [profile.dev]
 opt-level = 1
