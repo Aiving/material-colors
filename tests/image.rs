@@ -1,7 +1,7 @@
 #[cfg(feature = "image")]
 #[tokio::test]
 async fn main() -> Result<(), reqwest::Error> {
-    use material_colors::theme_from_source_color;
+    use material_colors::utils::theme::Theme;
     use material_colors::FilterType;
     use material_colors::ImageReader;
 
@@ -19,7 +19,7 @@ async fn main() -> Result<(), reqwest::Error> {
 
     println!("{}", color);
 
-    _ = theme_from_source_color(color, Default::default());
+    _ = Theme::from_source_color(color, Default::default());
 
     // Do whatever you want...
 
