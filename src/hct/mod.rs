@@ -1,17 +1,14 @@
-use core::fmt;
-
-use core::hash::Hash;
-use core::hash::Hasher;
+use core::{
+    fmt,
+    hash::{Hash, Hasher},
+};
 
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-use crate::utils::color::lstar_from_y;
-use crate::utils::color::Argb;
+use crate::{color::lstar_from_y, Argb};
 
-use self::cam16::Cam16;
-use self::solver::HctSolver;
-use self::viewing_conditions::ViewingConditions;
+pub use {cam16::Cam16, solver::HctSolver, viewing_conditions::ViewingConditions};
 
 pub mod cam16;
 pub mod solver;

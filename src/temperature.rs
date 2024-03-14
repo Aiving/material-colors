@@ -1,11 +1,7 @@
 use ahash::HashMap;
-use core::cmp::Ordering;
-use core::f64::consts::PI;
+use core::{cmp::Ordering, f64::consts::PI};
 
-use crate::hct::Hct;
-use crate::utils::color::Lab;
-use crate::utils::math::sanitize_degrees_double;
-use crate::Argb;
+use crate::{color::Lab, utils::math::sanitize_degrees_double, Argb, Hct};
 
 /// Design utilities using color temperature theory.
 ///

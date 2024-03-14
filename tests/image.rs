@@ -1,9 +1,7 @@
 #[cfg(feature = "image")]
 #[tokio::test]
 async fn main() -> Result<(), reqwest::Error> {
-    use material_colors::utils::theme::Theme;
-    use material_colors::FilterType;
-    use material_colors::ImageReader;
+    use material_colors::{FilterType, ImageReader, Theme};
 
     let image = reqwest::get("https://picsum.photos/id/866/1920/1080")
         .await?

@@ -2,23 +2,13 @@
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-use core::array::IntoIter;
-use core::fmt;
+use core::{array::IntoIter, fmt};
 
 use ahash::HashMap;
 
-use crate::dynamic_color::dynamic_scheme::DynamicScheme;
-use crate::utils::color::Argb;
+use crate::{dynamic_color::DynamicScheme, Argb};
 
-pub mod content;
-pub mod expressive;
-pub mod fidelity;
-pub mod fruit_salad;
-pub mod monochrome;
-pub mod neutral;
-pub mod rainbow;
-pub mod tonal_spot;
-pub mod vibrant;
+pub mod variant;
 
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize))]

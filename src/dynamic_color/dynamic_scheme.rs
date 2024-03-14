@@ -1,14 +1,11 @@
-use core::fmt;
-use core::hash::Hash;
-use core::hash::Hasher;
+use core::{
+    fmt,
+    hash::{Hash, Hasher},
+};
 
-use crate::hct::Hct;
-use crate::palettes::tonal::TonalPalette;
-use crate::utils::color::Argb;
-use crate::utils::math::sanitize_degrees_double;
+use crate::{utils::math::sanitize_degrees_double, Argb, Hct, TonalPalette};
 
-use super::material_dynamic_colors::MaterialDynamicColors;
-use super::variant::Variant;
+use super::{MaterialDynamicColors, Variant};
 
 /// Constructed by a set of values representing the current UI state (such as
 /// whether or not its dark theme, what the theme style is, etc.), and

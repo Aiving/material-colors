@@ -1,9 +1,8 @@
 use core::f64::consts::PI;
 
-use crate::utils::color::Argb;
-use crate::utils::color::Xyz;
+use crate::{color::Xyz, Argb};
 
-use super::viewing_conditions::ViewingConditions;
+use super::ViewingConditions;
 
 /// CAM16, a color appearance model. Colors are not just defined by their hex
 /// code, but rather, a hex code and viewing conditions.

@@ -1,12 +1,6 @@
-use crate::dislike::fix_if_disliked;
-use crate::hct::Hct;
+use crate::{dislike::fix_if_disliked, Hct};
 
-use super::contrast_curve::ContrastCurve;
-use super::dynamic_scheme::DynamicScheme;
-use super::tone_delta_pair::ToneDeltaPair;
-use super::tone_delta_pair::TonePolarity;
-use super::variant::Variant;
-use super::DynamicColor;
+use super::{ContrastCurve, DynamicColor, DynamicScheme, ToneDeltaPair, TonePolarity, Variant};
 
 fn _is_fidelity(scheme: &DynamicScheme) -> bool {
     matches!(scheme.variant, Variant::Fidelity) || matches!(scheme.variant, Variant::Content)

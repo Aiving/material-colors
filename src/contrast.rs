@@ -1,5 +1,4 @@
-use crate::utils::color::lstar_from_y;
-use crate::utils::color::y_from_lstar;
+use crate::color::{lstar_from_y, y_from_lstar};
 
 /// Returns a contrast ratio, which ranges from 1 to 21.
 ///

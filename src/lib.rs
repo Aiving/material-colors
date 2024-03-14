@@ -1,37 +1,34 @@
 pub mod blend;
+pub mod color;
 pub mod contrast;
 pub mod dislike;
 pub mod dynamic_color;
 pub mod hct;
+#[cfg(feature = "image")]
+pub mod image;
 pub mod palettes;
 pub mod quantize;
 pub mod scheme;
 pub mod score;
 pub mod temperature;
+pub mod theme;
 pub mod utils;
 
 pub use hct::Hct;
 
-pub use scheme::content::SchemeContent;
-pub use scheme::expressive::SchemeExpressive;
-pub use scheme::fidelity::SchemeFidelity;
-pub use scheme::fruit_salad::SchemeFruitSalad;
-pub use scheme::monochrome::SchemeMonochrome;
-pub use scheme::neutral::SchemeNeutral;
-pub use scheme::rainbow::SchemeRainbow;
-pub use scheme::tonal_spot::SchemeTonalSpot;
-pub use scheme::vibrant::SchemeVibrant;
-pub use scheme::Scheme;
+pub use scheme::{
+    variant::{
+        SchemeContent, SchemeExpressive, SchemeFidelity, SchemeFruitSalad, SchemeMonochrome,
+        SchemeNeutral, SchemeRainbow, SchemeTonalSpot, SchemeVibrant,
+    },
+    Scheme,
+};
 
-pub use utils::color::Argb;
-pub use utils::color::Rgb;
+pub use color::{Argb, Rgb};
+
+pub use theme::{CustomColorGroup, Theme};
 
 #[cfg(feature = "image")]
-pub use utils::image::FilterType;
-#[cfg(feature = "image")]
-pub use utils::image::Image;
-#[cfg(feature = "image")]
-pub use utils::image::ImageReader;
+pub use image::{FilterType, Image, ImageReader};
 
-pub use palettes::core::CorePalette;
-pub use palettes::tonal::TonalPalette;
+pub use palettes::{CorePalette, TonalPalette};

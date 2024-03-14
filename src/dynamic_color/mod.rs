@@ -2,19 +2,16 @@
 
 use ahash::HashMap;
 
-use crate::contrast::darker;
-use crate::contrast::darker_unsafe;
-use crate::contrast::lighter;
-use crate::contrast::lighter_unsafe;
-use crate::contrast::ratio_of_tones;
-use crate::hct::Hct;
-use crate::palettes::tonal::TonalPalette;
-use crate::utils::color::Argb;
+use crate::{
+    contrast::{darker, darker_unsafe, lighter, lighter_unsafe, ratio_of_tones},
+    Argb, Hct, TonalPalette,
+};
 
-use self::contrast_curve::ContrastCurve;
-use self::dynamic_scheme::DynamicScheme;
-use self::tone_delta_pair::ToneDeltaPair;
-use self::tone_delta_pair::TonePolarity;
+pub use {
+    contrast_curve::ContrastCurve, dynamic_scheme::DynamicScheme,
+    material_dynamic_colors::MaterialDynamicColors, tone_delta_pair::ToneDeltaPair,
+    tone_delta_pair::TonePolarity, variant::Variant,
+};
 
 pub mod contrast_curve;
 pub mod dynamic_scheme;
@@ -120,7 +117,7 @@ impl DynamicColor {
     /// - Parameter scheme: Defines the conditions of the user interface, for example,
     ///   whether or not it is dark mode or light mode, and what the desired contrast level is.
     /// - Returns: The color as an integer (Argb).
-    pub fn get_argb(&mut self, scheme: &DynamicScheme) -> Argb {        
+    pub fn get_argb(&mut self, scheme: &DynamicScheme) -> Argb {
         self.get_hct(scheme).into()
     }
 

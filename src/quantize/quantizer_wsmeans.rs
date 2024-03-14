@@ -3,8 +3,8 @@ use indexmap::IndexMap;
 use std::cmp::Ordering;
 
 use crate::quantize::point_provider_lab::PointProviderLab;
-use crate::utils::color::Argb;
-use crate::utils::color::Lab;
+use crate::Argb;
+use crate::color::Lab;
 use crate::utils::random::Random;
 
 use super::point_provider::PointProvider;

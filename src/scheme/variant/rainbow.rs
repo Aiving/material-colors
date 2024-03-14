@@ -1,8 +1,8 @@
-use crate::dynamic_color::dynamic_scheme::DynamicScheme;
-use crate::dynamic_color::variant::Variant;
-use crate::hct::Hct;
-use crate::palettes::tonal::TonalPalette;
-use crate::utils::math::sanitize_degrees_double;
+use crate::{
+    dynamic_color::{DynamicScheme, Variant},
+    utils::math::sanitize_degrees_double,
+    Hct, TonalPalette,
+};
 
 pub struct SchemeRainbow {
     pub scheme: DynamicScheme,

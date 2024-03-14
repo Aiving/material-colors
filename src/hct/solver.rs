@@ -1,13 +1,12 @@
 use core::f64::consts::PI;
 
-use crate::utils::color::y_from_lstar;
-use crate::utils::color::Argb;
-use crate::utils::color::LinearRgb;
-use crate::utils::math::matrix_multiply;
-use crate::utils::math::sanitize_degrees_double;
+use crate::{
+    color::{y_from_lstar, LinearRgb},
+    utils::math::{matrix_multiply, sanitize_degrees_double},
+    Argb,
+};
 
-use super::cam16::Cam16;
-use super::viewing_conditions::ViewingConditions;
+use super::{Cam16, ViewingConditions};
 
 /// A struct that solves the HCT equation.
 const SCALED_DISCOUNT_FROM_LINRGB: [[f64; 3]; 3] = [

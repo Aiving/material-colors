@@ -1,7 +1,7 @@
-use crate::dynamic_color::dynamic_scheme::DynamicScheme;
-use crate::dynamic_color::variant::Variant;
-use crate::hct::Hct;
-use crate::palettes::tonal::TonalPalette;
+use crate::{
+    dynamic_color::{DynamicScheme, Variant},
+    Hct, TonalPalette,
+};
 
 pub struct SchemeMonochrome {
     pub scheme: DynamicScheme,

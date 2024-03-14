@@ -1,7 +1,7 @@
 use ahash::HashMap;
 use indexmap::IndexMap;
 
-use crate::utils::color::Argb;
+use crate::Argb;
 
 pub trait Quantizer {
     fn quantize(

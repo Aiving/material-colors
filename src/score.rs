@@ -1,9 +1,9 @@
 use indexmap::IndexMap;
 
-use crate::hct::Hct;
-use crate::utils::color::Argb;
-use crate::utils::math::difference_degrees;
-use crate::utils::math::sanitize_degrees_int;
+use crate::{
+    utils::math::{difference_degrees, sanitize_degrees_int},
+    Argb, Hct,
+};
 
 #[derive(Debug)]
 struct ScoredHCT {

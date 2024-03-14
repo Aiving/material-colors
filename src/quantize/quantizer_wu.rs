@@ -3,12 +3,9 @@
 use core::fmt;
 use indexmap::IndexMap;
 
-use crate::utils::color::Argb;
-use crate::utils::color::Rgb;
+use crate::{Argb, Rgb};
 
-use super::quantizer::Quantizer;
-use super::quantizer::QuantizerResult;
-use super::quantizer_map::QuantizerMap;
+use super::{Quantizer, QuantizerMap, QuantizerResult};
 
 // A histogram of all the input colors is constructed. It has the shape of a
 //  The cube would be too large if it contained all 16 million colors:

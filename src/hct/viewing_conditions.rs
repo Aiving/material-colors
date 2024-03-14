@@ -1,8 +1,9 @@
 use core::f64::consts::PI;
 
-use crate::utils::color::y_from_lstar;
-use crate::utils::color::WHITE_POINT_D65;
-use crate::utils::math::lerp;
+use crate::{
+    color::{y_from_lstar, WHITE_POINT_D65},
+    utils::math::lerp,
+};
 
 /// In traditional color spaces, a color can be identified solely by the
 /// observer's measurement of the color. Color appearance models such as CAM16

@@ -1,12 +1,7 @@
-use crate::blend::harmonize;
-use crate::palettes::core::CorePalette;
-use crate::palettes::tonal::TonalPalette;
-use crate::scheme::tonal_spot::SchemeTonalSpot;
-use crate::scheme::Scheme;
+use crate::{blend::harmonize, Argb, CorePalette, Scheme, SchemeTonalSpot, TonalPalette};
+
 #[cfg(feature = "serde")]
 use serde::Serialize;
-
-use super::color::Argb;
 
 /// Custom color used to pair with a theme
 #[derive(Debug)]

@@ -2,8 +2,7 @@ use core::fmt;
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-use crate::hct::Hct;
-use crate::utils::color::Argb;
+use crate::{Argb, Hct};
 
 /// A convenience class for retrieving colors that are constant in hue and
 /// chroma, but vary in tone.

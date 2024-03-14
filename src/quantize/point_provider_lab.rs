@@ -1,7 +1,6 @@
-use crate::utils::color::Argb;
-use crate::utils::color::Lab;
+use crate::{color::Lab, Argb};
 
-use super::point_provider::PointProvider;
+use super::PointProvider;
 
 pub struct PointProviderLab;
 

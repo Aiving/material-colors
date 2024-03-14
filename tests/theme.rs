@@ -1,10 +1,6 @@
 use std::str::FromStr;
 
-use material_colors::utils::color::ParseRgbError;
-use material_colors::utils::theme::Theme;
-use material_colors::Argb;
-use material_colors::Rgb;
-use material_colors::Scheme;
+use material_colors::{color::ParseRgbError, Argb, Rgb, Scheme, Theme};
 
 #[test]
 fn test_theme() -> Result<(), ParseRgbError> {

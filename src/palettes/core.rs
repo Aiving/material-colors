@@ -1,9 +1,8 @@
 use core::fmt;
 
-use crate::hct::cam16::Cam16;
-use crate::utils::color::Argb;
+use crate::{hct::Cam16, Argb};
 
-use super::tonal::TonalPalette;
+use super::TonalPalette;
 
 /// An intermediate concept between the key color for a UI theme, and a full
 /// color scheme. 5 tonal palettes are generated, all except one use the same

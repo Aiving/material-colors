@@ -1,10 +1,8 @@
-use core::fmt;
-use std::error::Error;
-use std::str::FromStr;
 #[cfg(feature = "serde")]
 use serde::Serialize;
+use std::{error::Error, fmt, str::FromStr};
 
-use super::math::matrix_multiply;
+use crate::utils::math::matrix_multiply;
 
 pub const SRGB_TO_XYZ: [[f64; 3]; 3] = [
     [0.41233895, 0.35762064, 0.18051042],

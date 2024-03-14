@@ -1,19 +1,13 @@
-use std::io::Cursor;
-use std::io::Result;
-use std::path::Path;
+use std::{
+    io::{Cursor, Result},
+    path::Path,
+};
 
-use image::imageops::resize;
+pub use images::imageops::FilterType;
 
-pub use image::imageops::FilterType;
+use images::{imageops::resize, io::Reader, RgbaImage};
 
-use image::io::Reader;
-use image::RgbaImage;
-
-use crate::quantize::quantizer::Quantizer;
-use crate::quantize::quantizer_celebi::QuantizerCelebi;
-use crate::score::Score;
-
-use super::color::Argb;
+use crate::{quantize::Quantizer, quantize::QuantizerCelebi, score::Score, Argb};
 
 pub struct Image {
     image: RgbaImage,

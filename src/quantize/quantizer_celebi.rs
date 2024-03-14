@@ -1,11 +1,8 @@
-use crate::utils::color::Argb;
+use crate::Argb;
 
-use super::point_provider::PointProvider;
-use super::point_provider_lab::PointProviderLab;
-use super::quantizer::Quantizer;
-use super::quantizer::QuantizerResult;
-use super::quantizer_wsmeans::QuantizerWsmeans;
-use super::quantizer_wu::QuantizerWu;
+use super::{
+    PointProvider, PointProviderLab, Quantizer, QuantizerResult, QuantizerWsmeans, QuantizerWu,
+};
 
 #[derive(Default)]
 pub struct QuantizerCelebi;

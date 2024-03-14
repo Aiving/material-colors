@@ -1,9 +1,8 @@
 use indexmap::IndexMap;
 
-use crate::utils::color::Argb;
+use crate::Argb;
 
-use super::quantizer::Quantizer;
-use super::quantizer::QuantizerResult;
+use super::{Quantizer, QuantizerResult};
 
 #[derive(Default)]
 pub struct QuantizerMap;
