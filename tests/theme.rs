@@ -8,8 +8,7 @@ use material_colors::Scheme;
 
 #[test]
 fn test_theme() -> Result<(), ParseRgbError> {
-    let source = Argb::from_str("#AAE5A4")?;
-    let theme = theme_from_source_color(source, vec![]);
+    let theme = theme_from_source_color(Argb::from_str("#AAE5A4")?, vec![]);
 
     assert_eq!(
         theme.schemes.dark,

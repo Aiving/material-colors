@@ -730,7 +730,7 @@ dependencies = [
 
 [[package]]
 name = "material-colors"
-version = "0.1.6"
+version = "0.2.1"
 dependencies = [
  "ahash",
  "image",

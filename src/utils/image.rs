@@ -39,7 +39,11 @@ impl AsPixels for Image {
     fn as_pixels(&self) -> Vec<Argb> {
         self.image
             .pixels()
-            .map(|pixel| u32::from_be_bytes(pixel.0).rotate_right(8).to_be_bytes())
+            .map(|pixel| {
+                let [a, r, g, b] = u32::from_be_bytes(pixel.0).rotate_right(8).to_be_bytes();
+
+                Argb::new(a, r, g, b)
+            })
             .collect()
     }
 }

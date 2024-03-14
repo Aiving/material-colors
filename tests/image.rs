@@ -1,7 +1,6 @@
 #[cfg(feature = "image")]
 #[tokio::test]
 async fn main() -> Result<(), reqwest::Error> {
-    use material_colors::hex_from_argb;
     use material_colors::theme_from_source_color;
     use material_colors::FilterType;
     use material_colors::ImageReader;
@@ -18,7 +17,7 @@ async fn main() -> Result<(), reqwest::Error> {
 
     let color = ImageReader::extract_color(&data);
 
-    println!("{}", hex_from_argb(&color));
+    println!("{}", color);
 
     _ = theme_from_source_color(color, Default::default());
 

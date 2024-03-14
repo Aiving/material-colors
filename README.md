@@ -11,11 +11,12 @@ There are also a relatively large number of unused variables and functions (45 w
 From HEX color:
 
 ```rust
+use std::str::FromStr;
 use material_colors::theme_from_source_color;
-use material_colors::argb_from_hex;
+use material_colors::Argb;
 
 fn main() {
-    let theme = theme_from_source_color(argb_from_hex("#AAE5A4"), Default::default());
+    let theme = theme_from_source_color(Argb::from_str("#AAE5A4"), Default::default());
 
     // Do whatever you want...
 }
