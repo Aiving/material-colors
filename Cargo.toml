@@ -17,7 +17,6 @@ images = { package = "image", version = "0.25.0", optional = true }
 serde = { version = "1.0.197", features = ["derive"], optional = true }
 
 [features]
-default = ["image"]
 image = ["dep:images"]
 serde = ["dep:serde"]
 
