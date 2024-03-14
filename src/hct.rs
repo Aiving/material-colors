@@ -6,7 +6,6 @@ use core::hash::Hasher;
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-use crate::utils::color::lstar_from_argb;
 use crate::utils::color::lstar_from_y;
 use crate::utils::color::Argb;
 
@@ -55,7 +54,7 @@ impl Hct {
 
         self._hue = cam16.hue;
         self._chroma = cam16.chroma;
-        self._tone = lstar_from_argb(&self._argb);
+        self._tone = self._argb.as_lstar();
     }
 
     /// 0 <= [newChroma] <= ?
@@ -79,7 +78,7 @@ impl Hct {
 
         self._hue = cam16.hue;
         self._chroma = cam16.chroma;
-        self._tone = lstar_from_argb(&self._argb);
+        self._tone = self._argb.as_lstar();
     }
 
     /// Lightness. Ranges from 0 to 100.
@@ -107,7 +106,7 @@ impl Hct {
 
         self._hue = cam16.hue;
         self._chroma = cam16.chroma;
-        self._tone = lstar_from_argb(&self._argb);
+        self._tone = self._argb.as_lstar();
     }
 
     pub fn new(argb: Argb) -> Self {
@@ -117,7 +116,7 @@ impl Hct {
 
         let _hue = cam16.hue;
         let _chroma = cam16.chroma;
-        let _tone = lstar_from_argb(&argb);
+        let _tone = argb.as_lstar();
 
         Self {
             _hue,
@@ -157,9 +156,9 @@ impl Hct {
 
         // 2. Create CAM16 of those Xyz coordinates in default VC.
         let recast_in_vc = Cam16::from_xyz_in_viewing_conditions(
-            viewed_in_vc[0],
-            viewed_in_vc[1],
-            viewed_in_vc[2],
+            viewed_in_vc.x,
+            viewed_in_vc.y,
+            viewed_in_vc.z,
             ViewingConditions::standard(),
         );
 
@@ -169,7 +168,7 @@ impl Hct {
         Hct::from(
             recast_in_vc.hue,
             recast_in_vc.chroma,
-            lstar_from_y(viewed_in_vc[1]),
+            lstar_from_y(viewed_in_vc.y),
         )
     }
 }

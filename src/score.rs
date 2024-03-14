@@ -50,7 +50,7 @@ impl Score {
         filter: Option<bool>,
     ) -> Vec<Argb> {
         let desired = desired.unwrap_or(4);
-        let fallback_color_argb = fallback_color_argb.unwrap_or([255, 66, 133, 244]);
+        let fallback_color_argb = fallback_color_argb.unwrap_or(Argb::new(255, 66, 133, 244));
         let filter = filter.unwrap_or(true);
         // Get the HCT color for each Argb value, while finding the per hue count and
         // total count.

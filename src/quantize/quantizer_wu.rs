@@ -3,10 +3,6 @@
 use core::fmt;
 use indexmap::IndexMap;
 
-use crate::utils::color::argb_from_rgb;
-use crate::utils::color::blue_from_argb;
-use crate::utils::color::green_from_argb;
-use crate::utils::color::red_from_argb;
 use crate::utils::color::Argb;
 use crate::utils::color::Rgb;
 
@@ -84,9 +80,9 @@ impl QuantizerWu {
         self.moments = [0.0; TOTAL_SIZE];
 
         for (argb, count) in pixels {
-            let red = red_from_argb(&argb);
-            let green = green_from_argb(&argb);
-            let blue = blue_from_argb(&argb);
+            let red = argb.red;
+            let green = argb.green;
+            let blue = argb.blue;
 
             let i_r = (red >> BITS_TO_REMOVE) + 1;
             let i_g = (green >> BITS_TO_REMOVE) + 1;
@@ -152,7 +148,7 @@ impl QuantizerWu {
     pub fn create_boxes(&mut self, max_color_count: usize) -> CreateBoxesResult {
         self.cubes = vec![
             Cube {
-                pixels: [[0, 0, 0], [0, 0, 0]],
+                pixels: [Rgb::default(), Rgb::default()],
                 vol: 0
             };
             max_color_count
@@ -160,12 +156,12 @@ impl QuantizerWu {
 
         self.cubes[0] = Cube {
             pixels: [
-                [0, 0, 0],
-                [
+                Rgb::default(),
+                Rgb::new(
                     SIDE_LENGTH as u8 - 1,
                     SIDE_LENGTH as u8 - 1,
                     SIDE_LENGTH as u8 - 1,
-                ],
+                ),
             ],
             vol: 0,
         };
@@ -236,7 +232,7 @@ impl QuantizerWu {
                 let g = (Self::volume(cube, &self.moments_g) / weight) as u8;
                 let b = (Self::volume(cube, &self.moments_b) / weight) as u8;
 
-                let color = argb_from_rgb([r, g, b]);
+                let color = Rgb::new(r, g, b).into();
 
                 result.insert(color, 0);
             }
@@ -250,7 +246,15 @@ impl QuantizerWu {
         let dg = Self::volume(cube, &self.moments_g);
         let db = Self::volume(cube, &self.moments_b);
 
-        let [[r0, g0, b0], [r1, g1, b1]] = cube.pixels;
+        let [Rgb {
+            red: r0,
+            green: g0,
+            blue: b0,
+        }, Rgb {
+            red: r1,
+            green: g1,
+            blue: b1,
+        }] = cube.pixels;
 
         let xx = self.moments[Self::get_index(r1, g1, b1)]
             - self.moments[Self::get_index(r1, g1, b0)]
@@ -327,28 +331,28 @@ impl QuantizerWu {
             cut_direction = Direction::Blue;
         }
 
-        two.pixels[1][0] = one.pixels[1][0];
-        two.pixels[1][1] = one.pixels[1][1];
-        two.pixels[1][2] = one.pixels[1][2];
+        two.pixels[1].red = one.pixels[1].red;
+        two.pixels[1].green = one.pixels[1].green;
+        two.pixels[1].blue = one.pixels[1].blue;
 
         match cut_direction {
             Direction::Red => {
-                one.pixels[1][0] = max_rresult.cut_location.unwrap_or_default();
-                two.pixels[0][0] = one.pixels[1][0];
-                two.pixels[0][1] = one.pixels[0][1];
-                two.pixels[0][2] = one.pixels[0][2];
+                one.pixels[1].red = max_rresult.cut_location.unwrap_or_default();
+                two.pixels[0].red = one.pixels[1].red;
+                two.pixels[0].green = one.pixels[0].green;
+                two.pixels[0].blue = one.pixels[0].blue;
             }
             Direction::Green => {
-                one.pixels[1][1] = max_gresult.cut_location.unwrap_or_default();
-                two.pixels[0][0] = one.pixels[0][0];
-                two.pixels[0][1] = one.pixels[1][1];
-                two.pixels[0][2] = one.pixels[0][2];
+                one.pixels[1].blue = max_gresult.cut_location.unwrap_or_default();
+                two.pixels[0].red = one.pixels[0].red;
+                two.pixels[0].green = one.pixels[1].green;
+                two.pixels[0].blue = one.pixels[0].blue;
             }
             Direction::Blue => {
-                one.pixels[1][2] = max_bresult.cut_location.unwrap_or_default();
-                two.pixels[0][0] = one.pixels[0][0];
-                two.pixels[0][1] = one.pixels[0][1];
-                two.pixels[0][2] = one.pixels[1][2];
+                one.pixels[1].green = max_bresult.cut_location.unwrap_or_default();
+                two.pixels[0].red = one.pixels[0].red;
+                two.pixels[0].green = one.pixels[0].green;
+                two.pixels[0].blue = one.pixels[1].blue;
             }
         }
 
@@ -430,7 +434,15 @@ impl QuantizerWu {
     }
 
     pub fn volume(cube: &Cube, moment: &[u32]) -> i32 {
-        let [[r0, g0, b0], [r1, g1, b1]] = cube.pixels;
+        let [Rgb {
+            red: r0,
+            green: g0,
+            blue: b0,
+        }, Rgb {
+            red: r1,
+            green: g1,
+            blue: b1,
+        }] = cube.pixels;
 
         (moment[Self::get_index(r1, g1, b1)] as i32)
             .wrapping_sub(moment[Self::get_index(r1, g1, b0)] as i32)
@@ -443,7 +455,15 @@ impl QuantizerWu {
     }
 
     pub fn bottom(cube: &Cube, direction: &Direction, moment: &[u32]) -> i32 {
-        let [[r0, g0, b0], [r1, g1, b1]] = cube.pixels;
+        let [Rgb {
+            red: r0,
+            green: g0,
+            blue: b0,
+        }, Rgb {
+            red: r1,
+            green: g1,
+            blue: b1,
+        }] = cube.pixels;
 
         match direction {
             Direction::Red => (moment[Self::get_index(r0, g1, b1)] as i32)
@@ -465,7 +485,15 @@ impl QuantizerWu {
     }
 
     pub fn top(cube: &Cube, direction: &Direction, position: u8, moment: &[u32]) -> i32 {
-        let [[r0, g0, b0], [r1, g1, b1]] = cube.pixels;
+        let [Rgb {
+            red: r0,
+            green: g0,
+            blue: b0,
+        }, Rgb {
+            red: r1,
+            green: g1,
+            blue: b1,
+        }] = cube.pixels;
 
         match direction {
             Direction::Red => (moment[Self::get_index(position, g1, b1)] as i32)
@@ -510,15 +538,15 @@ pub struct Cube {
 
 impl Cube {
     pub fn r<T: From<u8>>(&self, pixel: usize) -> T {
-        self.pixels[pixel][0].into()
+        self.pixels[pixel].red.into()
     }
 
     pub fn g<T: From<u8>>(&self, pixel: usize) -> T {
-        self.pixels[pixel][1].into()
+        self.pixels[pixel].green.into()
     }
 
     pub fn b<T: From<u8>>(&self, pixel: usize) -> T {
-        self.pixels[pixel][2].into()
+        self.pixels[pixel].blue.into()
     }
 }
 
@@ -527,12 +555,12 @@ impl fmt::Display for Cube {
         write!(
             f,
             "Box R {} -> {} G {} -> {} B {} -> {} VOL = {}",
-            self.pixels[0][0],
-            self.pixels[0][1],
-            self.pixels[0][2],
-            self.pixels[1][0],
-            self.pixels[1][1],
-            self.pixels[1][2],
+            self.pixels[0].red,
+            self.pixels[0].green,
+            self.pixels[0].blue,
+            self.pixels[1].red,
+            self.pixels[1].green,
+            self.pixels[1].blue,
             self.vol
         )
     }

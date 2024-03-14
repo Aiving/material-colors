@@ -1,7 +1,5 @@
 use core::f64::consts::PI;
 
-use crate::utils::color::argb_from_xyz;
-use crate::utils::color::xyz_from_argb;
 use crate::utils::color::Argb;
 use crate::utils::color::Xyz;
 
@@ -86,10 +84,7 @@ impl Cam16 {
         viewing_conditions: ViewingConditions,
     ) -> Cam16 {
         // Transform Argb int to Xyz
-        let xyz = xyz_from_argb(&argb);
-        let x = xyz[0];
-        let y = xyz[1];
-        let z = xyz[2];
+        let Xyz { x, y, z } = Xyz::from(argb);
 
         Cam16::from_xyz_in_viewing_conditions(x, y, z, viewing_conditions)
     }
@@ -259,7 +254,7 @@ impl Cam16 {
     pub fn viewed(&self, viewing_conditions: ViewingConditions) -> Argb {
         let xyz = self.xyz_in_viewing_conditions(viewing_conditions);
 
-        argb_from_xyz(xyz)
+        xyz.into()
     }
 
     /// Xyz representation of CAM16 seen in [viewing_conditions].
@@ -305,7 +300,7 @@ impl Cam16 {
         let y = 0.38752654 * r_f + 0.62144744 * g_f - 0.00897398 * b_f;
         let z = -0.01584150 * r_f - 0.03412294 * g_f + 1.04996444 * b_f;
 
-        [x, y, z]
+        Xyz::new(x, y, z)
     }
 }
 

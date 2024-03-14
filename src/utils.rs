@@ -6,5 +6,4 @@ pub mod math;
 
 pub(crate) mod random;
 
-pub mod string;
 pub mod theme;

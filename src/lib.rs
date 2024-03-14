@@ -33,8 +33,6 @@ pub use utils::image::Image;
 #[cfg(feature = "image")]
 pub use utils::image::ImageReader;
 
-pub use utils::string::argb_from_hex;
-pub use utils::string::hex_from_argb;
 pub use utils::theme::theme_from_source_color;
 
 pub use palettes::core::CorePalette;

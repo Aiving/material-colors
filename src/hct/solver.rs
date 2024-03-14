@@ -1,9 +1,8 @@
 use core::f64::consts::PI;
 
-use crate::utils::color::argb_from_linrgb;
-use crate::utils::color::argb_from_lstar;
 use crate::utils::color::y_from_lstar;
 use crate::utils::color::Argb;
+use crate::utils::color::LinearRgb;
 use crate::utils::math::matrix_multiply;
 use crate::utils::math::sanitize_degrees_double;
 
@@ -604,30 +603,31 @@ impl HctSolver {
             let r_cscaled = Self::inverse_chromatic_adaptation(r_a);
             let g_cscaled = Self::inverse_chromatic_adaptation(g_a);
             let b_cscaled = Self::inverse_chromatic_adaptation(b_a);
-            let linrgb = matrix_multiply(
+            let [red, green, blue] = matrix_multiply(
                 [r_cscaled, g_cscaled, b_cscaled],
                 LINRGB_FROM_SCALED_DISCOUNT,
             );
+            let linrgb = LinearRgb { red, green, blue };
             // ===========================================================
             // Operations inlined from Cam16 to avoid repeated calculation
             // ===========================================================
-            if linrgb[0] < 0.0 || linrgb[1] < 0.0 || linrgb[2] < 0.0 {
-                return [0; 4];
+            if linrgb.red < 0.0 || linrgb.green < 0.0 || linrgb.blue < 0.0 {
+                return Argb::default();
             }
 
             let [k_r, k_g, k_b] = Y_FROM_LINRGB;
-            let fnj = k_r * linrgb[0] + k_g * linrgb[1] + k_b * linrgb[2];
+            let fnj = k_r * linrgb.red + k_g * linrgb.green + k_b * linrgb.blue;
 
             if fnj <= 0.0 {
-                return [0; 4];
+                return Argb::default();
             }
 
             if iteration_round == 4 || (fnj - y).abs() < 0.002 {
-                if linrgb[0] > 100.01 || linrgb[1] > 100.01 || linrgb[2] > 100.01 {
-                    return [0; 4];
+                if linrgb.red > 100.01 || linrgb.green > 100.01 || linrgb.blue > 100.01 {
+                    return Argb::default();
                 }
 
-                return argb_from_linrgb(linrgb);
+                return linrgb.into();
             }
 
             // Iterates with Newton method,
@@ -635,7 +635,7 @@ impl HctSolver {
             j = j - (fnj - y) * j / (2.0 * fnj);
         }
 
-        [0; 4]
+        Argb::default()
     }
 
     /// Finds an sRgb color with the given hue, chroma, and L*, if
@@ -648,7 +648,7 @@ impl HctSolver {
     /// chroma will be maximized.
     pub fn solve_to_int(hue_degrees: f64, chroma: f64, lstar: f64) -> Argb {
         if chroma < 0.0001 || !(0.0001..=99.9999).contains(&lstar) {
-            return argb_from_lstar(lstar);
+            return Argb::from_lstar(lstar);
         }
 
         let hue_degrees = sanitize_degrees_double(hue_degrees);
@@ -658,13 +658,14 @@ impl HctSolver {
 
         let exact_answer = Self::find_result_by_j(hue_radians, chroma, y);
 
-        if exact_answer != [0; 4] {
+        if exact_answer != Argb::default() {
             return exact_answer;
         }
 
-        let linrgb = Self::bisect_to_limit(y, hue_radians);
+        let [red, green, blue] = Self::bisect_to_limit(y, hue_radians);
+        let linrgb = LinearRgb { red, green, blue };
 
-        argb_from_linrgb(linrgb)
+        linrgb.into()
     }
 
     /// Finds a CAM16 object with the given hue, chroma, and L*, if

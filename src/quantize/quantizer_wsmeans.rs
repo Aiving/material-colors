@@ -4,6 +4,7 @@ use std::cmp::Ordering;
 
 use crate::quantize::point_provider_lab::PointProviderLab;
 use crate::utils::color::Argb;
+use crate::utils::color::Lab;
 use crate::utils::random::Random;
 
 use super::point_provider::PointProvider;
@@ -82,7 +83,7 @@ impl QuantizerWsmeans {
         };
 
         let mut pixel_to_count: IndexMap<Argb, u32> = Default::default();
-        let mut points: Vec<[f64; 3]> = vec![];
+        let mut points: Vec<Lab> = vec![];
         let mut pixels: Vec<Argb> = vec![];
         let mut point_count = 0;
 
@@ -290,16 +291,16 @@ impl QuantizerWsmeans {
                 let count = counts[i];
 
                 pixel_count_sums[cluster_index] += count;
-                component_asums[cluster_index] += point[0] * count as f64;
-                component_bsums[cluster_index] += point[1] * count as f64;
-                component_csums[cluster_index] += point[2] * count as f64;
+                component_asums[cluster_index] += point.l * count as f64;
+                component_bsums[cluster_index] += point.a * count as f64;
+                component_csums[cluster_index] += point.b * count as f64;
             }
 
             for i in 0..cluster_count {
                 let count = pixel_count_sums[i];
 
                 if count == 0 {
-                    clusters[i] = [0.0, 0.0, 0.0];
+                    clusters[i] = Lab::default();
 
                     continue;
                 }
@@ -308,7 +309,7 @@ impl QuantizerWsmeans {
                 let b = component_bsums[i] / count as f64;
                 let c = component_csums[i] / count as f64;
 
-                clusters[i] = [a, b, c]
+                clusters[i] = Lab { l: a, a: b, b: c };
             }
         }
 

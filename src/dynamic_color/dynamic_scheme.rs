@@ -6,7 +6,6 @@ use crate::hct::Hct;
 use crate::palettes::tonal::TonalPalette;
 use crate::utils::color::Argb;
 use crate::utils::math::sanitize_degrees_double;
-use crate::utils::string::hex_from_argb;
 
 use super::material_dynamic_colors::MaterialDynamicColors;
 use super::variant::Variant;
@@ -300,99 +299,47 @@ impl PartialEq for DynamicScheme {
 impl fmt::Display for DynamicScheme {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Scheme {{")?;
-        writeln!(f, "  primary = #{}", hex_from_argb(&self.primary()))?;
-        writeln!(f, "  on_primary = #{}", hex_from_argb(&self.on_primary()))?;
+        writeln!(f, "  primary = {}", self.primary())?;
+        writeln!(f, "  on_primary = {}", self.on_primary())?;
+        writeln!(f, "  primary_container = {}", self.primary_container())?;
         writeln!(
             f,
-            "  primary_container = #{}",
-            hex_from_argb(&self.primary_container())
+            "  on_primary_container = {}",
+            self.on_primary_container()
         )?;
+        writeln!(f, "  secondary = {}", self.secondary())?;
+        writeln!(f, "  on_secondary = {}", self.on_secondary())?;
+        writeln!(f, "  secondary_container = {}", self.secondary_container())?;
         writeln!(
             f,
-            "  on_primary_container = #{}",
-            hex_from_argb(&self.on_primary_container())
+            "  on_secondary_container = {}",
+            self.on_secondary_container()
         )?;
-        writeln!(f, "  secondary = #{}", hex_from_argb(&self.secondary()))?;
+        writeln!(f, "  tertiary = {}", self.tertiary())?;
+        writeln!(f, "  on_tertiary = {}", self.on_tertiary())?;
+        writeln!(f, "  tertiary_container = {}", self.tertiary_container())?;
         writeln!(
             f,
-            "  on_secondary = #{}",
-            hex_from_argb(&self.on_secondary())
+            "  on_tertiary_container = {}",
+            self.on_tertiary_container()
         )?;
-        writeln!(
-            f,
-            "  secondary_container = #{}",
-            hex_from_argb(&self.secondary_container())
-        )?;
-        writeln!(
-            f,
-            "  on_secondary_container = #{}",
-            hex_from_argb(&self.on_secondary_container())
-        )?;
-        writeln!(f, "  tertiary = #{}", hex_from_argb(&self.tertiary()))?;
-        writeln!(f, "  on_tertiary = #{}", hex_from_argb(&self.on_tertiary()))?;
-        writeln!(
-            f,
-            "  tertiary_container = #{}",
-            hex_from_argb(&self.tertiary_container())
-        )?;
-        writeln!(
-            f,
-            "  on_tertiary_container = #{}",
-            hex_from_argb(&self.on_tertiary_container())
-        )?;
-        writeln!(f, "  error = #{}", hex_from_argb(&self.error()))?;
-        writeln!(f, "  on_error = #{}", hex_from_argb(&self.on_error()))?;
-        writeln!(
-            f,
-            "  error_container = #{}",
-            hex_from_argb(&self.error_container())
-        )?;
-        writeln!(
-            f,
-            "  on_error_container = #{}",
-            hex_from_argb(&self.on_error_container())
-        )?;
-        writeln!(f, "  background = #{}", hex_from_argb(&self.background()))?;
-        writeln!(
-            f,
-            "  on_background = #{}",
-            hex_from_argb(&self.on_background())
-        )?;
-        writeln!(f, "  surface = #{}", hex_from_argb(&self.surface()))?;
-        writeln!(f, "  on_surface = #{}", hex_from_argb(&self.on_surface()))?;
-        writeln!(
-            f,
-            "  surface_variant = #{}",
-            hex_from_argb(&self.surface_variant())
-        )?;
-        writeln!(
-            f,
-            "  on_surface_variant = #{}",
-            hex_from_argb(&self.on_surface_variant())
-        )?;
-        writeln!(f, "  outline = #{}", hex_from_argb(&self.outline()))?;
-        writeln!(
-            f,
-            "  outline_variant = #{}",
-            hex_from_argb(&self.outline_variant())
-        )?;
-        writeln!(f, "  shadow = #{}", hex_from_argb(&self.shadow()))?;
-        writeln!(f, "  scrim = #{}", hex_from_argb(&self.scrim()))?;
-        writeln!(
-            f,
-            "  inverse_surface = #{}",
-            hex_from_argb(&self.inverse_surface())
-        )?;
-        writeln!(
-            f,
-            "  inverse_on_surface = #{}",
-            hex_from_argb(&self.inverse_on_surface())
-        )?;
-        writeln!(
-            f,
-            "  inverse_primary = #{}",
-            hex_from_argb(&self.inverse_primary())
-        )?;
+        writeln!(f, "  error = {}", self.error())?;
+        writeln!(f, "  on_error = {}", self.on_error())?;
+        writeln!(f, "  error_container = {}", self.error_container())?;
+        writeln!(f, "  on_error_container = {}", self.on_error_container())?;
+        writeln!(f, "  background = {}", self.background())?;
+        writeln!(f, "  on_background = {}", self.on_background())?;
+        writeln!(f, "  surface = {}", self.surface())?;
+        writeln!(f, "  on_surface = {}", self.on_surface())?;
+        writeln!(f, "  surface_variant = {}", self.surface_variant())?;
+        writeln!(f, "  on_surface_variant = {}", self.on_surface_variant())?;
+        writeln!(f, "  outline = {}", self.outline())?;
+        writeln!(f, "  outline_variant = {}", self.outline_variant())?;
+        writeln!(f, "  shadow = {}", self.shadow())?;
+        writeln!(f, "  scrim = {}", self.scrim())?;
+        writeln!(f, "  inverse_surface = {}", self.inverse_surface())?;
+        writeln!(f, "  inverse_on_surface = {}", self.inverse_on_surface())?;
+        writeln!(f, "  inverse_primary = {}", self.inverse_primary())?;
         writeln!(f, "}}")
     }
 }

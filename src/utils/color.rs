@@ -1,3 +1,7 @@
+use core::fmt;
+use std::error::Error;
+use std::str::FromStr;
+
 use super::math::matrix_multiply;
 
 pub const SRGB_TO_XYZ: [[f64; 3]; 3] = [
@@ -20,151 +24,306 @@ pub const XYZ_TO_SRGB: [[f64; 3]; 3] = [
 ];
 pub const WHITE_POINT_D65: [f64; 3] = [95.047, 100.0, 108.883];
 
-pub type Rgb = [u8; 3];
-pub type Argb = [u8; 4];
-pub type LinearRgb = [f64; 3];
-pub type Xyz = [f64; 3];
-pub type Lab = [f64; 3];
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Rgb {
+    pub red: u8,
+    pub green: u8,
+    pub blue: u8,
+}
+
+#[derive(Debug, Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Argb {
+    pub alpha: u8,
+    pub red: u8,
+    pub green: u8,
+    pub blue: u8,
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct LinearRgb {
+    pub red: f64,
+    pub green: f64,
+    pub blue: f64,
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Xyz {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Lab {
+    pub l: f64,
+    pub a: f64,
+    pub b: f64,
+}
 
 /** Converts a color from Rgb components to Argb format. */
-pub fn argb_from_rgb([r, g, b]: Rgb) -> Argb {
-    [255, r, g, b]
+impl From<Rgb> for Argb {
+    fn from(Rgb { red, green, blue }: Rgb) -> Argb {
+        Argb {
+            alpha: 255,
+            red,
+            green,
+            blue,
+        }
+    }
 }
 
 /** Converts a color from linear Rgb components to Argb format. */
-pub fn argb_from_linrgb([r, g, b]: LinearRgb) -> Argb {
-    let r = delinearized(r);
-    let g = delinearized(g);
-    let b = delinearized(b);
+impl From<LinearRgb> for Argb {
+    fn from(linear: LinearRgb) -> Argb {
+        let r = delinearized(linear.red);
+        let g = delinearized(linear.green);
+        let b = delinearized(linear.blue);
 
-    argb_from_rgb([r, g, b])
+        Rgb::new(r, g, b).into()
+    }
 }
-
-/** Returns the alpha component of a color in Argb format. */
-pub fn alpha_from_argb([alpha, _, _, _]: Argb) -> u8 {
-    alpha
-}
-
-/** Returns the red component of a color in Argb format. */
-pub fn red_from_argb([_, red, _, _]: &Argb) -> u8 {
-    *red
-}
-
-/** Returns the green component of a color in Argb format. */
-pub fn green_from_argb([_, _, green, _]: &Argb) -> u8 {
-    *green
-}
-
-/** Returns the blue component of a color in Argb format. */
-pub fn blue_from_argb([_, _, _, blue]: &Argb) -> u8 {
-    *blue
-}
-
-/** Returns whether a color in Argb format is opaque. */
-//pub fn is_opaque(argb: Argb) -> bool {
-//     alpha_from_argb(argb) >= 255
-// }
 
 /** Converts a color from Argb to Xyz. */
-pub fn argb_from_xyz([x, y, z]: Xyz) -> Argb {
-    let matrix = XYZ_TO_SRGB;
+impl From<Xyz> for Argb {
+    fn from(Xyz { x, y, z }: Xyz) -> Argb {
+        let matrix = XYZ_TO_SRGB;
 
-    let linear_r = matrix[0][0] * x + matrix[0][1] * y + matrix[0][2] * z;
-    let linear_g = matrix[1][0] * x + matrix[1][1] * y + matrix[1][2] * z;
-    let linear_b = matrix[2][0] * x + matrix[2][1] * y + matrix[2][2] * z;
+        let linear_r = matrix[0][0] * x + matrix[0][1] * y + matrix[0][2] * z;
+        let linear_g = matrix[1][0] * x + matrix[1][1] * y + matrix[1][2] * z;
+        let linear_b = matrix[2][0] * x + matrix[2][1] * y + matrix[2][2] * z;
 
-    let r = delinearized(linear_r);
-    let g = delinearized(linear_g);
-    let b = delinearized(linear_b);
+        let r = delinearized(linear_r);
+        let g = delinearized(linear_g);
+        let b = delinearized(linear_b);
 
-    argb_from_rgb([r, g, b])
+        Rgb::new(r, g, b).into()
+    }
 }
 
 /** Converts a color from Xyz to Argb. */
-pub fn xyz_from_argb(argb: &Argb) -> Xyz {
-    let r = linearized(red_from_argb(argb));
-    let g = linearized(green_from_argb(argb));
-    let b = linearized(blue_from_argb(argb));
+impl From<Argb> for Xyz {
+    fn from(
+        Argb {
+            alpha: _,
+            red,
+            green,
+            blue,
+        }: Argb,
+    ) -> Xyz {
+        let r = linearized(red);
+        let g = linearized(green);
+        let b = linearized(blue);
 
-    matrix_multiply([r, g, b], SRGB_TO_XYZ)
+        let [x, y, z] = matrix_multiply([r, g, b], SRGB_TO_XYZ);
+
+        Xyz { x, y, z }
+    }
 }
 
 /** Converts a color represented in Lab color space into an Argb integer. */
-pub fn argb_from_lab([l, a, b]: &Lab) -> Argb {
-    let white_point = WHITE_POINT_D65;
+impl From<Lab> for Argb {
+    fn from(Lab { l, a, b }: Lab) -> Argb {
+        let white_point = WHITE_POINT_D65;
 
-    let fy = (l + 16.0) / 116.0;
-    let fx = a / 500.0 + fy;
-    let fz = fy - b / 200.0;
+        let fy = (l + 16.0) / 116.0;
+        let fx = a / 500.0 + fy;
+        let fz = fy - b / 200.0;
 
-    let x_normalized = lab_invf(fx);
-    let y_normalized = lab_invf(fy);
-    let z_normalized = lab_invf(fz);
+        let x_normalized = lab_invf(fx);
+        let y_normalized = lab_invf(fy);
+        let z_normalized = lab_invf(fz);
 
-    let x = x_normalized * white_point[0];
-    let y = y_normalized * white_point[1];
-    let z = z_normalized * white_point[2];
+        let x = x_normalized * white_point[0];
+        let y = y_normalized * white_point[1];
+        let z = z_normalized * white_point[2];
 
-    argb_from_xyz([x, y, z])
+        Rgb::new(x as u8, y as u8, z as u8).into()
+    }
 }
-
 /**
  * Converts a color from Argb representation to L*a*b* representation.
  *
  * @param argb the Argb representation of a color
  * @return a Lab object representing the color
  */
-pub fn lab_from_argb(argb: &Argb) -> Lab {
-    let linear_r = linearized(red_from_argb(argb));
-    let linear_g = linearized(green_from_argb(argb));
-    let linear_b = linearized(blue_from_argb(argb));
+impl From<Argb> for Lab {
+    fn from(
+        Argb {
+            alpha: _,
+            red,
+            green,
+            blue,
+        }: Argb,
+    ) -> Lab {
+        let linear_r = linearized(red);
+        let linear_g = linearized(green);
+        let linear_b = linearized(blue);
 
-    let matrix = SRGB_TO_XYZ;
+        let matrix = SRGB_TO_XYZ;
 
-    let x = matrix[0][0] * linear_r + matrix[0][1] * linear_g + matrix[0][2] * linear_b;
-    let y = matrix[1][0] * linear_r + matrix[1][1] * linear_g + matrix[1][2] * linear_b;
-    let z = matrix[2][0] * linear_r + matrix[2][1] * linear_g + matrix[2][2] * linear_b;
+        let x = matrix[0][0] * linear_r + matrix[0][1] * linear_g + matrix[0][2] * linear_b;
+        let y = matrix[1][0] * linear_r + matrix[1][1] * linear_g + matrix[1][2] * linear_b;
+        let z = matrix[2][0] * linear_r + matrix[2][1] * linear_g + matrix[2][2] * linear_b;
 
-    let white_point = WHITE_POINT_D65;
+        let white_point = WHITE_POINT_D65;
 
-    let x_normalized = x / white_point[0];
-    let y_normalized = y / white_point[1];
-    let z_normalized = z / white_point[2];
+        let x_normalized = x / white_point[0];
+        let y_normalized = y / white_point[1];
+        let z_normalized = z / white_point[2];
 
-    let fx = lab_f(x_normalized);
-    let fy = lab_f(y_normalized);
-    let fz = lab_f(z_normalized);
+        let fx = lab_f(x_normalized);
+        let fy = lab_f(y_normalized);
+        let fz = lab_f(z_normalized);
 
-    let l = 116.0 * fy - 16.0;
-    let a = 500.0 * (fx - fy);
-    let b = 200.0 * (fy - fz);
+        let l = 116.0 * fy - 16.0;
+        let a = 500.0 * (fx - fy);
+        let b = 200.0 * (fy - fz);
 
-    [l, a, b]
+        Lab { l, a, b }
+    }
 }
 
-/**
- * Converts an L* value to an Argb representation.
- *
- * @param lstar L* in L*a*b*
- * @return Argb representation of grayscale color with lightness matching L*
- */
-pub fn argb_from_lstar(lstar: f64) -> Argb {
-    let y = y_from_lstar(lstar);
-    let component = delinearized(y);
+fn hex_digit_to_rgb(number: u32) -> Rgb {
+    let r = number >> 16;
+    let g = (number >> 8) & 0x00FF;
+    let b = number & 0x0000_00FF;
 
-    argb_from_rgb([component, component, component])
+    Rgb::new(r as u8, g as u8, b as u8)
 }
 
-/**
- * Computes the L* value of a color in Argb representation.
- *
- * @param argb Argb representation of a color
- * @return L*, from L*a*b*, coordinate of the color
- */
-pub fn lstar_from_argb(argb: &Argb) -> f64 {
-    let y = xyz_from_argb(argb)[1];
+/// An error returned when parsing a `bool` using [`from_str`] fails
+///
+/// [`from_str`]: super::FromStr::from_str
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParseRgbError;
 
-    116.0 * lab_f(y / 100.0) - 16.0
+impl fmt::Display for ParseRgbError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        "provided string was not RGB-like".fmt(f)
+    }
+}
+
+impl Error for ParseRgbError {
+    fn description(&self) -> &str {
+        "failed to parse RGB"
+    }
+}
+
+const HASH: u8 = b'#';
+
+impl FromStr for Argb {
+    type Err = ParseRgbError;
+
+    fn from_str(hex: &str) -> Result<Self, Self::Err> {
+        let s = hex.as_bytes();
+        let mut buff: [u8; 6] = [0; 6];
+        let mut buff_len = 0;
+
+        for b in s {
+            if !b.is_ascii() || buff_len == 6 {
+                return Err(ParseRgbError);
+            }
+
+            let bl = b.to_ascii_lowercase();
+
+            if bl == HASH {
+                continue;
+            }
+
+            if bl.is_ascii_hexdigit() {
+                buff[buff_len] = bl;
+                buff_len += 1;
+            } else {
+                return Err(ParseRgbError);
+            }
+        }
+
+        if buff_len == 3 {
+            buff = [buff[0], buff[0], buff[1], buff[1], buff[2], buff[2]];
+        }
+
+        let hex_str = core::str::from_utf8(&buff).map_err(|_| ParseRgbError)?;
+        let hex_digit = u32::from_str_radix(hex_str, 16).map_err(|_| ParseRgbError)?;
+
+        Ok(hex_digit_to_rgb(hex_digit).into())
+    }
+}
+
+impl Xyz {
+    pub const fn new(x: f64, y: f64, z: f64) -> Self {
+        Self { x, y, z }
+    }
+}
+
+impl Lab {
+    pub const fn new(l: f64, a: f64, b: f64) -> Self {
+        Self { l, a, b }
+    }
+}
+
+impl Rgb {
+    pub const fn new(red: u8, green: u8, blue: u8) -> Self {
+        Self { red, green, blue }
+    }
+}
+
+impl Argb {
+    pub const fn new(alpha: u8, red: u8, green: u8, blue: u8) -> Self {
+        Self {
+            alpha,
+            red,
+            green,
+            blue,
+        }
+    }
+
+    /**
+     * Converts an L* value to an Argb representation.
+     *
+     * @param lstar L* in L*a*b*
+     * @return Argb representation of grayscale color with lightness matching L*
+     */
+    pub fn from_lstar(lstar: f64) -> Self {
+        let y = y_from_lstar(lstar);
+        let component = delinearized(y);
+
+        Rgb::new(component, component, component).into()
+    }
+
+    /**
+     * Computes the L* value of a color in Argb representation.
+     *
+     * @param argb Argb representation of a color
+     * @return L*, from L*a*b*, coordinate of the color
+     */
+    pub fn as_lstar(&self) -> f64 {
+        116.0 * lab_f(Xyz::from(*self).y / 100.0) - 16.0
+    }
+
+    fn hex(number: u8) -> String {
+        let string = format!("{:x}", number);
+
+        if string.len() == 1 {
+            String::from("0") + &string
+        } else {
+            string
+        }
+    }
+
+    pub fn as_hex(&self) -> String {
+        format!(
+            "#{}{}{}",
+            Argb::hex(self.red),
+            Argb::hex(self.green),
+            Argb::hex(self.blue)
+        )
+    }
+}
+
+impl fmt::Display for Argb {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.as_hex())
+    }
 }
 
 /**

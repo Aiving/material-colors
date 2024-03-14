@@ -3,8 +3,9 @@ use core::cmp::Ordering;
 use core::f64::consts::PI;
 
 use crate::hct::Hct;
-use crate::utils::color::lab_from_argb;
+use crate::utils::color::Lab;
 use crate::utils::math::sanitize_degrees_double;
+use crate::Argb;
 
 /// Design utilities using color temperature theory.
 ///
@@ -354,9 +355,9 @@ impl TemperatureCache {
     /// - Upper bound: -0.52 + (chroma ^ 1.07 / 20). L*a*b* chroma is infinite.
     ///   Assuming max of 130 chroma, 8.61.
     pub fn raw_temperature(color: Hct) -> f64 {
-        let lab = lab_from_argb(&color.into());
-        let hue = sanitize_degrees_double(lab[2].atan2(lab[1]) * 180.0 / PI);
-        let chroma = ((lab[1] * lab[1]) + (lab[2] * lab[2])).sqrt();
+        let lab = Lab::from(Argb::from(color));
+        let hue = sanitize_degrees_double(lab.b.atan2(lab.a) * 180.0 / PI);
+        let chroma = ((lab.a * lab.a) + (lab.b * lab.b)).sqrt();
 
         -0.5 + 0.02 * chroma.powf(1.07) * (sanitize_degrees_double(hue - 50.0) * PI / 180.0).cos()
     }
