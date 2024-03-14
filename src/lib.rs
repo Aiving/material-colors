@@ -33,7 +33,5 @@ pub use utils::image::Image;
 #[cfg(feature = "image")]
 pub use utils::image::ImageReader;
 
-pub use utils::theme::theme_from_source_color;
-
 pub use palettes::core::CorePalette;
 pub use palettes::tonal::TonalPalette;

@@ -1,14 +1,14 @@
 use std::str::FromStr;
 
-use material_colors::theme_from_source_color;
 use material_colors::utils::color::ParseRgbError;
+use material_colors::utils::theme::Theme;
 use material_colors::Argb;
 use material_colors::Rgb;
 use material_colors::Scheme;
 
 #[test]
 fn test_theme() -> Result<(), ParseRgbError> {
-    let theme = theme_from_source_color(Argb::from_str("#AAE5A4")?, vec![]);
+    let theme = Theme::from_source_color(Argb::from_str("#AAE5A4")?, vec![]);
 
     assert_eq!(
         theme.schemes.dark,
