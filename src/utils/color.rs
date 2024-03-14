@@ -1,6 +1,8 @@
 use core::fmt;
 use std::error::Error;
 use std::str::FromStr;
+#[cfg(feature = "serde")]
+use serde::Serialize;
 
 use super::math::matrix_multiply;
 
@@ -25,6 +27,7 @@ pub const XYZ_TO_SRGB: [[f64; 3]; 3] = [
 pub const WHITE_POINT_D65: [f64; 3] = [95.047, 100.0, 108.883];
 
 #[derive(Debug, Default, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Rgb {
     pub red: u8,
     pub green: u8,
@@ -32,6 +35,7 @@ pub struct Rgb {
 }
 
 #[derive(Debug, Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Argb {
     pub alpha: u8,
     pub red: u8,
@@ -40,6 +44,7 @@ pub struct Argb {
 }
 
 #[derive(Debug, Default, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct LinearRgb {
     pub red: f64,
     pub green: f64,
@@ -47,6 +52,7 @@ pub struct LinearRgb {
 }
 
 #[derive(Debug, Default, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Xyz {
     pub x: f64,
     pub y: f64,
@@ -54,6 +60,7 @@ pub struct Xyz {
 }
 
 #[derive(Debug, Default, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Lab {
     pub l: f64,
     pub a: f64,

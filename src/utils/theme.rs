@@ -55,7 +55,6 @@ pub struct Palettes {
     pub error: TonalPalette,
 }
 
-// Theme
 #[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Theme {
