@@ -12,11 +12,11 @@ From HEX color:
 
 ```rust
 use std::str::FromStr;
-use material_colors::theme_from_source_color;
+use material_colors::utils::theme::Theme;
 use material_colors::Argb;
 
 fn main() {
-    let theme = theme_from_source_color(Argb::from_str("#AAE5A4"), Default::default());
+    let theme = Theme::from_source_color(Argb::from_str("#AAE5A4").unwrap(), Default::default());
 
     // Do whatever you want...
 }
@@ -27,7 +27,7 @@ From image:
 > ⚠️ Before obtaining an array of ARGB pixels for the image, **it is recommended** (but not necessary if your image is already small in size or you just don't mind about execution time) to adjust its dimensions to 128x128 (by `resize` function from `image` crate, for example). The reason is described [**here**](https://github.com/material-foundation/material-color-utilities/blob/main/extract_colors.md).
 
 ```rust
-use material_colors::theme_from_source_color;
+use material_colors::utils::theme::Theme;
 use material_colors::FilterType;
 use material_colors::ImageReader;
 
@@ -45,7 +45,7 @@ async fn _main() -> Result<(), reqwest::Error> {
     // However, if you don't like the results, you can always try other FilterType values.
     data.resize(128, 128, FilterType::Lanczos3);
 
-    let theme = theme_from_source_color(ImageReader::extract_color(&data), Default::default());
+    let theme = Theme::from_source_color(ImageReader::extract_color(&data), Default::default());
 
     // Do whatever you want...
 
