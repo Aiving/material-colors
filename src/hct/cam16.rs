@@ -68,7 +68,7 @@ impl Cam16 {
     /// CAM16 instances also have coordinates in the CAM16-UCS space, called J*,
     /// a*, b*, or jstar, astar, bstar in code. CAM16-UCS is included in the CAM16
     /// specification, and should be used when measuring distances between colors.
-    pub fn distance(&self, other: &Cam16) -> f64 {
+    pub fn distance(&self, other: &Self) -> f64 {
         let d_j = self.jstar - other.jstar;
         let d_a = self.astar - other.astar;
         let d_b = self.bstar - other.bstar;
@@ -81,11 +81,11 @@ impl Cam16 {
     pub fn fromi32_in_viewing_conditions(
         argb: Argb,
         viewing_conditions: &ViewingConditions,
-    ) -> Cam16 {
+    ) -> Self {
         // Transform Argb int to Xyz
         let Xyz { x, y, z } = Xyz::from(argb);
 
-        Cam16::from_xyz_in_viewing_conditions(x, y, z, viewing_conditions)
+        Self::from_xyz_in_viewing_conditions(x, y, z, viewing_conditions)
     }
 
     /// Given color expressed in Xyz and viewed in [viewing_conditions], convert to
@@ -95,7 +95,7 @@ impl Cam16 {
         y: f64,
         z: f64,
         viewing_conditions: &ViewingConditions,
-    ) -> Cam16 {
+    ) -> Self {
         // Transform Xyz to 'cone'/'rgb' responses
         let r_c = 0.401288 * x + 0.650173 * y - 0.051461 * z;
         let g_c = -0.250268 * x + 1.204414 * y + 0.045854 * z;
@@ -181,7 +181,7 @@ impl Cam16 {
     /// Create a CAM16 color from lightness [j], chroma [c], and hue [h],
     /// assuming the color was viewed in default viewing conditions.
     pub fn from_jch(j: f64, c: f64, h: f64) -> Self {
-        Cam16::from_jch_in_viewing_conditions(j, c, h, &ViewingConditions::s_rgb())
+        Self::from_jch_in_viewing_conditions(j, c, h, &ViewingConditions::s_rgb())
     }
 
     /// Create a CAM16 color from lightness [j], chroma [c], and hue [h],
@@ -191,7 +191,7 @@ impl Cam16 {
         c: f64,
         h: f64,
         viewing_conditions: &ViewingConditions,
-    ) -> Cam16 {
+    ) -> Self {
         let q = (4.0 / viewing_conditions.c)
             * (j / 100.0).sqrt()
             * (viewing_conditions.aw + 4.0)
@@ -206,7 +206,7 @@ impl Cam16 {
         let astar = mstar * hue_radians.cos();
         let bstar = mstar * hue_radians.sin();
 
-        Cam16 {
+        Self {
             hue: h,
             chroma: c,
             j,
@@ -221,8 +221,8 @@ impl Cam16 {
 
     /// Create a CAM16 color from CAM16-UCS coordinates [jstar], [astar], [bstar].
     /// assuming the color was viewed in default viewing conditions.
-    pub fn from_ucs(jstar: f64, astar: f64, bstar: f64) -> Cam16 {
-        Cam16::from_ucs_in_viewing_conditions(jstar, astar, bstar, &ViewingConditions::standard())
+    pub fn from_ucs(jstar: f64, astar: f64, bstar: f64) -> Self {
+        Self::from_ucs_in_viewing_conditions(jstar, astar, bstar, &ViewingConditions::standard())
     }
 
     /// Create a CAM16 color from CAM16-UCS coordinates [jstar], [astar], [bstar].
@@ -232,7 +232,7 @@ impl Cam16 {
         astar: f64,
         bstar: f64,
         viewing_conditions: &ViewingConditions,
-    ) -> Cam16 {
+    ) -> Self {
         let a = astar;
         let b = bstar;
         let m = (a * a + b * b).sqrt();
@@ -242,7 +242,7 @@ impl Cam16 {
         let h = if h < 0.0 { h + 360.0 } else { h };
         let j = jstar / (jstar - 100.0).mul_add(-0.007, 1.0);
 
-        Cam16::from_jch_in_viewing_conditions(j, c, h, viewing_conditions)
+        Self::from_jch_in_viewing_conditions(j, c, h, viewing_conditions)
     }
 
     // Avoid allocations during conversion by pre-allocating an array.
@@ -305,7 +305,7 @@ impl Cam16 {
 
 impl From<Argb> for Cam16 {
     fn from(argb: Argb) -> Self {
-        Cam16::fromi32_in_viewing_conditions(argb, &ViewingConditions::s_rgb())
+        Self::fromi32_in_viewing_conditions(argb, &ViewingConditions::s_rgb())
     }
 }
 

@@ -128,10 +128,10 @@ impl Hct {
     ///    lower than the requested chroma. Chroma has a different maximum for any
     ///    given hue and tone.
     /// 0 <= [tone] <= 100; informally, lightness. Invalid values are corrected.
-    pub fn from(hue: f64, chroma: f64, tone: f64) -> Hct {
+    pub fn from(hue: f64, chroma: f64, tone: f64) -> Self {
         let argb = HctSolver::solve_to_int(hue, chroma, tone);
 
-        Hct::new(argb)
+        Self::new(argb)
     }
 
     /// Translate a color into different [ViewingConditions].
@@ -147,7 +147,7 @@ impl Hct {
     ///
     /// See [ViewingConditions.make] for parameters affecting color appearance.
     #[must_use]
-    pub fn in_viewing_conditions(self, vc: &ViewingConditions) -> Hct {
+    pub fn in_viewing_conditions(self, vc: &ViewingConditions) -> Self {
         // 1. Use CAM16 to find Xyz coordinates of color in specified VC.
         let cam16 = Cam16::from(Argb::from(self));
         let viewed_in_vc = cam16.xyz_in_viewing_conditions(vc);
@@ -163,7 +163,7 @@ impl Hct {
         // 3. Create HCT from:
         // - CAM16 using default VC with Xyz coordinates in specified VC.
         // - L* converted from Y in Xyz coordinates in specified VC.
-        Hct::from(
+        Self::from(
             recast_in_vc.hue,
             recast_in_vc.chroma,
             lstar_from_y(viewed_in_vc.y),
@@ -199,7 +199,7 @@ impl Hash for Hct {
 
 impl From<Argb> for Hct {
     fn from(value: Argb) -> Self {
-        Hct::new(value)
+        Self::new(value)
     }
 }
 

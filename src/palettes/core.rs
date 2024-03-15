@@ -39,14 +39,14 @@ impl CorePalette {
     }
 
     /// Create a [CorePalette] from a source Argb color.
-    pub fn of(argb: Argb) -> CorePalette {
+    pub fn of(argb: Argb) -> Self {
         let cam = Cam16::from(argb);
 
-        CorePalette::_of(cam.hue, cam.chroma)
+        Self::_of(cam.hue, cam.chroma)
     }
 
-    fn _of(hue: f64, chroma: f64) -> CorePalette {
-        CorePalette::new(
+    fn _of(hue: f64, chroma: f64) -> Self {
+        Self::new(
             TonalPalette::of(hue, 48.0_f64.max(chroma)),
             TonalPalette::of(hue, 16.0),
             TonalPalette::of(hue + 60.0, 24.0),
@@ -57,14 +57,14 @@ impl CorePalette {
     }
 
     /// Create a content [CorePalette] from a source Argb color.
-    pub fn content_of(argb: Argb) -> CorePalette {
+    pub fn content_of(argb: Argb) -> Self {
         let cam = Cam16::from(argb);
 
-        CorePalette::_content_of(cam.hue, cam.chroma)
+        Self::_content_of(cam.hue, cam.chroma)
     }
 
-    fn _content_of(hue: f64, chroma: f64) -> CorePalette {
-        CorePalette::new(
+    fn _content_of(hue: f64, chroma: f64) -> Self {
+        Self::new(
             TonalPalette::of(hue, chroma),
             TonalPalette::of(hue, chroma / 3.0),
             TonalPalette::of(hue + 60.0, chroma / 2.0),

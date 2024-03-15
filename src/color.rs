@@ -67,8 +67,8 @@ pub struct Lab {
 
 /** Converts a color from Rgb components to Argb format. */
 impl From<Rgb> for Argb {
-    fn from(Rgb { red, green, blue }: Rgb) -> Argb {
-        Argb {
+    fn from(Rgb { red, green, blue }: Rgb) -> Self {
+        Self {
             alpha: 255,
             red,
             green,
@@ -79,7 +79,7 @@ impl From<Rgb> for Argb {
 
 /** Converts a color from linear Rgb components to Argb format. */
 impl From<LinearRgb> for Argb {
-    fn from(linear: LinearRgb) -> Argb {
+    fn from(linear: LinearRgb) -> Self {
         let r = delinearized(linear.red);
         let g = delinearized(linear.green);
         let b = delinearized(linear.blue);
@@ -90,7 +90,7 @@ impl From<LinearRgb> for Argb {
 
 /** Converts a color from Argb to Xyz. */
 impl From<Xyz> for Argb {
-    fn from(Xyz { x, y, z }: Xyz) -> Argb {
+    fn from(Xyz { x, y, z }: Xyz) -> Self {
         let matrix = XYZ_TO_SRGB;
 
         let linear_r = matrix[0][0] * x + matrix[0][1] * y + matrix[0][2] * z;
@@ -114,20 +114,20 @@ impl From<Argb> for Xyz {
             green,
             blue,
         }: Argb,
-    ) -> Xyz {
+    ) -> Self {
         let r = linearized(red);
         let g = linearized(green);
         let b = linearized(blue);
 
         let [x, y, z] = matrix_multiply([r, g, b], SRGB_TO_XYZ);
 
-        Xyz { x, y, z }
+        Self { x, y, z }
     }
 }
 
 /** Converts a color represented in Lab color space into an Argb integer. */
 impl From<Lab> for Argb {
-    fn from(Lab { l, a, b }: Lab) -> Argb {
+    fn from(Lab { l, a, b }: Lab) -> Self {
         let white_point = WHITE_POINT_D65;
 
         let fy = (l + 16.0) / 116.0;
@@ -159,7 +159,7 @@ impl From<Argb> for Lab {
             green,
             blue,
         }: Argb,
-    ) -> Lab {
+    ) -> Self {
         let linear_r = linearized(red);
         let linear_g = linearized(green);
         let linear_b = linearized(blue);
@@ -184,7 +184,7 @@ impl From<Argb> for Lab {
         let a = 500.0 * (fx - fy);
         let b = 200.0 * (fy - fz);
 
-        Lab { l, a, b }
+        Self { l, a, b }
     }
 }
 
@@ -318,9 +318,9 @@ impl Argb {
     pub fn as_hex(&self) -> String {
         format!(
             "#{}{}{}",
-            Argb::hex(self.red),
-            Argb::hex(self.green),
-            Argb::hex(self.blue)
+            Self::hex(self.red),
+            Self::hex(self.green),
+            Self::hex(self.blue)
         )
     }
 }

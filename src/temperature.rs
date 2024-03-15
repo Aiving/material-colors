@@ -179,7 +179,7 @@ impl TemperatureCache {
 
         let range = warmest_temp - coldest_temp;
         let start_hue_is_coldest_to_warmest =
-            TemperatureCache::is_between(self.input.get_hue(), coldest_hue, warmest_hue);
+            Self::is_between(self.input.get_hue(), coldest_hue, warmest_hue);
         let start_hue = if start_hue_is_coldest_to_warmest {
             warmest_hue
         } else {
@@ -203,7 +203,7 @@ impl TemperatureCache {
                 direction_of_rotation.mul_add(f64::from(hue_addend), start_hue),
             );
 
-            if !TemperatureCache::is_between(hue, start_hue, end_hue) {
+            if !Self::is_between(hue, start_hue, end_hue) {
                 continue;
             }
 
@@ -296,7 +296,7 @@ impl TemperatureCache {
         let mut temperatures_by_hct = HashMap::<Hct, f64>::default();
 
         for e in all_hcts {
-            temperatures_by_hct.insert(e, TemperatureCache::raw_temperature(e));
+            temperatures_by_hct.insert(e, Self::raw_temperature(e));
         }
 
         self._temps_by_hct = temperatures_by_hct;

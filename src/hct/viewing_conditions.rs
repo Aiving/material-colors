@@ -38,11 +38,11 @@ pub struct ViewingConditions {
 
 impl ViewingConditions {
     pub fn standard() -> Self {
-        ViewingConditions::s_rgb()
+        Self::s_rgb()
     }
 
     pub fn s_rgb() -> Self {
-        ViewingConditions::make(None, None, None, None, None)
+        Self::make(None, None, None, None, None)
     }
 
     /// Convenience constructor for [ViewingConditions].
@@ -59,7 +59,7 @@ impl ViewingConditions {
         background_lstar: Option<f64>,
         surround: Option<f64>,
         discounting_illuminant: Option<bool>,
-    ) -> ViewingConditions {
+    ) -> Self {
         let white_point = white_point.unwrap_or(WHITE_POINT_D65);
         let adapting_luminance = adapting_luminance.unwrap_or(-1.0);
         let background_lstar = background_lstar.unwrap_or(50.0);
@@ -158,7 +158,7 @@ impl ViewingConditions {
 
         let aw = (40.0 * rgb_a[0] + 20.0 * rgb_a[1] + rgb_a[2]) / 20.0 * nbb;
 
-        ViewingConditions {
+        Self {
             white_point,
             adapting_luminance,
             background_lstar,

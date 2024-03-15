@@ -60,7 +60,7 @@ impl QuantizerWsmeans {
     pub fn debug_log<T: Into<String>>(log: T) {
         let log: String = log.into();
 
-        if QuantizerWsmeans::DEBUG {
+        if Self::DEBUG {
             println!("{log}");
         }
     }
@@ -164,7 +164,7 @@ impl QuantizerWsmeans {
             }
         }
 
-        QuantizerWsmeans::debug_log(format!(
+        Self::debug_log(format!(
             "have {} starting clusters, {} points",
             clusters.len(),
             points.len()
@@ -185,7 +185,7 @@ impl QuantizerWsmeans {
         let mut pixel_count_sums = vec![0; cluster_count];
 
         for iteration in 0..max_iterations {
-            if QuantizerWsmeans::DEBUG {
+            if Self::DEBUG {
                 for item in pixel_count_sums.iter_mut().take(cluster_count) {
                     *item = 0;
                 }
@@ -205,7 +205,7 @@ impl QuantizerWsmeans {
                     }
                 }
 
-                QuantizerWsmeans::debug_log(format!(
+                Self::debug_log(format!(
                     "starting iteration {}; {empty_clusters} clusters are empty of {cluster_count}",
                     iteration + 1
                 ));
@@ -266,17 +266,12 @@ impl QuantizerWsmeans {
             }
 
             if points_moved == 0 && iteration > 0 {
-                QuantizerWsmeans::debug_log(format!(
-                    "terminated after {iteration} k-means iterations"
-                ));
+                Self::debug_log(format!("terminated after {iteration} k-means iterations"));
 
                 break;
             }
 
-            QuantizerWsmeans::debug_log(format!(
-                "iteration {} moved {points_moved}",
-                iteration + 1
-            ));
+            Self::debug_log(format!("iteration {} moved {points_moved}", iteration + 1));
 
             let mut component_asums = vec![0.0; cluster_count];
             let mut component_bsums = vec![0.0; cluster_count];

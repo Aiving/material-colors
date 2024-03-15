@@ -99,10 +99,10 @@ pub struct Theme {
 
 impl Theme {
     /// Generatse a theme from a source color
-    pub fn from_source_color(source: Argb, custom_colors: Vec<CustomColor>) -> Theme {
+    pub fn from_source_color(source: Argb, custom_colors: Vec<CustomColor>) -> Self {
         let palette = CorePalette::of(source);
 
-        Theme {
+        Self {
             source,
             schemes: Schemes {
                 light: SchemeTonalSpot::new(source.into(), false, None)

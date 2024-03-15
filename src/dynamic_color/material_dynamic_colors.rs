@@ -164,7 +164,7 @@ impl MaterialDynamicColors {
     define_key! {
       on_background => neutral_palette;
       [tone, scheme] => if scheme.is_dark { 90.0 } else { 10.0 };
-      [background, _scheme] => MaterialDynamicColors::background();
+      [background, _scheme] => Self::background();
       [contrast_curve] => ContrastCurve { low: 3.0, normal: 3.0, medium: 4.5, high: 7.0 };
     }
 
@@ -330,7 +330,7 @@ impl MaterialDynamicColors {
 
     define_key! {
       on_secondary_container => secondary_palette;
-      [tone, scheme] => if _is_fidelity(scheme) { DynamicColor::foreground_tone(MaterialDynamicColors::secondary_container().get_tone(scheme), 4.5) } else if scheme.is_dark { 90.0 } else { 10.0 };
+      [tone, scheme] => if _is_fidelity(scheme) { DynamicColor::foreground_tone(Self::secondary_container().get_tone(scheme), 4.5) } else if scheme.is_dark { 90.0 } else { 10.0 };
       [background, scheme] => Self::highest_surface(scheme);
       [contrast_curve] => ContrastCurve { low: 4.5, normal: 7.0, medium: 11.0, high: 21.0 };
     }

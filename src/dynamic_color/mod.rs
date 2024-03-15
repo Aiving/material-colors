@@ -94,8 +94,8 @@ impl DynamicColor {
         palette: fn(&DynamicScheme) -> &TonalPalette,
         tone: fn(&DynamicScheme) -> f64,
         is_background: bool,
-        background: Option<fn(&DynamicScheme) -> DynamicColor>,
-        second_background: Option<fn(&DynamicScheme) -> DynamicColor>,
+        background: Option<fn(&DynamicScheme) -> Self>,
+        second_background: Option<fn(&DynamicScheme) -> Self>,
         contrast_curve: Option<ContrastCurve>,
         tone_delta_pair: Option<fn(&DynamicScheme) -> ToneDeltaPair>,
     ) -> Self {
@@ -188,21 +188,21 @@ impl DynamicColor {
             let mut n_tone = if ratio_of_tones(bg_tone, n_initial_tone) >= n_contrast {
                 n_initial_tone
             } else {
-                DynamicColor::foreground_tone(bg_tone, n_contrast)
+                Self::foreground_tone(bg_tone, n_contrast)
             };
             // Initial and adjusted tones for `farther`
             let f_initial_tone = (farther.tone)(scheme);
             let mut f_tone = if ratio_of_tones(bg_tone, f_initial_tone) >= f_contrast {
                 f_initial_tone
             } else {
-                DynamicColor::foreground_tone(bg_tone, f_contrast)
+                Self::foreground_tone(bg_tone, f_contrast)
             };
 
             if decreasing_contrast {
                 // If decreasing contrast, adjust color to the "bare minimum"
                 // that satisfies contrast.
-                n_tone = DynamicColor::foreground_tone(bg_tone, n_contrast);
-                f_tone = DynamicColor::foreground_tone(bg_tone, f_contrast);
+                n_tone = Self::foreground_tone(bg_tone, n_contrast);
+                f_tone = Self::foreground_tone(bg_tone, f_contrast);
             }
 
             if (f_tone - n_tone) * expansion_dir >= delta {
@@ -274,11 +274,11 @@ impl DynamicColor {
                     // Don't "improve" what's good enough.
                 } else {
                     // Rough improvement.
-                    answer = DynamicColor::foreground_tone(bg_tone, desired_ratio);
+                    answer = Self::foreground_tone(bg_tone, desired_ratio);
                 }
 
                 if decreasing_contrast {
-                    answer = DynamicColor::foreground_tone(bg_tone, desired_ratio);
+                    answer = Self::foreground_tone(bg_tone, desired_ratio);
                 }
 
                 if self.is_background && (50.0..60.0).contains(&answer) {
@@ -323,8 +323,8 @@ impl DynamicColor {
                         availables.push(dark_option);
                     }
 
-                    let prefers_light = DynamicColor::tone_prefers_light_foreground(bg_tone1)
-                        || DynamicColor::tone_prefers_light_foreground(bg_tone2);
+                    let prefers_light = Self::tone_prefers_light_foreground(bg_tone1)
+                        || Self::tone_prefers_light_foreground(bg_tone2);
 
                     if prefers_light {
                         return if light_option < 0.0 {

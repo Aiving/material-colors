@@ -56,12 +56,12 @@ impl TonalPalette {
 
     /// Create a Tonal Palette from hue and chroma, which generates a key color.
     pub fn from_hue_and_chroma(hue: f64, chroma: f64) -> Self {
-        Self::new(hue, chroma, TonalPalette::create_key_color(hue, chroma))
+        Self::new(hue, chroma, Self::create_key_color(hue, chroma))
     }
 
     /// Create colors using [hue] and [chroma].
     pub fn of(hue: f64, chroma: f64) -> Self {
-        TonalPalette::from_hue_and_chroma(hue, chroma)
+        Self::from_hue_and_chroma(hue, chroma)
     }
 
     /// Creates a key color from a [hue] and a [chroma].
