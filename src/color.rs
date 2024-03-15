@@ -368,7 +368,7 @@ pub fn lstar_from_y(y: f64) -> f64 {
  * @return 0.0 <= output <= 100.0, color channel converted to linear Rgb space
  */
 pub fn linearized(rgb_component: u8) -> f64 {
-    let normalized = rgb_component as f64 / 255.0;
+    let normalized = f64::from(rgb_component) / 255.0;
 
     if normalized <= 0.040449936 {
         normalized / 12.92 * 100.0

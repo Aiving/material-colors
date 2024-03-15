@@ -291,9 +291,9 @@ impl QuantizerWsmeans {
                 let count = counts[i];
 
                 pixel_count_sums[cluster_index] += count;
-                component_asums[cluster_index] += point.l * count as f64;
-                component_bsums[cluster_index] += point.a * count as f64;
-                component_csums[cluster_index] += point.b * count as f64;
+                component_asums[cluster_index] += point.l * f64::from(count);
+                component_bsums[cluster_index] += point.a * f64::from(count);
+                component_csums[cluster_index] += point.b * f64::from(count);
             }
 
             for i in 0..cluster_count {
@@ -305,9 +305,9 @@ impl QuantizerWsmeans {
                     continue;
                 }
 
-                let a = component_asums[i] / count as f64;
-                let b = component_bsums[i] / count as f64;
-                let c = component_csums[i] / count as f64;
+                let a = component_asums[i] / f64::from(count);
+                let b = component_bsums[i] / f64::from(count);
+                let c = component_csums[i] / f64::from(count);
 
                 clusters[i] = Lab { l: a, a: b, b: c };
             }

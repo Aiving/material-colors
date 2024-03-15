@@ -87,7 +87,7 @@ impl TonalPalette {
                 return smallest_delta_hct;
             }
 
-            let hct_add = Hct::from(hue, chroma, start_tone + delta as f64);
+            let hct_add = Hct::from(hue, chroma, start_tone + f64::from(delta));
             let hct_add_delta = (hct_add.get_chroma() - chroma).abs();
 
             if hct_add_delta < smallest_delta {
@@ -95,7 +95,7 @@ impl TonalPalette {
                 smallest_delta_hct = hct_add;
             }
 
-            let hct_subtract = Hct::from(hue, chroma, start_tone - delta as f64);
+            let hct_subtract = Hct::from(hue, chroma, start_tone - f64::from(delta));
             let hct_subtract_delta = (hct_subtract.get_chroma() - chroma).abs();
 
             if hct_subtract_delta < smallest_delta {
@@ -114,7 +114,7 @@ impl TonalPalette {
     /// If the class was instantiated from a fixed-size list of color ints, [tone]
     /// must be in [commonTones].
     pub fn tone(&self, tone: i32) -> Argb {
-        Hct::from(self.hue(), self.chroma(), tone as f64).into()
+        Hct::from(self.hue(), self.chroma(), f64::from(tone)).into()
     }
 
     pub fn get_hct(&self, tone: f64) -> Hct {

@@ -529,10 +529,10 @@ impl HctSolver {
                 };
 
                 for _ in 0..8 {
-                    if (r_plane as i16 - l_plane as i16).abs() <= 1 {
+                    if (i16::from(r_plane) - i16::from(l_plane)).abs() <= 1 {
                         break;
                     } else {
-                        let m_plane = ((l_plane as f32 + r_plane as f32) / 2.0).floor() as u8;
+                        let m_plane = ((f32::from(l_plane) + f32::from(r_plane)) / 2.0).floor() as u8;
                         let mid_plane_coordinate = CRITICAL_PLANES[m_plane as usize];
                         let mid = Self::set_coordinate(left, mid_plane_coordinate, right, axis);
                         let mid_hue = Self::hue_of(mid);

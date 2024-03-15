@@ -73,7 +73,7 @@ impl TemperatureCache {
         }
 
         let mut hue_addend = 1;
-        let temp_step = absolute_total_temp_delta / divisions as f64;
+        let temp_step = absolute_total_temp_delta / f64::from(divisions);
 
         let mut total_temp_delta = 0.0;
 
@@ -125,7 +125,7 @@ impl TemperatureCache {
         let mut answers = vec![self.input];
 
         // First, generate analogues from rotating counter-clockwise.
-        let increase_hue_count = ((count as f64 - 1.0) / 2.0).floor() as isize;
+        let increase_hue_count = ((f64::from(count) - 1.0) / 2.0).floor() as isize;
 
         for i in 1..=increase_hue_count {
             let mut index = 0_isize - i;
@@ -200,7 +200,7 @@ impl TemperatureCache {
         // of the input color. This is the complement.
         for hue_addend in 0..=360 {
             let hue = sanitize_degrees_double(
-                direction_of_rotation.mul_add(hue_addend as f64, start_hue),
+                direction_of_rotation.mul_add(f64::from(hue_addend), start_hue),
             );
 
             if !TemperatureCache::is_between(hue, start_hue, end_hue) {
@@ -314,8 +314,11 @@ impl TemperatureCache {
         let mut hcts = vec![];
 
         for hue in 0..=360 {
-            let color_at_hue =
-                Hct::from(hue as f64, self.input.get_chroma(), self.input.get_tone());
+            let color_at_hue = Hct::from(
+                f64::from(hue),
+                self.input.get_chroma(),
+                self.input.get_tone(),
+            );
 
             hcts.push(color_at_hue);
         }

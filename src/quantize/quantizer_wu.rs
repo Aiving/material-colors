@@ -89,12 +89,12 @@ impl QuantizerWu {
 
             self.weights[index] += count;
 
-            self.moments_r[index] += red as u32 * count;
-            self.moments_g[index] += green as u32 * count;
-            self.moments_b[index] += blue as u32 * count;
+            self.moments_r[index] += u32::from(red) * count;
+            self.moments_g[index] += u32::from(green) * count;
+            self.moments_b[index] += u32::from(blue) * count;
 
-            self.moments[index] += count as f64
-                * ((red as f64).powi(2) + (green as f64).powi(2) + (blue as f64).powi(2));
+            self.moments[index] += f64::from(count)
+                * (f64::from(red).powi(2) + f64::from(green).powi(2) + f64::from(blue)).powi(2);
         }
     }
 
@@ -268,7 +268,7 @@ impl QuantizerWu {
             .wrapping_add(db.wrapping_pow(2));
         let volume_ = Self::volume(cube, &self.weights);
 
-        xx - (hypotenuse / volume_) as f64
+        xx - f64::from(hypotenuse / volume_)
     }
 
     pub fn cut(&mut self, next: usize, i: usize) -> bool {
@@ -395,11 +395,13 @@ impl QuantizerWu {
                 continue;
             }
 
-            let mut temp_numerator = half_r
-                .wrapping_pow(2)
-                .wrapping_add(half_g.wrapping_pow(2))
-                .wrapping_add(half_b.wrapping_pow(2)) as f64;
-            let mut temp_denominator = half_w as f64;
+            let mut temp_numerator = f64::from(
+                half_r
+                    .wrapping_pow(2)
+                    .wrapping_add(half_g.wrapping_pow(2))
+                    .wrapping_add(half_b.wrapping_pow(2)),
+            );
+            let mut temp_denominator = f64::from(half_w);
             let mut temp = temp_numerator / temp_denominator;
 
             half_r = whole_r.wrapping_sub(half_r);
@@ -411,11 +413,13 @@ impl QuantizerWu {
                 continue;
             }
 
-            temp_numerator = half_r
-                .wrapping_pow(2)
-                .wrapping_add(half_g.wrapping_pow(2))
-                .wrapping_add(half_b.wrapping_pow(2)) as f64;
-            temp_denominator = half_w as f64;
+            temp_numerator = f64::from(
+                half_r
+                    .wrapping_pow(2)
+                    .wrapping_add(half_g.wrapping_pow(2))
+                    .wrapping_add(half_b.wrapping_pow(2)),
+            );
+            temp_denominator = f64::from(half_w);
             temp += temp_numerator / temp_denominator;
 
             if temp > max {

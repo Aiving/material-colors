@@ -14,7 +14,7 @@ impl Random {
 
     pub(crate) fn next_range(&mut self, range: i32) -> i32 {
         if (range & -range) == range {
-            return ((range as i64).wrapping_mul(self._next(31) as i64) >> 31) as i32;
+            return (i64::from(range).wrapping_mul(i64::from(self._next(31))) >> 31) as i32;
         }
 
         let mut bits: i32;
