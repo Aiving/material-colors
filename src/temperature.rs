@@ -357,7 +357,7 @@ impl TemperatureCache {
     pub fn raw_temperature(color: Hct) -> f64 {
         let lab = Lab::from(Argb::from(color));
         let hue = sanitize_degrees_double(lab.b.atan2(lab.a).to_degrees());
-        let chroma = ((lab.a * lab.a) + (lab.b * lab.b)).sqrt();
+        let chroma = lab.a.hypot(lab.b);
 
         -0.5 + 0.02 * chroma.powf(1.07) * (sanitize_degrees_double(hue - 50.0).to_radians()).cos()
     }

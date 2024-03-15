@@ -129,8 +129,8 @@ impl ViewingConditions {
         let k4_f = 1.0 - k4;
 
         // Luminance-level adaptation factor
-        let fl = (k4 * adapting_luminance)
-            + (0.1 * k4_f * k4_f * (5.0 * adapting_luminance).powf(1.0 / 3.0));
+        let fl =
+            (k4 * adapting_luminance) + (0.1 * k4_f * k4_f * (5.0 * adapting_luminance).cbrt());
         // Intermediate factor, ratio of background relative luminance to white relative luminance
         let n = y_from_lstar(background_lstar) / white_point[1];
 

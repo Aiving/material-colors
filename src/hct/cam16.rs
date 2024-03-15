@@ -150,7 +150,7 @@ impl Cam16 {
         let hue_prime = if hue < 20.14 { hue + 360.0 } else { hue };
         let e_hue = (1.0 / 4.0) * ((hue_prime.to_radians() + 2.0).cos() + 3.8);
         let p1 = 50000.0 / 13.0 * e_hue * viewing_conditions.n_c * viewing_conditions.ncb;
-        let t = p1 * (a * a + b * b).sqrt() / (u + 0.305);
+        let t = p1 * a.hypot(b) / (u + 0.305);
         let alpha = t.powf(0.9)
             * (1.64 - 0.29_f64.powf(viewing_conditions.background_ytowhite_point_y)).powf(0.73);
 
@@ -235,8 +235,8 @@ impl Cam16 {
     ) -> Self {
         let a = astar;
         let b = bstar;
-        let m = (a * a + b * b).sqrt();
-        let m = ((m * 0.0228).exp() - 1.0) / 0.0228;
+        let m = a.hypot(b);
+        let m = (m * 0.0228).exp_m1() / 0.0228;
         let c = m / viewing_conditions.f_lroot;
         let h = b.atan2(a) * (180.0 / PI);
         let h = if h < 0.0 { h + 360.0 } else { h };

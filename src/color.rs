@@ -399,7 +399,7 @@ fn lab_f(t: f64) -> f64 {
     let kappa = 24389.0_f64 / 27.0;
 
     if t > e {
-        t.powf(1.0 / 3.0)
+        t.cbrt()
     } else {
         kappa.mul_add(t, 16.0) / 116.0
     }
