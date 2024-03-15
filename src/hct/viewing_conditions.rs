@@ -97,13 +97,7 @@ impl ViewingConditions {
             f * (1.0 - ((1.0 / 3.6) * ((-adapting_luminance - 42.0) / 92.0).exp()))
         };
         // Per Li et al, if D is greater than 1 or less than 0, set it to 1 or 0.
-        let d = if d > 1.0 {
-            1.0
-        } else if d < 0.0 {
-            0.0
-        } else {
-            d
-        };
+        let d = d.clamp(0.0, 1.0);
         // chromatic induction factor
         let nc = f;
 
