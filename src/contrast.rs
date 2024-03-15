@@ -14,7 +14,11 @@ pub fn ratio_of_tones(tone_a: f64, tone_b: f64) -> f64 {
 
 fn ratio_of_ys(y1: f64, y2: f64) -> f64 {
     let lighter = if y1 > y2 { y1 } else { y2 };
-    let darker = if lighter == y2 { y1 } else { y2 };
+    let darker = if (lighter - y2).abs() < f64::EPSILON {
+        y1
+    } else {
+        y2
+    };
 
     (lighter + 5.0) / (darker + 5.0)
 }

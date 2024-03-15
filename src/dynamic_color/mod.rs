@@ -316,10 +316,10 @@ impl DynamicColor {
                     // Tones suitable for the foreground.
                     let mut availables: Vec<f64> = vec![];
 
-                    if light_option != -1.0 {
+                    if (light_option - -1.0).abs() > f64::EPSILON {
                         availables.push(light_option);
                     }
-                    if dark_option != -1.0 {
+                    if (dark_option - -1.0).abs() > f64::EPSILON {
                         availables.push(dark_option);
                     }
 

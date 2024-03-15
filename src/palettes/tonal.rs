@@ -83,7 +83,7 @@ impl TonalPalette {
             // case where requested chroma is 16.51, and the closest chroma is 16.49.
             // Error is minimized, but when rounded and displayed, requested chroma
             // is 17, key color's chroma is 16.
-            if chroma.round() == smallest_delta_hct.get_chroma().round() {
+            if (chroma.round() - smallest_delta_hct.get_chroma().round()).abs() < f64::EPSILON {
                 return smallest_delta_hct;
             }
 
