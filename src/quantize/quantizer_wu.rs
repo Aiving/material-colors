@@ -282,7 +282,7 @@ impl QuantizerWu {
 
         let max_rresult = self.maximize(
             &one,
-            Direction::Red,
+            &Direction::Red,
             one.r::<u8>(0) + 1,
             one.r::<u8>(1),
             whole_r,
@@ -292,7 +292,7 @@ impl QuantizerWu {
         );
         let max_gresult = self.maximize(
             &one,
-            Direction::Green,
+            &Direction::Green,
             one.g::<u8>(0) + 1,
             one.g::<u8>(1),
             whole_r,
@@ -302,7 +302,7 @@ impl QuantizerWu {
         );
         let max_bresult = self.maximize(
             &one,
-            Direction::Blue,
+            &Direction::Blue,
             one.b::<u8>(0) + 1,
             one.b::<u8>(1),
             whole_r,
@@ -370,7 +370,7 @@ impl QuantizerWu {
     pub fn maximize(
         &self,
         cube: &Cube,
-        direction: Direction,
+        direction: &Direction,
         first: u8,
         last: u8,
         whole_r: i32,
@@ -378,19 +378,19 @@ impl QuantizerWu {
         whole_b: i32,
         whole_w: i32,
     ) -> MaximizeResult {
-        let bottom_r = Self::bottom(cube, &direction, &self.moments_r);
-        let bottom_g = Self::bottom(cube, &direction, &self.moments_g);
-        let bottom_b = Self::bottom(cube, &direction, &self.moments_b);
-        let bottom_w = Self::bottom(cube, &direction, &self.weights);
+        let bottom_r = Self::bottom(cube, direction, &self.moments_r);
+        let bottom_g = Self::bottom(cube, direction, &self.moments_g);
+        let bottom_b = Self::bottom(cube, direction, &self.moments_b);
+        let bottom_w = Self::bottom(cube, direction, &self.weights);
 
         let mut max = 0.0;
         let mut cut = None;
 
         for i in first..last {
-            let mut half_r = bottom_r.wrapping_add(Self::top(cube, &direction, i, &self.moments_r));
-            let mut half_g = bottom_g.wrapping_add(Self::top(cube, &direction, i, &self.moments_g));
-            let mut half_b = bottom_b.wrapping_add(Self::top(cube, &direction, i, &self.moments_b));
-            let mut half_w = bottom_w.wrapping_add(Self::top(cube, &direction, i, &self.weights));
+            let mut half_r = bottom_r.wrapping_add(Self::top(cube, direction, i, &self.moments_r));
+            let mut half_g = bottom_g.wrapping_add(Self::top(cube, direction, i, &self.moments_g));
+            let mut half_b = bottom_b.wrapping_add(Self::top(cube, direction, i, &self.moments_b));
+            let mut half_w = bottom_w.wrapping_add(Self::top(cube, direction, i, &self.weights));
 
             if half_w == 0 {
                 continue;

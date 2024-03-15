@@ -85,7 +85,7 @@ impl DynamicScheme {
         }
     }
 
-    pub fn get_rotated_hue(source_color: Hct, hues: Vec<f64>, rotations: Vec<f64>) -> f64 {
+    pub fn get_rotated_hue(source_color: Hct, hues: &[f64], rotations: &[f64]) -> f64 {
         let source_hue = source_color.get_hue();
 
         assert!(hues.len() == rotations.len());

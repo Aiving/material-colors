@@ -39,16 +39,16 @@ impl SchemeExpressive {
                 TonalPalette::of(
                     DynamicScheme::get_rotated_hue(
                         source_color_hct,
-                        Self::HUES.to_vec(),
-                        Self::SECONDARY_ROTATIONS.to_vec(),
+                        &Self::HUES,
+                        &Self::SECONDARY_ROTATIONS,
                     ),
                     24.0,
                 ),
                 TonalPalette::of(
                     DynamicScheme::get_rotated_hue(
                         source_color_hct,
-                        Self::HUES.to_vec(),
-                        Self::TERTIARY_ROTATIONS.to_vec(),
+                        &Self::HUES,
+                        &Self::TERTIARY_ROTATIONS,
                     ),
                     32.0,
                 ),

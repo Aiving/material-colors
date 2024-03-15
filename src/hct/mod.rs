@@ -146,7 +146,7 @@ impl Hct {
     /// CAM16, a color appearance model, and uses it to make these calculations.
     ///
     /// See [ViewingConditions.make] for parameters affecting color appearance.
-    pub fn in_viewing_conditions(self, vc: ViewingConditions) -> Hct {
+    pub fn in_viewing_conditions(self, vc: &ViewingConditions) -> Hct {
         // 1. Use CAM16 to find Xyz coordinates of color in specified VC.
         let cam16 = Cam16::from(Argb::from(self));
         let viewed_in_vc = cam16.xyz_in_viewing_conditions(vc);
@@ -156,7 +156,7 @@ impl Hct {
             viewed_in_vc.x,
             viewed_in_vc.y,
             viewed_in_vc.z,
-            ViewingConditions::standard(),
+            &ViewingConditions::standard(),
         );
 
         // 3. Create HCT from:
