@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - **breaking:** Move the functions within `mod:theme` into structs for a more idiomatic approach
-- **breaking**: Update exports
+- **breaking:** Update exports
+- **breaking:** Apply more strictly Clippy lints
 - **added:** Add `CHANGELOG`
 - **changed:** Remove unnecessary comments about warnings count from the `README`
 - **fixed:** Update `README` and `tests:image` for renamed color functions
