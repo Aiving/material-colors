@@ -34,7 +34,7 @@ impl CorePalette {
             tertiary,
             neutral,
             neutral_variant,
-            error: error.unwrap_or(TonalPalette::of(25.0, 84.0)),
+            error: error.unwrap_or_else(|| TonalPalette::of(25.0, 84.0)),
         }
     }
 

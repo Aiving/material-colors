@@ -72,7 +72,7 @@ impl DynamicScheme {
     ) -> Self {
         Self {
             source_color_argb,
-            source_color_hct: source_color_hct.unwrap_or(source_color_argb.into()),
+            source_color_hct: source_color_hct.unwrap_or_else(|| source_color_argb.into()),
             variant,
             is_dark,
             contrast_level: contrast_level.unwrap_or(0.0),
@@ -81,7 +81,7 @@ impl DynamicScheme {
             tertiary_palette,
             neutral_palette,
             neutral_variant_palette,
-            error_palette: error_palette.unwrap_or(TonalPalette::of(25.0, 84.0)),
+            error_palette: error_palette.unwrap_or_else(|| TonalPalette::of(25.0, 84.0)),
         }
     }
 
