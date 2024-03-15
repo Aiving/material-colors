@@ -93,11 +93,10 @@ impl QuantizerWsmeans {
 
             if let Some(value) = pixel_count {
                 pixel_count = Some(value + 1);
-                pixel_to_count.insert(*input_pixel, pixel_count.unwrap());
             } else {
                 pixel_count = Some(1);
-                pixel_to_count.insert(*input_pixel, pixel_count.unwrap());
             }
+            pixel_to_count.insert(*input_pixel, pixel_count.unwrap());
 
             if pixel_count.is_some_and(|count| count == 1) {
                 point_count += 1;
