@@ -208,7 +208,7 @@ impl TemperatureCache {
             }
 
             let possible_answer = &self.hcts_by_hue()[hue.round() as usize];
-            let relative_temp = (self._temps_by_hct[&possible_answer] - coldest_temp) / range;
+            let relative_temp = (self._temps_by_hct[possible_answer] - coldest_temp) / range;
             let error = (complement_relative_temp - relative_temp).abs();
 
             if error < smallest_error {
