@@ -306,7 +306,7 @@ impl Argb {
     }
 
     fn hex(number: u8) -> String {
-        let string = format!("{:x}", number);
+        let string = format!("{number:x}");
 
         if string.len() == 1 {
             String::from("0") + &string
