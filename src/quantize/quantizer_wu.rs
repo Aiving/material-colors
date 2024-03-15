@@ -136,7 +136,7 @@ impl QuantizerWu {
                     self.moments_g[index] = self.moments_g[previous_index] + area_g[b];
                     self.moments_b[index] = self.moments_b[previous_index] + area_b[b];
 
-                    self.moments[index] = self.moments[previous_index] + area2[b]
+                    self.moments[index] = self.moments[previous_index] + area2[b];
                 }
             }
         }

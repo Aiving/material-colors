@@ -144,11 +144,11 @@ impl Score {
         let mut colors = vec![];
 
         if chosen_colors.is_empty() {
-            colors.push(fallback_color_argb)
+            colors.push(fallback_color_argb);
         }
 
         for chosen_hct in chosen_colors {
-            colors.push(Argb::from(chosen_hct))
+            colors.push(Argb::from(chosen_hct));
         }
 
         colors

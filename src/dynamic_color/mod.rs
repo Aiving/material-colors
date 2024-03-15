@@ -317,10 +317,10 @@ impl DynamicColor {
                     let mut availables: Vec<f64> = vec![];
 
                     if light_option != -1.0 {
-                        availables.push(light_option)
+                        availables.push(light_option);
                     }
                     if dark_option != -1.0 {
-                        availables.push(dark_option)
+                        availables.push(dark_option);
                     }
 
                     let prefers_light = DynamicColor::tone_prefers_light_foreground(bg_tone1)
