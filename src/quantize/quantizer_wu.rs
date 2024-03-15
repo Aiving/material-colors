@@ -2,6 +2,7 @@
 
 use core::fmt;
 use indexmap::IndexMap;
+use std::collections::HashMap;
 
 use crate::{Argb, Rgb};
 
@@ -55,7 +56,7 @@ impl Quantizer for QuantizerWu {
 
         QuantizerResult {
             color_to_count,
-            input_pixel_to_cluster_pixel: Default::default(),
+            input_pixel_to_cluster_pixel: HashMap::default(),
         }
     }
 }

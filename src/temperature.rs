@@ -35,7 +35,7 @@ impl TemperatureCache {
             input,
             _hcts_by_temp: vec![],
             _hcts_by_hue: vec![],
-            _temps_by_hct: Default::default(),
+            _temps_by_hct: HashMap::default(),
             _input_relative_temperature: -1.0,
             _complement: None,
         }
@@ -293,7 +293,7 @@ impl TemperatureCache {
 
         all_hcts.push(self.input);
 
-        let mut temperatures_by_hct: HashMap<Hct, f64> = Default::default();
+        let mut temperatures_by_hct = HashMap::<Hct, f64>::default();
 
         for e in all_hcts {
             temperatures_by_hct.insert(e, TemperatureCache::raw_temperature(e));

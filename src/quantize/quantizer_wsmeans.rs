@@ -1,11 +1,12 @@
 use indexmap::IndexMap;
 
 use std::cmp::Ordering;
+use std::collections::HashMap;
 
-use crate::quantize::point_provider_lab::PointProviderLab;
-use crate::Argb;
 use crate::color::Lab;
+use crate::quantize::point_provider_lab::PointProviderLab;
 use crate::utils::random::Random;
+use crate::Argb;
 
 use super::point_provider::PointProvider;
 use super::quantizer::QuantizerResult;
@@ -82,7 +83,7 @@ impl QuantizerWsmeans {
             _return_input_pixel_to_cluster_pixel: bool = false;
         };
 
-        let mut pixel_to_count: IndexMap<Argb, u32> = Default::default();
+        let mut pixel_to_count = IndexMap::<Argb, u32>::default();
         let mut points: Vec<Lab> = vec![];
         let mut pixels: Vec<Argb> = vec![];
         let mut point_count = 0;
@@ -313,7 +314,7 @@ impl QuantizerWsmeans {
             }
         }
 
-        let mut argb_to_population: IndexMap<Argb, u32> = Default::default();
+        let mut argb_to_population = IndexMap::<Argb, u32>::default();
 
         for i in 0..cluster_count {
             let count = pixel_count_sums[i];
@@ -333,7 +334,7 @@ impl QuantizerWsmeans {
 
         QuantizerResult {
             color_to_count: argb_to_population,
-            input_pixel_to_cluster_pixel: Default::default(),
+            input_pixel_to_cluster_pixel: HashMap::default(),
         }
     }
 }

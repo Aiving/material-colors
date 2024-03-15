@@ -108,7 +108,7 @@ impl DynamicColor {
             second_background: second_background.map(Box::new),
             contrast_curve,
             tone_delta_pair: tone_delta_pair.map(Box::new),
-            _hct_cache: Default::default(),
+            _hct_cache: HashMap::default(),
         }
     }
 
