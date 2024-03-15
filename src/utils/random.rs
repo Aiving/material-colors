@@ -1,8 +1,8 @@
 /// Partial LCG Algorithm implementation.
-pub(crate) struct Random(i64);
+pub struct Random(i64);
 
 impl Random {
-    pub(crate) fn new(seed: i64) -> Self {
+    pub fn new(seed: i64) -> Self {
         Self((seed ^ 0x5DEECE66Di64) & ((1i64 << 48) - 1))
     }
 
@@ -12,7 +12,7 @@ impl Random {
         ((self.0 as u64) >> (48 - bits)) as i32
     }
 
-    pub(crate) fn next_range(&mut self, range: i32) -> i32 {
+    pub fn next_range(&mut self, range: i32) -> i32 {
         if (range & -range) == range {
             return (i64::from(range).wrapping_mul(i64::from(self._next(31))) >> 31) as i32;
         }
