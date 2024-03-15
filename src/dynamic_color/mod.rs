@@ -147,6 +147,7 @@ impl DynamicColor {
     ///   contrast level is.
     /// - Returns: a tone, T in the HCT color space, that this `DynamicColor` is under
     ///   the conditions in `scheme`.
+    #[allow(clippy::useless_let_if_seq)]
     pub fn get_tone(&self, scheme: &DynamicScheme) -> f64 {
         let decreasing_contrast = scheme.contrast_level < 0.0;
 
