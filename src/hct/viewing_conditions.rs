@@ -124,7 +124,7 @@ impl ViewingConditions {
         ];
 
         // Factor used in calculating meaningful factors
-        let k = 1.0 / (5.0 * adapting_luminance + 1.0);
+        let k = 1.0 / 5.0_f64.mul_add(adapting_luminance, 1.0);
         let k4 = k * k * k * k; // pow(k, 4)
         let k4_f = 1.0 - k4;
 

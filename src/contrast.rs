@@ -34,7 +34,7 @@ pub fn lighter(tone: f64, ratio: f64) -> f64 {
     }
 
     let dark_y = y_from_lstar(tone);
-    let light_y = ratio * (dark_y + 5.0) - 5.0;
+    let light_y = ratio.mul_add(dark_y + 5.0, -5.0);
     let real_contrast = ratio_of_ys(light_y, dark_y);
     let delta = (real_contrast - ratio).abs();
 

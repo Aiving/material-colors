@@ -1,5 +1,5 @@
 pub fn lerp(start: f64, stop: f64, amount: f64) -> f64 {
-    (1.0 - amount) * start + amount * stop
+    (1.0 - amount).mul_add(start, amount * stop)
 }
 
 pub fn sanitize_degrees_int(degrees: i32) -> u32 {

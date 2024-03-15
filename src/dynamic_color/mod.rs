@@ -209,13 +209,13 @@ impl DynamicColor {
                 // Good! Tones satisfy the constraint; no change needed.
             } else {
                 // 2nd round: expand farther to match delta.
-                f_tone = (n_tone + delta * expansion_dir).clamp(0.0, 100.0);
+                f_tone = delta.mul_add(expansion_dir, n_tone).clamp(0.0, 100.0);
 
                 if (f_tone - n_tone) * expansion_dir >= delta {
                     // Good! Tones now satisfy the constraint; no change needed.
                 } else {
                     // 3rd round: contract nearer to match delta.
-                    n_tone = (f_tone - delta * expansion_dir).clamp(0.0, 100.0);
+                    n_tone = delta.mul_add(-expansion_dir, f_tone).clamp(0.0, 100.0);
                 }
             }
 
@@ -225,10 +225,10 @@ impl DynamicColor {
                 // `farther`.
                 if expansion_dir > 0.0 {
                     n_tone = 60.0;
-                    f_tone = f_tone.max(n_tone + delta * expansion_dir);
+                    f_tone = f_tone.max(delta.mul_add(expansion_dir, n_tone));
                 } else {
                     n_tone = 49.0;
-                    f_tone = f_tone.min(n_tone + delta * expansion_dir);
+                    f_tone = f_tone.min(delta.mul_add(expansion_dir, n_tone));
                 }
             } else if (50.0..60.0).contains(&f_tone) {
                 if stay_together {
@@ -236,10 +236,10 @@ impl DynamicColor {
                     // zone".
                     if expansion_dir > 0.0 {
                         n_tone = 60.0;
-                        f_tone = f_tone.max(n_tone + delta * expansion_dir);
+                        f_tone = f_tone.max(delta.mul_add(expansion_dir, n_tone));
                     } else {
                         n_tone = 49.0;
-                        f_tone = f_tone.min(n_tone + delta * expansion_dir);
+                        f_tone = f_tone.min(delta.mul_add(expansion_dir, n_tone));
                     }
                 } else {
                     // Not required to stay together; fixes just one.

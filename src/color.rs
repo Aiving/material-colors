@@ -180,7 +180,7 @@ impl From<Argb> for Lab {
         let fy = lab_f(y_normalized);
         let fz = lab_f(z_normalized);
 
-        let l = 116.0 * fy - 16.0;
+        let l = 116.0_f64.mul_add(fy, -16.0);
         let a = 500.0 * (fx - fy);
         let b = 200.0 * (fy - fz);
 
@@ -396,12 +396,12 @@ pub fn delinearized(rgb_component: f64) -> u8 {
 
 fn lab_f(t: f64) -> f64 {
     let e = 216.0 / 24389.0;
-    let kappa = 24389.0 / 27.0;
+    let kappa = 24389.0_f64 / 27.0;
 
     if t > e {
         t.powf(1.0 / 3.0)
     } else {
-        (kappa * t + 16.0) / 116.0
+        kappa.mul_add(t, 16.0) / 116.0
     }
 }
 

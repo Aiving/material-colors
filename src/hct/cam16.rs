@@ -117,14 +117,14 @@ impl Cam16 {
         // redness-greenness
         let a = (11.0 * r_a + -12.0 * g_a + b_a) / 11.0;
         // yellowness-blueness
-        let b = (r_a + g_a - 2.0 * b_a) / 9.0;
+        let b = 2.0_f64.mul_add(-b_a, r_a + g_a) / 9.0;
         // auxiliary components
         let u = (20.0 * r_a + 20.0 * g_a + 21.0 * b_a) / 20.0;
         let p2 = (40.0 * r_a + 20.0 * g_a + b_a) / 20.0;
 
         // hue
         let atan2 = b.atan2(a);
-        let atan_degrees = atan2 * 180.0 / PI;
+        let atan_degrees = atan2.to_degrees();
         let hue = if atan_degrees < 0.0 {
             atan_degrees + 360.0
         } else if atan_degrees >= 360.0 {
@@ -132,7 +132,7 @@ impl Cam16 {
         } else {
             atan_degrees
         };
-        let hue_radians = hue * PI / 180.0;
+        let hue_radians = hue.to_radians();
 
         assert!((0.0..360.0).contains(&hue));
 
@@ -148,7 +148,7 @@ impl Cam16 {
             * (viewing_conditions.f_lroot);
 
         let hue_prime = if hue < 20.14 { hue + 360.0 } else { hue };
-        let e_hue = (1.0 / 4.0) * ((hue_prime * PI / 180.0 + 2.0).cos() + 3.8);
+        let e_hue = (1.0 / 4.0) * ((hue_prime.to_radians() + 2.0).cos() + 3.8);
         let p1 = 50000.0 / 13.0 * e_hue * viewing_conditions.n_c * viewing_conditions.ncb;
         let t = p1 * (a * a + b * b).sqrt() / (u + 0.305);
         let alpha = t.powf(0.9)
@@ -160,8 +160,8 @@ impl Cam16 {
         let s = 50.0 * ((alpha * viewing_conditions.c) / (viewing_conditions.aw + 4.0)).sqrt();
 
         // CAM16-UCS components
-        let jstar = (1.0 + 100.0 * 0.007) * j / (1.0 + 0.007 * j);
-        let mstar = (1.0 + 0.0228 * m).ln() / 0.0228;
+        let jstar = 100.0_f64.mul_add(0.007, 1.0) * j / 0.007f64.mul_add(j, 1.0);
+        let mstar = 0.0228_f64.mul_add(m, 1.0) / 0.0228;
         let astar = mstar * hue_radians.cos();
         let bstar = mstar * hue_radians.sin();
 
@@ -200,9 +200,9 @@ impl Cam16 {
         let alpha = c / (j / 100.0).sqrt();
         let s = 50.0 * ((alpha * viewing_conditions.c) / (viewing_conditions.aw + 4.0)).sqrt();
 
-        let hue_radians = h * PI / 180.0;
-        let jstar = (1.0 + 100.0 * 0.007) * j / (1.0 + 0.007 * j);
-        let mstar = 1.0 / 0.0228 * (1.0 + 0.0228 * m).ln();
+        let hue_radians = h.to_radians();
+        let jstar = 100.0_f64.mul_add(0.007, 1.0) * j / 0.007_f64.mul_add(j, 1.0);
+        let mstar = 1.0 / 0.0228 * 0.0228_f64.mul_add(m, 1.0).ln();
         let astar = mstar * hue_radians.cos();
         let bstar = mstar * hue_radians.sin();
 
@@ -240,7 +240,7 @@ impl Cam16 {
         let c = m / viewing_conditions.f_lroot;
         let h = b.atan2(a) * (180.0 / PI);
         let h = if h < 0.0 { h + 360.0 } else { h };
-        let j = jstar / (1.0 - (jstar - 100.0) * 0.007);
+        let j = jstar / (jstar - 100.0).mul_add(-0.007, 1.0);
 
         Cam16::from_jch_in_viewing_conditions(j, c, h, viewing_conditions)
     }
@@ -266,7 +266,7 @@ impl Cam16 {
         let t = (alpha
             / (1.64 - 0.29_f64.powf(viewing_conditions.background_ytowhite_point_y)).powf(0.73))
         .powf(1.0 / 0.9);
-        let h_rad = self.hue * PI / 180.0;
+        let h_rad = self.hue.to_radians();
 
         let e_hue = 0.25 * ((h_rad + 2.0).cos() + 3.8);
         let ac = viewing_conditions.aw

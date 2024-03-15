@@ -301,7 +301,7 @@ impl HctSolver {
     /// [angle] An angle in radians; must not deviate too much from 0.
     /// Returns A coterminal angle between 0 and 2pi.
     fn sanitize_radians(angle: f64) -> f64 {
-        (angle + PI * 8.0) % (PI * 2.0)
+        PI.mul_add(8.0, angle) % (PI * 2.0)
     }
 
     /// Delinearizes an Rgb component, returning a floating-point
@@ -408,9 +408,9 @@ impl HctSolver {
         let coord_b = if n % 2 == 0 { 0.0 } else { 100.0 };
 
         if n < 4 {
-            let g = coord_a;
+            let g: f64 = coord_a;
             let b = coord_b;
-            let r = (y - g * k_g - b * k_b) / k_r;
+            let r = (g.mul_add(-k_g, y) - b * k_b) / k_r;
 
             if Self::is_bounded(r) {
                 [r, g, b]
@@ -430,7 +430,7 @@ impl HctSolver {
         } else {
             let r = coord_a;
             let g = coord_b;
-            let b = (y - r * k_r - g * k_g) / k_b;
+            let b = (r.mul_add(-k_r, y) - g * k_g) / k_b;
 
             if Self::is_bounded(b) {
                 [r, g, b]

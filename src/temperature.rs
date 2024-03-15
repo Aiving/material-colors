@@ -1,5 +1,5 @@
 use ahash::HashMap;
-use core::{cmp::Ordering, f64::consts::PI};
+use core::cmp::Ordering;
 
 use crate::{color::Lab, utils::math::sanitize_degrees_double, Argb, Hct};
 
@@ -190,7 +190,7 @@ impl TemperatureCache {
         } else {
             warmest_hue
         };
-        let direction_of_rotation = 1.0;
+        let direction_of_rotation = 1.0_f64;
         let mut smallest_error = 1000.0;
         let mut answer = self.hcts_by_hue()[self.input.get_hue().round() as usize];
 
@@ -199,8 +199,9 @@ impl TemperatureCache {
         // Find the color in the other section, closest to the inverse percentile
         // of the input color. This is the complement.
         for hue_addend in 0..=360 {
-            let hue =
-                sanitize_degrees_double(start_hue + direction_of_rotation * hue_addend as f64);
+            let hue = sanitize_degrees_double(
+                direction_of_rotation.mul_add(hue_addend as f64, start_hue),
+            );
 
             if !TemperatureCache::is_between(hue, start_hue, end_hue) {
                 continue;
@@ -352,9 +353,9 @@ impl TemperatureCache {
     ///   Assuming max of 130 chroma, 8.61.
     pub fn raw_temperature(color: Hct) -> f64 {
         let lab = Lab::from(Argb::from(color));
-        let hue = sanitize_degrees_double(lab.b.atan2(lab.a) * 180.0 / PI);
+        let hue = sanitize_degrees_double(lab.b.atan2(lab.a).to_degrees());
         let chroma = ((lab.a * lab.a) + (lab.b * lab.b)).sqrt();
 
-        -0.5 + 0.02 * chroma.powf(1.07) * (sanitize_degrees_double(hue - 50.0) * PI / 180.0).cos()
+        -0.5 + 0.02 * chroma.powf(1.07) * (sanitize_degrees_double(hue - 50.0).to_radians()).cos()
     }
 }
