@@ -38,11 +38,11 @@ pub struct ViewingConditions {
 
 impl ViewingConditions {
     pub fn standard() -> Self {
-        ViewingConditions::s_rgb()
+        Self::s_rgb()
     }
 
     pub fn s_rgb() -> Self {
-        ViewingConditions::make(None, None, None, None, None)
+        Self::make(None, None, None, None, None)
     }
 
     /// Convenience constructor for [ViewingConditions].
@@ -59,7 +59,7 @@ impl ViewingConditions {
         background_lstar: Option<f64>,
         surround: Option<f64>,
         discounting_illuminant: Option<bool>,
-    ) -> ViewingConditions {
+    ) -> Self {
         let white_point = white_point.unwrap_or(WHITE_POINT_D65);
         let adapting_luminance = adapting_luminance.unwrap_or(-1.0);
         let background_lstar = background_lstar.unwrap_or(50.0);
@@ -97,13 +97,7 @@ impl ViewingConditions {
             f * (1.0 - ((1.0 / 3.6) * ((-adapting_luminance - 42.0) / 92.0).exp()))
         };
         // Per Li et al, if D is greater than 1 or less than 0, set it to 1 or 0.
-        let d = if d > 1.0 {
-            1.0
-        } else if d < 0.0 {
-            0.0
-        } else {
-            d
-        };
+        let d = d.clamp(0.0, 1.0);
         // chromatic induction factor
         let nc = f;
 
@@ -124,13 +118,13 @@ impl ViewingConditions {
         ];
 
         // Factor used in calculating meaningful factors
-        let k = 1.0 / (5.0 * adapting_luminance + 1.0);
+        let k = 1.0 / 5.0_f64.mul_add(adapting_luminance, 1.0);
         let k4 = k * k * k * k; // pow(k, 4)
         let k4_f = 1.0 - k4;
 
         // Luminance-level adaptation factor
-        let fl = (k4 * adapting_luminance)
-            + (0.1 * k4_f * k4_f * (5.0 * adapting_luminance).powf(1.0 / 3.0));
+        let fl =
+            (k4 * adapting_luminance) + (0.1 * k4_f * k4_f * (5.0 * adapting_luminance).cbrt());
         // Intermediate factor, ratio of background relative luminance to white relative luminance
         let n = y_from_lstar(background_lstar) / white_point[1];
 
@@ -158,7 +152,7 @@ impl ViewingConditions {
 
         let aw = (40.0 * rgb_a[0] + 20.0 * rgb_a[1] + rgb_a[2]) / 20.0 * nbb;
 
-        ViewingConditions {
+        Self {
             white_point,
             adapting_luminance,
             background_lstar,

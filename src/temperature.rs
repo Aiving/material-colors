@@ -1,5 +1,5 @@
 use ahash::HashMap;
-use core::{cmp::Ordering, f64::consts::PI};
+use core::cmp::Ordering;
 
 use crate::{color::Lab, utils::math::sanitize_degrees_double, Argb, Hct};
 
@@ -35,7 +35,7 @@ impl TemperatureCache {
             input,
             _hcts_by_temp: vec![],
             _hcts_by_hue: vec![],
-            _temps_by_hct: Default::default(),
+            _temps_by_hct: HashMap::default(),
             _input_relative_temperature: -1.0,
             _complement: None,
         }
@@ -73,7 +73,7 @@ impl TemperatureCache {
         }
 
         let mut hue_addend = 1;
-        let temp_step = absolute_total_temp_delta / divisions as f64;
+        let temp_step = absolute_total_temp_delta / f64::from(divisions);
 
         let mut total_temp_delta = 0.0;
 
@@ -125,7 +125,7 @@ impl TemperatureCache {
         let mut answers = vec![self.input];
 
         // First, generate analogues from rotating counter-clockwise.
-        let increase_hue_count = ((count as f64 - 1.0) / 2.0).floor() as isize;
+        let increase_hue_count = ((f64::from(count) - 1.0) / 2.0).floor() as isize;
 
         for i in 1..=increase_hue_count {
             let mut index = 0_isize - i;
@@ -179,7 +179,7 @@ impl TemperatureCache {
 
         let range = warmest_temp - coldest_temp;
         let start_hue_is_coldest_to_warmest =
-            TemperatureCache::is_between(self.input.get_hue(), coldest_hue, warmest_hue);
+            Self::is_between(self.input.get_hue(), coldest_hue, warmest_hue);
         let start_hue = if start_hue_is_coldest_to_warmest {
             warmest_hue
         } else {
@@ -190,7 +190,7 @@ impl TemperatureCache {
         } else {
             warmest_hue
         };
-        let direction_of_rotation = 1.0;
+        let direction_of_rotation = 1.0_f64;
         let mut smallest_error = 1000.0;
         let mut answer = self.hcts_by_hue()[self.input.get_hue().round() as usize];
 
@@ -199,15 +199,16 @@ impl TemperatureCache {
         // Find the color in the other section, closest to the inverse percentile
         // of the input color. This is the complement.
         for hue_addend in 0..=360 {
-            let hue =
-                sanitize_degrees_double(start_hue + direction_of_rotation * hue_addend as f64);
+            let hue = sanitize_degrees_double(
+                direction_of_rotation.mul_add(f64::from(hue_addend), start_hue),
+            );
 
-            if !TemperatureCache::is_between(hue, start_hue, end_hue) {
+            if !Self::is_between(hue, start_hue, end_hue) {
                 continue;
             }
 
             let possible_answer = &self.hcts_by_hue()[hue.round() as usize];
-            let relative_temp = (self._temps_by_hct[&possible_answer] - coldest_temp) / range;
+            let relative_temp = (self._temps_by_hct[possible_answer] - coldest_temp) / range;
             let error = (complement_relative_temp - relative_temp).abs();
 
             if error < smallest_error {
@@ -292,10 +293,10 @@ impl TemperatureCache {
 
         all_hcts.push(self.input);
 
-        let mut temperatures_by_hct: HashMap<Hct, f64> = Default::default();
+        let mut temperatures_by_hct = HashMap::<Hct, f64>::default();
 
         for e in all_hcts {
-            temperatures_by_hct.insert(e, TemperatureCache::raw_temperature(e));
+            temperatures_by_hct.insert(e, Self::raw_temperature(e));
         }
 
         self._temps_by_hct = temperatures_by_hct;
@@ -313,8 +314,11 @@ impl TemperatureCache {
         let mut hcts = vec![];
 
         for hue in 0..=360 {
-            let color_at_hue =
-                Hct::from(hue as f64, self.input.get_chroma(), self.input.get_tone());
+            let color_at_hue = Hct::from(
+                f64::from(hue),
+                self.input.get_chroma(),
+                self.input.get_tone(),
+            );
 
             hcts.push(color_at_hue);
         }
@@ -352,9 +356,9 @@ impl TemperatureCache {
     ///   Assuming max of 130 chroma, 8.61.
     pub fn raw_temperature(color: Hct) -> f64 {
         let lab = Lab::from(Argb::from(color));
-        let hue = sanitize_degrees_double(lab.b.atan2(lab.a) * 180.0 / PI);
-        let chroma = ((lab.a * lab.a) + (lab.b * lab.b)).sqrt();
+        let hue = sanitize_degrees_double(lab.b.atan2(lab.a).to_degrees());
+        let chroma = lab.a.hypot(lab.b);
 
-        -0.5 + 0.02 * chroma.powf(1.07) * (sanitize_degrees_double(hue - 50.0) * PI / 180.0).cos()
+        -0.5 + 0.02 * chroma.powf(1.07) * (sanitize_degrees_double(hue - 50.0).to_radians()).cos()
     }
 }

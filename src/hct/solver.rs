@@ -301,7 +301,7 @@ impl HctSolver {
     /// [angle] An angle in radians; must not deviate too much from 0.
     /// Returns A coterminal angle between 0 and 2pi.
     fn sanitize_radians(angle: f64) -> f64 {
-        (angle + PI * 8.0) % (PI * 2.0)
+        PI.mul_add(8.0, angle) % (PI * 2.0)
     }
 
     /// Delinearizes an Rgb component, returning a floating-point
@@ -408,9 +408,9 @@ impl HctSolver {
         let coord_b = if n % 2 == 0 { 0.0 } else { 100.0 };
 
         if n < 4 {
-            let g = coord_a;
+            let g: f64 = coord_a;
             let b = coord_b;
-            let r = (y - g * k_g - b * k_b) / k_r;
+            let r = (g.mul_add(-k_g, y) - b * k_b) / k_r;
 
             if Self::is_bounded(r) {
                 [r, g, b]
@@ -430,7 +430,7 @@ impl HctSolver {
         } else {
             let r = coord_a;
             let g = coord_b;
-            let b = (y - r * k_r - g * k_g) / k_b;
+            let b = (r.mul_add(-k_r, y) - g * k_g) / k_b;
 
             if Self::is_bounded(b) {
                 [r, g, b]
@@ -515,7 +515,7 @@ impl HctSolver {
         let mut right = segment[1];
 
         for axis in 0..3 {
-            if left[axis] != right[axis] {
+            if (left[axis] - right[axis]).abs() > f64::EPSILON {
                 let [mut l_plane, mut r_plane] = if left[axis] < right[axis] {
                     [
                         Self::critical_plane_below(Self::true_delinearized(left[axis])),
@@ -529,22 +529,21 @@ impl HctSolver {
                 };
 
                 for _ in 0..8 {
-                    if (r_plane as i16 - l_plane as i16).abs() <= 1 {
+                    if (i16::from(r_plane) - i16::from(l_plane)).abs() <= 1 {
                         break;
-                    } else {
-                        let m_plane = ((l_plane as f32 + r_plane as f32) / 2.0).floor() as u8;
-                        let mid_plane_coordinate = CRITICAL_PLANES[m_plane as usize];
-                        let mid = Self::set_coordinate(left, mid_plane_coordinate, right, axis);
-                        let mid_hue = Self::hue_of(mid);
+                    }
+                    let m_plane = ((f32::from(l_plane) + f32::from(r_plane)) / 2.0).floor() as u8;
+                    let mid_plane_coordinate = CRITICAL_PLANES[m_plane as usize];
+                    let mid = Self::set_coordinate(left, mid_plane_coordinate, right, axis);
+                    let mid_hue = Self::hue_of(mid);
 
-                        if Self::are_in_cyclic_order(left_hue, target_hue, mid_hue) {
-                            right = mid;
-                            r_plane = m_plane;
-                        } else {
-                            left = mid;
-                            left_hue = mid_hue;
-                            l_plane = m_plane;
-                        }
+                    if Self::are_in_cyclic_order(left_hue, target_hue, mid_hue) {
+                        right = mid;
+                        r_plane = m_plane;
+                    } else {
+                        left = mid;
+                        left_hue = mid_hue;
+                        l_plane = m_plane;
                     }
                 }
             }

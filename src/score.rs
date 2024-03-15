@@ -66,14 +66,14 @@ impl Score {
             colors_hct.push(hct);
 
             hue_population[hue as usize] += population;
-            population_sum += (*population) as f64;
+            population_sum += f64::from(*population);
         }
 
         // Hues with more usage in neighboring 30 degree slice get a larger number.
         let mut hue_excited_proportions = [0.0; 360];
 
         for (hue, population) in hue_population.into_iter().enumerate().take(360) {
-            let proportion = (population as f64) / population_sum;
+            let proportion = f64::from(population) / population_sum;
 
             for i in ((hue as i32) - 14)..((hue as i32) + 16) {
                 let neighbor_hue = sanitize_degrees_int(i);
@@ -126,7 +126,7 @@ impl Score {
 
                 if !chosen_colors.iter().any(|color| {
                     difference_degrees(entry.hct.get_hue(), color.get_hue())
-                        < difference_degree as f64
+                        < f64::from(difference_degree)
                 }) {
                     chosen_colors.push(hct);
                 }
@@ -144,11 +144,11 @@ impl Score {
         let mut colors = vec![];
 
         if chosen_colors.is_empty() {
-            colors.push(fallback_color_argb)
+            colors.push(fallback_color_argb);
         }
 
         for chosen_hct in chosen_colors {
-            colors.push(Argb::from(chosen_hct))
+            colors.push(Argb::from(chosen_hct));
         }
 
         colors

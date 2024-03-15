@@ -2,6 +2,7 @@
 
 use core::fmt;
 use indexmap::IndexMap;
+use std::collections::HashMap;
 
 use crate::{Argb, Rgb};
 
@@ -55,7 +56,7 @@ impl Quantizer for QuantizerWu {
 
         QuantizerResult {
             color_to_count,
-            input_pixel_to_cluster_pixel: Default::default(),
+            input_pixel_to_cluster_pixel: HashMap::default(),
         }
     }
 }
@@ -89,12 +90,12 @@ impl QuantizerWu {
 
             self.weights[index] += count;
 
-            self.moments_r[index] += red as u32 * count;
-            self.moments_g[index] += green as u32 * count;
-            self.moments_b[index] += blue as u32 * count;
+            self.moments_r[index] += u32::from(red) * count;
+            self.moments_g[index] += u32::from(green) * count;
+            self.moments_b[index] += u32::from(blue) * count;
 
-            self.moments[index] += count as f64
-                * ((red as f64).powi(2) + (green as f64).powi(2) + (blue as f64).powi(2));
+            self.moments[index] += f64::from(count)
+                * (f64::from(red).powi(2) + f64::from(green).powi(2) + f64::from(blue)).powi(2);
         }
     }
 
@@ -136,7 +137,7 @@ impl QuantizerWu {
                     self.moments_g[index] = self.moments_g[previous_index] + area_g[b];
                     self.moments_b[index] = self.moments_b[previous_index] + area_b[b];
 
-                    self.moments[index] = self.moments[previous_index] + area2[b]
+                    self.moments[index] = self.moments[previous_index] + area2[b];
                 }
             }
         }
@@ -268,7 +269,7 @@ impl QuantizerWu {
             .wrapping_add(db.wrapping_pow(2));
         let volume_ = Self::volume(cube, &self.weights);
 
-        xx - (hypotenuse / volume_) as f64
+        xx - f64::from(hypotenuse / volume_)
     }
 
     pub fn cut(&mut self, next: usize, i: usize) -> bool {
@@ -281,7 +282,7 @@ impl QuantizerWu {
 
         let max_rresult = self.maximize(
             &one,
-            Direction::Red,
+            &Direction::Red,
             one.r::<u8>(0) + 1,
             one.r::<u8>(1),
             whole_r,
@@ -291,7 +292,7 @@ impl QuantizerWu {
         );
         let max_gresult = self.maximize(
             &one,
-            Direction::Green,
+            &Direction::Green,
             one.g::<u8>(0) + 1,
             one.g::<u8>(1),
             whole_r,
@@ -301,7 +302,7 @@ impl QuantizerWu {
         );
         let max_bresult = self.maximize(
             &one,
-            Direction::Blue,
+            &Direction::Blue,
             one.b::<u8>(0) + 1,
             one.b::<u8>(1),
             whole_r,
@@ -369,7 +370,7 @@ impl QuantizerWu {
     pub fn maximize(
         &self,
         cube: &Cube,
-        direction: Direction,
+        direction: &Direction,
         first: u8,
         last: u8,
         whole_r: i32,
@@ -377,29 +378,31 @@ impl QuantizerWu {
         whole_b: i32,
         whole_w: i32,
     ) -> MaximizeResult {
-        let bottom_r = Self::bottom(cube, &direction, &self.moments_r);
-        let bottom_g = Self::bottom(cube, &direction, &self.moments_g);
-        let bottom_b = Self::bottom(cube, &direction, &self.moments_b);
-        let bottom_w = Self::bottom(cube, &direction, &self.weights);
+        let bottom_r = Self::bottom(cube, direction, &self.moments_r);
+        let bottom_g = Self::bottom(cube, direction, &self.moments_g);
+        let bottom_b = Self::bottom(cube, direction, &self.moments_b);
+        let bottom_w = Self::bottom(cube, direction, &self.weights);
 
         let mut max = 0.0;
         let mut cut = None;
 
         for i in first..last {
-            let mut half_r = bottom_r.wrapping_add(Self::top(cube, &direction, i, &self.moments_r));
-            let mut half_g = bottom_g.wrapping_add(Self::top(cube, &direction, i, &self.moments_g));
-            let mut half_b = bottom_b.wrapping_add(Self::top(cube, &direction, i, &self.moments_b));
-            let mut half_w = bottom_w.wrapping_add(Self::top(cube, &direction, i, &self.weights));
+            let mut half_r = bottom_r.wrapping_add(Self::top(cube, direction, i, &self.moments_r));
+            let mut half_g = bottom_g.wrapping_add(Self::top(cube, direction, i, &self.moments_g));
+            let mut half_b = bottom_b.wrapping_add(Self::top(cube, direction, i, &self.moments_b));
+            let mut half_w = bottom_w.wrapping_add(Self::top(cube, direction, i, &self.weights));
 
             if half_w == 0 {
                 continue;
             }
 
-            let mut temp_numerator = half_r
-                .wrapping_pow(2)
-                .wrapping_add(half_g.wrapping_pow(2))
-                .wrapping_add(half_b.wrapping_pow(2)) as f64;
-            let mut temp_denominator = half_w as f64;
+            let mut temp_numerator = f64::from(
+                half_r
+                    .wrapping_pow(2)
+                    .wrapping_add(half_g.wrapping_pow(2))
+                    .wrapping_add(half_b.wrapping_pow(2)),
+            );
+            let mut temp_denominator = f64::from(half_w);
             let mut temp = temp_numerator / temp_denominator;
 
             half_r = whole_r.wrapping_sub(half_r);
@@ -411,11 +414,13 @@ impl QuantizerWu {
                 continue;
             }
 
-            temp_numerator = half_r
-                .wrapping_pow(2)
-                .wrapping_add(half_g.wrapping_pow(2))
-                .wrapping_add(half_b.wrapping_pow(2)) as f64;
-            temp_denominator = half_w as f64;
+            temp_numerator = f64::from(
+                half_r
+                    .wrapping_pow(2)
+                    .wrapping_add(half_g.wrapping_pow(2))
+                    .wrapping_add(half_b.wrapping_pow(2)),
+            );
+            temp_denominator = f64::from(half_w);
             temp += temp_numerator / temp_denominator;
 
             if temp > max {

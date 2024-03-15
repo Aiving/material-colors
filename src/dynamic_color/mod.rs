@@ -94,8 +94,8 @@ impl DynamicColor {
         palette: fn(&DynamicScheme) -> &TonalPalette,
         tone: fn(&DynamicScheme) -> f64,
         is_background: bool,
-        background: Option<fn(&DynamicScheme) -> DynamicColor>,
-        second_background: Option<fn(&DynamicScheme) -> DynamicColor>,
+        background: Option<fn(&DynamicScheme) -> Self>,
+        second_background: Option<fn(&DynamicScheme) -> Self>,
         contrast_curve: Option<ContrastCurve>,
         tone_delta_pair: Option<fn(&DynamicScheme) -> ToneDeltaPair>,
     ) -> Self {
@@ -108,7 +108,7 @@ impl DynamicColor {
             second_background: second_background.map(Box::new),
             contrast_curve,
             tone_delta_pair: tone_delta_pair.map(Box::new),
-            _hct_cache: Default::default(),
+            _hct_cache: HashMap::default(),
         }
     }
 
@@ -147,6 +147,7 @@ impl DynamicColor {
     ///   contrast level is.
     /// - Returns: a tone, T in the HCT color space, that this `DynamicColor` is under
     ///   the conditions in `scheme`.
+    #[allow(clippy::useless_let_if_seq)]
     pub fn get_tone(&self, scheme: &DynamicScheme) -> f64 {
         let decreasing_contrast = scheme.contrast_level < 0.0;
 
@@ -188,34 +189,34 @@ impl DynamicColor {
             let mut n_tone = if ratio_of_tones(bg_tone, n_initial_tone) >= n_contrast {
                 n_initial_tone
             } else {
-                DynamicColor::foreground_tone(bg_tone, n_contrast)
+                Self::foreground_tone(bg_tone, n_contrast)
             };
             // Initial and adjusted tones for `farther`
             let f_initial_tone = (farther.tone)(scheme);
             let mut f_tone = if ratio_of_tones(bg_tone, f_initial_tone) >= f_contrast {
                 f_initial_tone
             } else {
-                DynamicColor::foreground_tone(bg_tone, f_contrast)
+                Self::foreground_tone(bg_tone, f_contrast)
             };
 
             if decreasing_contrast {
                 // If decreasing contrast, adjust color to the "bare minimum"
                 // that satisfies contrast.
-                n_tone = DynamicColor::foreground_tone(bg_tone, n_contrast);
-                f_tone = DynamicColor::foreground_tone(bg_tone, f_contrast);
+                n_tone = Self::foreground_tone(bg_tone, n_contrast);
+                f_tone = Self::foreground_tone(bg_tone, f_contrast);
             }
 
             if (f_tone - n_tone) * expansion_dir >= delta {
                 // Good! Tones satisfy the constraint; no change needed.
             } else {
                 // 2nd round: expand farther to match delta.
-                f_tone = (n_tone + delta * expansion_dir).clamp(0.0, 100.0);
+                f_tone = delta.mul_add(expansion_dir, n_tone).clamp(0.0, 100.0);
 
                 if (f_tone - n_tone) * expansion_dir >= delta {
                     // Good! Tones now satisfy the constraint; no change needed.
                 } else {
                     // 3rd round: contract nearer to match delta.
-                    n_tone = (f_tone - delta * expansion_dir).clamp(0.0, 100.0);
+                    n_tone = delta.mul_add(-expansion_dir, f_tone).clamp(0.0, 100.0);
                 }
             }
 
@@ -225,10 +226,10 @@ impl DynamicColor {
                 // `farther`.
                 if expansion_dir > 0.0 {
                     n_tone = 60.0;
-                    f_tone = f_tone.max(n_tone + delta * expansion_dir);
+                    f_tone = f_tone.max(delta.mul_add(expansion_dir, n_tone));
                 } else {
                     n_tone = 49.0;
-                    f_tone = f_tone.min(n_tone + delta * expansion_dir);
+                    f_tone = f_tone.min(delta.mul_add(expansion_dir, n_tone));
                 }
             } else if (50.0..60.0).contains(&f_tone) {
                 if stay_together {
@@ -236,10 +237,10 @@ impl DynamicColor {
                     // zone".
                     if expansion_dir > 0.0 {
                         n_tone = 60.0;
-                        f_tone = f_tone.max(n_tone + delta * expansion_dir);
+                        f_tone = f_tone.max(delta.mul_add(expansion_dir, n_tone));
                     } else {
                         n_tone = 49.0;
-                        f_tone = f_tone.min(n_tone + delta * expansion_dir);
+                        f_tone = f_tone.min(delta.mul_add(expansion_dir, n_tone));
                     }
                 } else {
                     // Not required to stay together; fixes just one.
@@ -274,11 +275,11 @@ impl DynamicColor {
                     // Don't "improve" what's good enough.
                 } else {
                     // Rough improvement.
-                    answer = DynamicColor::foreground_tone(bg_tone, desired_ratio);
+                    answer = Self::foreground_tone(bg_tone, desired_ratio);
                 }
 
                 if decreasing_contrast {
-                    answer = DynamicColor::foreground_tone(bg_tone, desired_ratio);
+                    answer = Self::foreground_tone(bg_tone, desired_ratio);
                 }
 
                 if self.is_background && (50.0..60.0).contains(&answer) {
@@ -316,15 +317,15 @@ impl DynamicColor {
                     // Tones suitable for the foreground.
                     let mut availables: Vec<f64> = vec![];
 
-                    if light_option != -1.0 {
-                        availables.push(light_option)
+                    if (light_option - -1.0).abs() > f64::EPSILON {
+                        availables.push(light_option);
                     }
-                    if dark_option != -1.0 {
-                        availables.push(dark_option)
+                    if (dark_option - -1.0).abs() > f64::EPSILON {
+                        availables.push(dark_option);
                     }
 
-                    let prefers_light = DynamicColor::tone_prefers_light_foreground(bg_tone1)
-                        || DynamicColor::tone_prefers_light_foreground(bg_tone2);
+                    let prefers_light = Self::tone_prefers_light_foreground(bg_tone1)
+                        || Self::tone_prefers_light_foreground(bg_tone2);
 
                     if prefers_light {
                         return if light_option < 0.0 {

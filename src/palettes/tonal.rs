@@ -25,23 +25,23 @@ impl TonalPalette {
     /// Commonly-used tone values.
     const COMMON_TONES: [i32; 13] = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 100];
 
-    pub fn common_size() -> usize {
+    pub const fn common_size() -> usize {
         Self::COMMON_TONES.len()
     }
 
-    pub fn hue(&self) -> f64 {
+    pub const fn hue(&self) -> f64 {
         self._hue
     }
 
-    pub fn chroma(&self) -> f64 {
+    pub const fn chroma(&self) -> f64 {
         self._chroma
     }
 
-    pub fn key_color(&self) -> Hct {
+    pub const fn key_color(&self) -> Hct {
         self._key_color
     }
 
-    fn new(_hue: f64, _chroma: f64, _key_color: Hct) -> Self {
+    const fn new(_hue: f64, _chroma: f64, _key_color: Hct) -> Self {
         Self {
             _hue,
             _chroma,
@@ -50,18 +50,18 @@ impl TonalPalette {
     }
 
     /// Create a Tonal Palette from hue and chroma of [hct].
-    pub fn from_hct(hct: Hct) -> Self {
+    pub const fn from_hct(hct: Hct) -> Self {
         Self::new(hct.get_hue(), hct.get_chroma(), hct)
     }
 
     /// Create a Tonal Palette from hue and chroma, which generates a key color.
     pub fn from_hue_and_chroma(hue: f64, chroma: f64) -> Self {
-        Self::new(hue, chroma, TonalPalette::create_key_color(hue, chroma))
+        Self::new(hue, chroma, Self::create_key_color(hue, chroma))
     }
 
     /// Create colors using [hue] and [chroma].
     pub fn of(hue: f64, chroma: f64) -> Self {
-        TonalPalette::from_hue_and_chroma(hue, chroma)
+        Self::from_hue_and_chroma(hue, chroma)
     }
 
     /// Creates a key color from a [hue] and a [chroma].
@@ -83,11 +83,11 @@ impl TonalPalette {
             // case where requested chroma is 16.51, and the closest chroma is 16.49.
             // Error is minimized, but when rounded and displayed, requested chroma
             // is 17, key color's chroma is 16.
-            if chroma.round() == smallest_delta_hct.get_chroma().round() {
+            if (chroma.round() - smallest_delta_hct.get_chroma().round()).abs() < f64::EPSILON {
                 return smallest_delta_hct;
             }
 
-            let hct_add = Hct::from(hue, chroma, start_tone + delta as f64);
+            let hct_add = Hct::from(hue, chroma, start_tone + f64::from(delta));
             let hct_add_delta = (hct_add.get_chroma() - chroma).abs();
 
             if hct_add_delta < smallest_delta {
@@ -95,7 +95,7 @@ impl TonalPalette {
                 smallest_delta_hct = hct_add;
             }
 
-            let hct_subtract = Hct::from(hue, chroma, start_tone - delta as f64);
+            let hct_subtract = Hct::from(hue, chroma, start_tone - f64::from(delta));
             let hct_subtract_delta = (hct_subtract.get_chroma() - chroma).abs();
 
             if hct_subtract_delta < smallest_delta {
@@ -114,7 +114,7 @@ impl TonalPalette {
     /// If the class was instantiated from a fixed-size list of color ints, [tone]
     /// must be in [commonTones].
     pub fn tone(&self, tone: i32) -> Argb {
-        Hct::from(self.hue(), self.chroma(), tone as f64).into()
+        Hct::from(self.hue(), self.chroma(), f64::from(tone)).into()
     }
 
     pub fn get_hct(&self, tone: f64) -> Hct {

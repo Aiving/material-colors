@@ -1,11 +1,12 @@
 use indexmap::IndexMap;
 
 use std::cmp::Ordering;
+use std::collections::HashMap;
 
-use crate::quantize::point_provider_lab::PointProviderLab;
-use crate::Argb;
 use crate::color::Lab;
+use crate::quantize::point_provider_lab::PointProviderLab;
 use crate::utils::random::Random;
+use crate::Argb;
 
 use super::point_provider::PointProvider;
 use super::quantizer::QuantizerResult;
@@ -59,7 +60,7 @@ impl QuantizerWsmeans {
     pub fn debug_log<T: Into<String>>(log: T) {
         let log: String = log.into();
 
-        if QuantizerWsmeans::DEBUG {
+        if Self::DEBUG {
             println!("{log}");
         }
     }
@@ -82,7 +83,7 @@ impl QuantizerWsmeans {
             _return_input_pixel_to_cluster_pixel: bool = false;
         };
 
-        let mut pixel_to_count: IndexMap<Argb, u32> = Default::default();
+        let mut pixel_to_count = IndexMap::<Argb, u32>::default();
         let mut points: Vec<Lab> = vec![];
         let mut pixels: Vec<Argb> = vec![];
         let mut point_count = 0;
@@ -92,11 +93,10 @@ impl QuantizerWsmeans {
 
             if let Some(value) = pixel_count {
                 pixel_count = Some(value + 1);
-                pixel_to_count.insert(*input_pixel, pixel_count.unwrap());
             } else {
                 pixel_count = Some(1);
-                pixel_to_count.insert(*input_pixel, pixel_count.unwrap());
             }
+            pixel_to_count.insert(*input_pixel, pixel_count.unwrap());
 
             if pixel_count.is_some_and(|count| count == 1) {
                 point_count += 1;
@@ -163,7 +163,7 @@ impl QuantizerWsmeans {
             }
         }
 
-        QuantizerWsmeans::debug_log(format!(
+        Self::debug_log(format!(
             "have {} starting clusters, {} points",
             clusters.len(),
             points.len()
@@ -184,7 +184,7 @@ impl QuantizerWsmeans {
         let mut pixel_count_sums = vec![0; cluster_count];
 
         for iteration in 0..max_iterations {
-            if QuantizerWsmeans::DEBUG {
+            if Self::DEBUG {
                 for item in pixel_count_sums.iter_mut().take(cluster_count) {
                     *item = 0;
                 }
@@ -204,7 +204,7 @@ impl QuantizerWsmeans {
                     }
                 }
 
-                QuantizerWsmeans::debug_log(format!(
+                Self::debug_log(format!(
                     "starting iteration {}; {empty_clusters} clusters are empty of {cluster_count}",
                     iteration + 1
                 ));
@@ -265,17 +265,12 @@ impl QuantizerWsmeans {
             }
 
             if points_moved == 0 && iteration > 0 {
-                QuantizerWsmeans::debug_log(format!(
-                    "terminated after {iteration} k-means iterations"
-                ));
+                Self::debug_log(format!("terminated after {iteration} k-means iterations"));
 
                 break;
             }
 
-            QuantizerWsmeans::debug_log(format!(
-                "iteration {} moved {points_moved}",
-                iteration + 1
-            ));
+            Self::debug_log(format!("iteration {} moved {points_moved}", iteration + 1));
 
             let mut component_asums = vec![0.0; cluster_count];
             let mut component_bsums = vec![0.0; cluster_count];
@@ -291,9 +286,9 @@ impl QuantizerWsmeans {
                 let count = counts[i];
 
                 pixel_count_sums[cluster_index] += count;
-                component_asums[cluster_index] += point.l * count as f64;
-                component_bsums[cluster_index] += point.a * count as f64;
-                component_csums[cluster_index] += point.b * count as f64;
+                component_asums[cluster_index] += point.l * f64::from(count);
+                component_bsums[cluster_index] += point.a * f64::from(count);
+                component_csums[cluster_index] += point.b * f64::from(count);
             }
 
             for i in 0..cluster_count {
@@ -305,15 +300,15 @@ impl QuantizerWsmeans {
                     continue;
                 }
 
-                let a = component_asums[i] / count as f64;
-                let b = component_bsums[i] / count as f64;
-                let c = component_csums[i] / count as f64;
+                let a = component_asums[i] / f64::from(count);
+                let b = component_bsums[i] / f64::from(count);
+                let c = component_csums[i] / f64::from(count);
 
                 clusters[i] = Lab { l: a, a: b, b: c };
             }
         }
 
-        let mut argb_to_population: IndexMap<Argb, u32> = Default::default();
+        let mut argb_to_population = IndexMap::<Argb, u32>::default();
 
         for i in 0..cluster_count {
             let count = pixel_count_sums[i];
@@ -333,7 +328,7 @@ impl QuantizerWsmeans {
 
         QuantizerResult {
             color_to_count: argb_to_population,
-            input_pixel_to_cluster_pixel: Default::default(),
+            input_pixel_to_cluster_pixel: HashMap::default(),
         }
     }
 }

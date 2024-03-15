@@ -14,7 +14,11 @@ pub fn ratio_of_tones(tone_a: f64, tone_b: f64) -> f64 {
 
 fn ratio_of_ys(y1: f64, y2: f64) -> f64 {
     let lighter = if y1 > y2 { y1 } else { y2 };
-    let darker = if lighter == y2 { y1 } else { y2 };
+    let darker = if (lighter - y2).abs() < f64::EPSILON {
+        y1
+    } else {
+        y2
+    };
 
     (lighter + 5.0) / (darker + 5.0)
 }
@@ -34,7 +38,7 @@ pub fn lighter(tone: f64, ratio: f64) -> f64 {
     }
 
     let dark_y = y_from_lstar(tone);
-    let light_y = ratio * (dark_y + 5.0) - 5.0;
+    let light_y = ratio.mul_add(dark_y + 5.0, -5.0);
     let real_contrast = ratio_of_ys(light_y, dark_y);
     let delta = (real_contrast - ratio).abs();
 

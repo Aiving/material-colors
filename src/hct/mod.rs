@@ -32,7 +32,7 @@ impl Hct {
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
-    pub fn get_hue(&self) -> f64 {
+    pub const fn get_hue(&self) -> f64 {
         self._hue
     }
 
@@ -59,7 +59,7 @@ impl Hct {
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
-    pub fn get_chroma(&self) -> f64 {
+    pub const fn get_chroma(&self) -> f64 {
         self._chroma
     }
 
@@ -85,7 +85,7 @@ impl Hct {
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
-    pub fn get_tone(&self) -> f64 {
+    pub const fn get_tone(&self) -> f64 {
         self._tone
     }
 
@@ -128,10 +128,10 @@ impl Hct {
     ///    lower than the requested chroma. Chroma has a different maximum for any
     ///    given hue and tone.
     /// 0 <= [tone] <= 100; informally, lightness. Invalid values are corrected.
-    pub fn from(hue: f64, chroma: f64, tone: f64) -> Hct {
+    pub fn from(hue: f64, chroma: f64, tone: f64) -> Self {
         let argb = HctSolver::solve_to_int(hue, chroma, tone);
 
-        Hct::new(argb)
+        Self::new(argb)
     }
 
     /// Translate a color into different [ViewingConditions].
@@ -146,7 +146,8 @@ impl Hct {
     /// CAM16, a color appearance model, and uses it to make these calculations.
     ///
     /// See [ViewingConditions.make] for parameters affecting color appearance.
-    pub fn in_viewing_conditions(self, vc: ViewingConditions) -> Hct {
+    #[must_use]
+    pub fn in_viewing_conditions(self, vc: &ViewingConditions) -> Self {
         // 1. Use CAM16 to find Xyz coordinates of color in specified VC.
         let cam16 = Cam16::from(Argb::from(self));
         let viewed_in_vc = cam16.xyz_in_viewing_conditions(vc);
@@ -156,13 +157,13 @@ impl Hct {
             viewed_in_vc.x,
             viewed_in_vc.y,
             viewed_in_vc.z,
-            ViewingConditions::standard(),
+            &ViewingConditions::standard(),
         );
 
         // 3. Create HCT from:
         // - CAM16 using default VC with Xyz coordinates in specified VC.
         // - L* converted from Y in Xyz coordinates in specified VC.
-        Hct::from(
+        Self::from(
             recast_in_vc.hue,
             recast_in_vc.chroma,
             lstar_from_y(viewed_in_vc.y),
@@ -198,7 +199,7 @@ impl Hash for Hct {
 
 impl From<Argb> for Hct {
     fn from(value: Argb) -> Self {
-        Hct::new(value)
+        Self::new(value)
     }
 }
 

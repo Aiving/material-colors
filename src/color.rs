@@ -67,8 +67,8 @@ pub struct Lab {
 
 /** Converts a color from Rgb components to Argb format. */
 impl From<Rgb> for Argb {
-    fn from(Rgb { red, green, blue }: Rgb) -> Argb {
-        Argb {
+    fn from(Rgb { red, green, blue }: Rgb) -> Self {
+        Self {
             alpha: 255,
             red,
             green,
@@ -79,7 +79,7 @@ impl From<Rgb> for Argb {
 
 /** Converts a color from linear Rgb components to Argb format. */
 impl From<LinearRgb> for Argb {
-    fn from(linear: LinearRgb) -> Argb {
+    fn from(linear: LinearRgb) -> Self {
         let r = delinearized(linear.red);
         let g = delinearized(linear.green);
         let b = delinearized(linear.blue);
@@ -90,7 +90,7 @@ impl From<LinearRgb> for Argb {
 
 /** Converts a color from Argb to Xyz. */
 impl From<Xyz> for Argb {
-    fn from(Xyz { x, y, z }: Xyz) -> Argb {
+    fn from(Xyz { x, y, z }: Xyz) -> Self {
         let matrix = XYZ_TO_SRGB;
 
         let linear_r = matrix[0][0] * x + matrix[0][1] * y + matrix[0][2] * z;
@@ -114,20 +114,20 @@ impl From<Argb> for Xyz {
             green,
             blue,
         }: Argb,
-    ) -> Xyz {
+    ) -> Self {
         let r = linearized(red);
         let g = linearized(green);
         let b = linearized(blue);
 
         let [x, y, z] = matrix_multiply([r, g, b], SRGB_TO_XYZ);
 
-        Xyz { x, y, z }
+        Self { x, y, z }
     }
 }
 
 /** Converts a color represented in Lab color space into an Argb integer. */
 impl From<Lab> for Argb {
-    fn from(Lab { l, a, b }: Lab) -> Argb {
+    fn from(Lab { l, a, b }: Lab) -> Self {
         let white_point = WHITE_POINT_D65;
 
         let fy = (l + 16.0) / 116.0;
@@ -159,7 +159,7 @@ impl From<Argb> for Lab {
             green,
             blue,
         }: Argb,
-    ) -> Lab {
+    ) -> Self {
         let linear_r = linearized(red);
         let linear_g = linearized(green);
         let linear_b = linearized(blue);
@@ -180,15 +180,15 @@ impl From<Argb> for Lab {
         let fy = lab_f(y_normalized);
         let fz = lab_f(z_normalized);
 
-        let l = 116.0 * fy - 16.0;
+        let l = 116.0_f64.mul_add(fy, -16.0);
         let a = 500.0 * (fx - fy);
         let b = 200.0 * (fy - fz);
 
-        Lab { l, a, b }
+        Self { l, a, b }
     }
 }
 
-fn hex_digit_to_rgb(number: u32) -> Rgb {
+const fn hex_digit_to_rgb(number: u32) -> Rgb {
     let r = number >> 16;
     let g = (number >> 8) & 0x00FF;
     let b = number & 0x0000_00FF;
@@ -306,7 +306,7 @@ impl Argb {
     }
 
     fn hex(number: u8) -> String {
-        let string = format!("{:x}", number);
+        let string = format!("{number:x}");
 
         if string.len() == 1 {
             String::from("0") + &string
@@ -318,9 +318,9 @@ impl Argb {
     pub fn as_hex(&self) -> String {
         format!(
             "#{}{}{}",
-            Argb::hex(self.red),
-            Argb::hex(self.green),
-            Argb::hex(self.blue)
+            Self::hex(self.red),
+            Self::hex(self.green),
+            Self::hex(self.blue)
         )
     }
 }
@@ -368,7 +368,7 @@ pub fn lstar_from_y(y: f64) -> f64 {
  * @return 0.0 <= output <= 100.0, color channel converted to linear Rgb space
  */
 pub fn linearized(rgb_component: u8) -> f64 {
-    let normalized = rgb_component as f64 / 255.0;
+    let normalized = f64::from(rgb_component) / 255.0;
 
     if normalized <= 0.040449936 {
         normalized / 12.92 * 100.0
@@ -396,12 +396,12 @@ pub fn delinearized(rgb_component: f64) -> u8 {
 
 fn lab_f(t: f64) -> f64 {
     let e = 216.0 / 24389.0;
-    let kappa = 24389.0 / 27.0;
+    let kappa = 24389.0_f64 / 27.0;
 
     if t > e {
-        t.powf(1.0 / 3.0)
+        t.cbrt()
     } else {
-        (kappa * t + 16.0) / 116.0
+        kappa.mul_add(t, 16.0) / 116.0
     }
 }
 

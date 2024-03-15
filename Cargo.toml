@@ -9,6 +9,7 @@ repository = "https://github.com/Aiving/material-colors"
 readme = "README.md"
 license = "Apache-2.0"
 keywords = ["palette", "color-scheme", "material-you"]
+categories = ["graphics"]
 
 [dependencies]
 ahash = "0.8.11"

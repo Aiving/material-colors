@@ -17,7 +17,7 @@ async fn main() -> Result<(), reqwest::Error> {
 
     println!("{}", color);
 
-    _ = Theme::from_source_color(color, Default::default());
+    _ = Theme::from_source_color(color, Vec::new());
 
     // Do whatever you want...
 
