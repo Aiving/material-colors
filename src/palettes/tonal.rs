@@ -25,23 +25,23 @@ impl TonalPalette {
     /// Commonly-used tone values.
     const COMMON_TONES: [i32; 13] = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 100];
 
-    pub fn common_size() -> usize {
+    pub const fn common_size() -> usize {
         Self::COMMON_TONES.len()
     }
 
-    pub fn hue(&self) -> f64 {
+    pub const fn hue(&self) -> f64 {
         self._hue
     }
 
-    pub fn chroma(&self) -> f64 {
+    pub const fn chroma(&self) -> f64 {
         self._chroma
     }
 
-    pub fn key_color(&self) -> Hct {
+    pub const fn key_color(&self) -> Hct {
         self._key_color
     }
 
-    fn new(_hue: f64, _chroma: f64, _key_color: Hct) -> Self {
+    const fn new(_hue: f64, _chroma: f64, _key_color: Hct) -> Self {
         Self {
             _hue,
             _chroma,
@@ -50,7 +50,7 @@ impl TonalPalette {
     }
 
     /// Create a Tonal Palette from hue and chroma of [hct].
-    pub fn from_hct(hct: Hct) -> Self {
+    pub const fn from_hct(hct: Hct) -> Self {
         Self::new(hct.get_hue(), hct.get_chroma(), hct)
     }
 

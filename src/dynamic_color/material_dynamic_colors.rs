@@ -2,11 +2,11 @@ use crate::{dislike::fix_if_disliked, Hct};
 
 use super::{ContrastCurve, DynamicColor, DynamicScheme, ToneDeltaPair, TonePolarity, Variant};
 
-fn _is_fidelity(scheme: &DynamicScheme) -> bool {
+const fn _is_fidelity(scheme: &DynamicScheme) -> bool {
     matches!(scheme.variant, Variant::Fidelity) || matches!(scheme.variant, Variant::Content)
 }
 
-fn _is_monochrome(scheme: &DynamicScheme) -> bool {
+const fn _is_monochrome(scheme: &DynamicScheme) -> bool {
     matches!(scheme.variant, Variant::Monochrome)
 }
 

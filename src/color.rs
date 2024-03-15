@@ -188,7 +188,7 @@ impl From<Argb> for Lab {
     }
 }
 
-fn hex_digit_to_rgb(number: u32) -> Rgb {
+const fn hex_digit_to_rgb(number: u32) -> Rgb {
     let r = number >> 16;
     let g = (number >> 8) & 0x00FF;
     let b = number & 0x0000_00FF;

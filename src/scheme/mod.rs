@@ -122,7 +122,7 @@ impl fmt::Display for Scheme {
 }
 
 impl Scheme {
-    pub fn new(
+    pub const fn new(
         primary: Argb,
         on_primary: Argb,
         primary_container: Argb,

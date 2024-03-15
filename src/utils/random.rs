@@ -2,7 +2,7 @@
 pub struct Random(i64);
 
 impl Random {
-    pub fn new(seed: i64) -> Self {
+    pub const fn new(seed: i64) -> Self {
         Self((seed ^ 0x5DEECE66Di64) & ((1i64 << 48) - 1))
     }
 

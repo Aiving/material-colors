@@ -48,7 +48,7 @@ impl ToneDeltaPair {
     /// * `stayTogether`: Whether these two roles should stay on the same side of
     ///   the "awkward zone" (T50-59). This is necessary for certain cases where
     ///   one role has two backgrounds.
-    pub fn new(
+    pub const fn new(
         subject: DynamicColor,
         basis: DynamicColor,
         delta: f64,

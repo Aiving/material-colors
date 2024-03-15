@@ -32,7 +32,7 @@ impl Hct {
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
-    pub fn get_hue(&self) -> f64 {
+    pub const fn get_hue(&self) -> f64 {
         self._hue
     }
 
@@ -59,7 +59,7 @@ impl Hct {
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
-    pub fn get_chroma(&self) -> f64 {
+    pub const fn get_chroma(&self) -> f64 {
         self._chroma
     }
 
@@ -85,7 +85,7 @@ impl Hct {
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
-    pub fn get_tone(&self) -> f64 {
+    pub const fn get_tone(&self) -> f64 {
         self._tone
     }
 
