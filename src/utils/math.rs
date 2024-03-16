@@ -31,9 +31,9 @@ pub fn difference_degrees(a: f64, b: f64) -> f64 {
 }
 
 pub fn matrix_multiply(row: [f64; 3], matrix: [[f64; 3]; 3]) -> [f64; 3] {
-    let a = row[0] * matrix[0][0] + row[1] * matrix[0][1] + row[2] * matrix[0][2];
-    let b = row[0] * matrix[1][0] + row[1] * matrix[1][1] + row[2] * matrix[1][2];
-    let c = row[0] * matrix[2][0] + row[1] * matrix[2][1] + row[2] * matrix[2][2];
+    let a = row[2].mul_add(matrix[0][2], row[0].mul_add(matrix[0][0], row[1] * matrix[0][1]));
+    let b = row[2].mul_add(matrix[1][2], row[0].mul_add(matrix[1][0], row[1] * matrix[1][1]));
+    let c = row[2].mul_add(matrix[2][2], row[0].mul_add(matrix[2][0], row[1] * matrix[2][1]));
 
     [a, b, c]
 }

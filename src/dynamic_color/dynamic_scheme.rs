@@ -1,16 +1,27 @@
-use core::{
+use std::{
     fmt,
     hash::{Hash, Hasher},
 };
 
-use crate::{utils::math::sanitize_degrees_double, Argb, Hct, TonalPalette};
+use crate::{
+    color::Argb,
+    hct::Hct,
+    palette::TonalPalette,
+    scheme::variant::{
+        SchemeContent, SchemeExpressive, SchemeFidelity, SchemeFruitSalad, SchemeMonochrome,
+        SchemeNeutral, SchemeRainbow, SchemeTonalSpot, SchemeVibrant,
+    },
+    utils::math::sanitize_degrees_double,
+};
 
 use super::{MaterialDynamicColors, Variant};
 
 /// Constructed by a set of values representing the current UI state (such as
 /// whether or not its dark theme, what the theme style is, etc.), and
-/// provides a set of [TonalPalette]s that can create colors that fit in
-/// with the theme style. Used by [DynamicColor] to resolve into a color.
+/// provides a set of [`TonalPalette`]s that can create colors that fit in
+/// with the theme style. Used by [`DynamicColor`] to resolve into a color.
+///
+/// [`DynamicColor`]: super::DynamicColor
 #[derive(Clone, PartialOrd)]
 pub struct DynamicScheme {
     /// The source color of the theme as an Argb integer.
@@ -85,13 +96,38 @@ impl DynamicScheme {
         }
     }
 
-    pub fn get_rotated_hue(source_color: Hct, hues: &[f64], rotations: &[f64]) -> f64 {
-        let source_hue = source_color.get_hue();
+    pub fn by_variant(
+        source: Argb,
+        variant: &Variant,
+        is_dark: bool,
+        contrast_level: Option<f64>,
+    ) -> Self {
+        let source_hct = source.into();
 
+        match variant {
+            Variant::Monochrome => {
+                SchemeMonochrome::new(source_hct, is_dark, contrast_level).scheme
+            }
+            Variant::Neutral => SchemeNeutral::new(source_hct, is_dark, contrast_level).scheme,
+            Variant::TonalSpot => SchemeTonalSpot::new(source_hct, is_dark, contrast_level).scheme,
+            Variant::Vibrant => SchemeVibrant::new(source_hct, is_dark, contrast_level).scheme,
+            Variant::Expressive => {
+                SchemeExpressive::new(source_hct, is_dark, contrast_level).scheme
+            }
+            Variant::Fidelity => SchemeFidelity::new(source_hct, is_dark, contrast_level).scheme,
+            Variant::Content => SchemeContent::new(source_hct, is_dark, contrast_level).scheme,
+            Variant::Rainbow => SchemeRainbow::new(source_hct, is_dark, contrast_level).scheme,
+            Variant::FruitSalad => {
+                SchemeFruitSalad::new(source_hct, is_dark, contrast_level).scheme
+            }
+        }
+    }
+
+    pub fn get_rotated_hue(source_hue: f64, hues: &[f64], rotations: &[f64]) -> f64 {
         assert!(hues.len() == rotations.len());
 
         if rotations.len() == 1 {
-            return sanitize_degrees_double(source_color.get_hue() + rotations[0]);
+            return sanitize_degrees_double(source_hue + rotations[0]);
         }
 
         let size = hues.len();

@@ -1,4 +1,4 @@
-use core::{
+use std::{
     fmt,
     hash::{Hash, Hasher},
 };
@@ -6,7 +6,7 @@ use core::{
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-use crate::{color::lstar_from_y, Argb};
+use crate::color::{lstar_from_y, Argb};
 
 pub use {cam16::Cam16, solver::HctSolver, viewing_conditions::ViewingConditions};
 
@@ -107,19 +107,13 @@ impl Hct {
     }
 
     pub fn new(argb: Argb) -> Self {
-        let _argb = argb;
-
         let cam16 = Cam16::from(argb);
 
-        let _hue = cam16.hue;
-        let _chroma = cam16.chroma;
-        let _tone = argb.as_lstar();
-
         Self {
-            _hue,
-            _chroma,
-            _tone,
-            _argb,
+            _hue: cam16.hue,
+            _chroma: cam16.chroma,
+            _tone: argb.as_lstar(),
+            _argb: argb,
         }
     }
 
@@ -134,7 +128,7 @@ impl Hct {
         Self::new(argb)
     }
 
-    /// Translate a color into different [ViewingConditions].
+    /// Translate a color into different [`ViewingConditions`].
     ///
     /// Colors change appearance. They look different with lights on versus off,
     /// the same color, as in hex code, on white looks different when on black.
@@ -145,7 +139,7 @@ impl Hct {
     /// calculate the appearance of a color in different settings. HCT is based on
     /// CAM16, a color appearance model, and uses it to make these calculations.
     ///
-    /// See [ViewingConditions.make] for parameters affecting color appearance.
+    /// See [`ViewingConditions`] for parameters affecting color appearance.
     #[must_use]
     pub fn in_viewing_conditions(self, vc: &ViewingConditions) -> Self {
         // 1. Use CAM16 to find Xyz coordinates of color in specified VC.

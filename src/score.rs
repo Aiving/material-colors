@@ -1,8 +1,9 @@
 use indexmap::IndexMap;
 
 use crate::{
+    color::Argb,
+    hct::Hct,
     utils::math::{difference_degrees, sanitize_degrees_int},
-    Argb, Hct,
 };
 
 #[derive(Debug)]

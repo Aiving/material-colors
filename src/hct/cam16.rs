@@ -1,6 +1,6 @@
-use core::f64::consts::PI;
+use std::f64::consts::PI;
 
-use crate::{color::Xyz, Argb};
+use crate::color::{Argb, Xyz};
 
 use super::ViewingConditions;
 
@@ -72,12 +72,12 @@ impl Cam16 {
         let d_j = self.jstar - other.jstar;
         let d_a = self.astar - other.astar;
         let d_b = self.bstar - other.bstar;
-        let d_eprime = (d_j * d_j + d_a * d_a + d_b * d_b).sqrt();
+        let d_eprime = d_b.mul_add(d_b, d_j.mul_add(d_j, d_a * d_a)).sqrt();
 
         1.41 * d_eprime.powf(0.63)
     }
 
-    /// Given [viewing_conditions], convert [argb] to
+    /// Given `viewing_conditions`, convert `argb` to
     pub fn fromi32_in_viewing_conditions(
         argb: Argb,
         viewing_conditions: &ViewingConditions,
@@ -88,7 +88,7 @@ impl Cam16 {
         Self::from_xyz_in_viewing_conditions(x, y, z, viewing_conditions)
     }
 
-    /// Given color expressed in Xyz and viewed in [viewing_conditions], convert to
+    /// Given color expressed in Xyz and viewed in `viewing_conditions`, convert to
     ///
     pub fn from_xyz_in_viewing_conditions(
         x: f64,
@@ -97,9 +97,9 @@ impl Cam16 {
         viewing_conditions: &ViewingConditions,
     ) -> Self {
         // Transform Xyz to 'cone'/'rgb' responses
-        let r_c = 0.401288 * x + 0.650173 * y - 0.051461 * z;
-        let g_c = -0.250268 * x + 1.204414 * y + 0.045854 * z;
-        let b_c = -0.002079 * x + 0.048952 * y + 0.953127 * z;
+        let r_c = 0.051461f64.mul_add(-z, 0.401288f64.mul_add(x, 0.650173 * y));
+        let g_c = 0.045854f64.mul_add(z, (-0.250268f64).mul_add(x, 1.204414 * y));
+        let b_c = 0.953127f64.mul_add(z, (-0.002079f64).mul_add(x, 0.048952 * y));
 
         // Discount illuminant
         let r_d = viewing_conditions.rgb_d[0] * r_c;
@@ -115,12 +115,12 @@ impl Cam16 {
         let b_a = b_d.signum() * 400.0 * b_af / (b_af + 27.13);
 
         // redness-greenness
-        let a = (11.0 * r_a + -12.0 * g_a + b_a) / 11.0;
+        let a = (11.0f64.mul_add(r_a, -12.0 * g_a) + b_a) / 11.0;
         // yellowness-blueness
         let b = 2.0_f64.mul_add(-b_a, r_a + g_a) / 9.0;
         // auxiliary components
-        let u = (20.0 * r_a + 20.0 * g_a + 21.0 * b_a) / 20.0;
-        let p2 = (40.0 * r_a + 20.0 * g_a + b_a) / 20.0;
+        let u = 21.0f64.mul_add(b_a, 20.0f64.mul_add(r_a, 20.0 * g_a)) / 20.0;
+        let p2 = (40.0f64.mul_add(r_a, 20.0 * g_a) + b_a) / 20.0;
 
         // hue
         let atan2 = b.atan2(a);
@@ -178,14 +178,14 @@ impl Cam16 {
         }
     }
 
-    /// Create a CAM16 color from lightness [j], chroma [c], and hue [h],
+    /// Create a CAM16 color from lightness `j`, chroma `c`, and hue `h`,
     /// assuming the color was viewed in default viewing conditions.
     pub fn from_jch(j: f64, c: f64, h: f64) -> Self {
         Self::from_jch_in_viewing_conditions(j, c, h, &ViewingConditions::s_rgb())
     }
 
-    /// Create a CAM16 color from lightness [j], chroma [c], and hue [h],
-    /// in [viewing_conditions].
+    /// Create a CAM16 color from lightness `j`, chroma `c`, and hue `h`,
+    /// in `viewing_conditions`.
     pub fn from_jch_in_viewing_conditions(
         j: f64,
         c: f64,
@@ -219,14 +219,14 @@ impl Cam16 {
         }
     }
 
-    /// Create a CAM16 color from CAM16-UCS coordinates [jstar], [astar], [bstar].
+    /// Create a CAM16 color from CAM16-UCS coordinates `jstar`, `astar`, `bstar`.
     /// assuming the color was viewed in default viewing conditions.
     pub fn from_ucs(jstar: f64, astar: f64, bstar: f64) -> Self {
         Self::from_ucs_in_viewing_conditions(jstar, astar, bstar, &ViewingConditions::standard())
     }
 
-    /// Create a CAM16 color from CAM16-UCS coordinates [jstar], [astar], [bstar].
-    /// in [viewing_conditions].
+    /// Create a CAM16 color from CAM16-UCS coordinates `jstar`, `astar`, `bstar`.
+    /// in `viewing_conditions`.
     pub fn from_ucs_in_viewing_conditions(
         jstar: f64,
         astar: f64,
@@ -245,18 +245,15 @@ impl Cam16 {
         Self::from_jch_in_viewing_conditions(j, c, h, viewing_conditions)
     }
 
-    // Avoid allocations during conversion by pre-allocating an array.
-    // private var viewedArray: [f64] = [0, 0, 0]
-
     /// Argb representation of a color, given the color was viewed in
-    /// [viewing_conditions]
+    /// `viewing_conditions`
     pub fn viewed(&self, viewing_conditions: &ViewingConditions) -> Argb {
         let xyz = self.xyz_in_viewing_conditions(viewing_conditions);
 
         xyz.into()
     }
 
-    /// Xyz representation of CAM16 seen in [viewing_conditions].
+    /// Xyz representation of CAM16 seen in `viewing_conditions`.
     pub fn xyz_in_viewing_conditions(&self, viewing_conditions: &ViewingConditions) -> Xyz {
         let alpha = if self.chroma == 0.0 || self.j == 0.0 {
             0.0
@@ -278,12 +275,12 @@ impl Cam16 {
         let h_sin = h_rad.sin();
         let h_cos = h_rad.cos();
 
-        let gamma = 23.0 * (p2 + 0.305) * t / (23.0 * p1 + 11.0 * t * h_cos + 108.0 * t * h_sin);
+        let gamma = 23.0 * (p2 + 0.305) * t / (108.0 * t).mul_add(h_sin, 23.0f64.mul_add(p1, 11.0 * t * h_cos));
         let a = gamma * h_cos;
         let b = gamma * h_sin;
-        let r_a = (460.0 * p2 + 451.0 * a + 288.0 * b) / 1403.0;
-        let g_a = (460.0 * p2 - 891.0 * a - 261.0 * b) / 1403.0;
-        let b_a = (460.0 * p2 - 220.0 * a - 6300.0 * b) / 1403.0;
+        let r_a = 288.0f64.mul_add(b, 460.0f64.mul_add(p2, 451.0 * a)) / 1403.0;
+        let g_a = 261.0f64.mul_add(-b, 460.0f64.mul_add(p2, -891.0 * a)) / 1403.0;
+        let b_a = 6300.0f64.mul_add(-b, 460.0f64.mul_add(p2, -220.0 * a)) / 1403.0;
 
         let r_cbase = 0.0_f64.max((27.13 * r_a.abs()) / (400.0 - (r_a.abs())));
         let r_c = r_a.signum() * (100.0 / viewing_conditions.fl) * r_cbase.powf(1.0 / 0.42);
@@ -295,9 +292,9 @@ impl Cam16 {
         let g_f = g_c / viewing_conditions.rgb_d[1];
         let b_f = b_c / viewing_conditions.rgb_d[2];
 
-        let x = 1.86206786 * r_f - 1.01125463 * g_f + 0.14918677 * b_f;
-        let y = 0.38752654 * r_f + 0.62144744 * g_f - 0.00897398 * b_f;
-        let z = -0.01584150 * r_f - 0.03412294 * g_f + 1.04996444 * b_f;
+        let x = 0.14918677f64.mul_add(b_f, 1.86206786f64.mul_add(r_f, -1.01125463 * g_f));
+        let y = 0.00897398f64.mul_add(-b_f, 0.38752654f64.mul_add(r_f, 0.62144744 * g_f));
+        let z = 1.04996444f64.mul_add(b_f, (-0.01584150f64).mul_add(r_f, -0.03412294 * g_f));
 
         Xyz::new(x, y, z)
     }

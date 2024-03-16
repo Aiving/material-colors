@@ -10,9 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **breaking:** Move the functions within `mod:theme` into structs for a more idiomatic approach
 - **breaking:** Update exports
 - **breaking:** Apply more strictly Clippy lints
+- **breaking:** Replace `func:from_source_color` in `struct:Theme` with `struct:ThemeBuilder`
+- **breaking:** Replace `struct:ParseRgbError` with `enum:Error` `ParseRGB` variant in `mod:error`
+- **breaking:** Rename `mod:palettes` to `mod:palette`
 - **added:** Add `CHANGELOG`
+- **added:** Add documentation above `struct:Argb`
 - **changed:** Remove unnecessary comments about warnings count from the `README`
-- **fixed:** Update `README` and `tests:image` for renamed color functions
+- **changed:** Update tests
+- **changed:** Update examples in `README`
 - **fixed:** Restore `trait:Serialize` on `struct:Argb` and implement it for a new color types
 
 ## 0.2.1 (March 14th, 2024)

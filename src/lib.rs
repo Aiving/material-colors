@@ -13,10 +13,10 @@
     clippy::similar_names,
     // pedantic lints for later
     clippy::too_many_lines,
-    clippy::doc_markdown,
     clippy::missing_panics_doc,
+    clippy::missing_errors_doc,
     clippy::implicit_hasher,  // we use ahash on Scheme
-    clippy::suboptimal_flops, // some more cases can be optimized
+    // clippy::suboptimal_flops, // some more cases can be optimized
     // nursery lints for later
     clippy::large_stack_frames,
     clippy::cognitive_complexity
@@ -27,10 +27,11 @@ pub mod color;
 pub mod contrast;
 pub mod dislike;
 pub mod dynamic_color;
+pub mod error;
 pub mod hct;
 #[cfg(feature = "image")]
 pub mod image;
-pub mod palettes;
+pub mod palette;
 pub mod quantize;
 pub mod scheme;
 pub mod score;
@@ -38,21 +39,4 @@ pub mod temperature;
 pub mod theme;
 pub mod utils;
 
-pub use hct::Hct;
-
-pub use scheme::{
-    variant::{
-        SchemeContent, SchemeExpressive, SchemeFidelity, SchemeFruitSalad, SchemeMonochrome,
-        SchemeNeutral, SchemeRainbow, SchemeTonalSpot, SchemeVibrant,
-    },
-    Scheme,
-};
-
-pub use color::{Argb, Rgb};
-
-pub use theme::{CustomColorGroup, Theme};
-
-#[cfg(feature = "image")]
-pub use image::{FilterType, Image, ImageReader};
-
-pub use palettes::{CorePalette, TonalPalette};
+pub use error::Error;

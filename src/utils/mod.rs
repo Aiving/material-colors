@@ -1,2 +1,2 @@
 pub mod math;
-pub(crate) mod random;
+pub mod random;

@@ -1,7 +1,7 @@
 use ahash::HashMap;
-use core::cmp::Ordering;
+use std::cmp::Ordering;
 
-use crate::{color::Lab, utils::math::sanitize_degrees_double, Argb, Hct};
+use crate::{color::Argb, color::Lab, hct::Hct, utils::math::sanitize_degrees_double};
 
 /// Design utilities using color temperature theory.
 ///
@@ -283,7 +283,7 @@ impl TemperatureCache {
         a.partial_cmp(&b).unwrap()
     }
 
-    /// A Map with keys of HCTs in [hctsByTemp], values of raw temperature.
+    /// A Map with keys of HCTs in [`hctsByTemp`], values of raw temperature.
     pub fn temps_by_hct(&mut self) -> HashMap<Hct, f64> {
         if !self._temps_by_hct.is_empty() {
             return self._temps_by_hct.clone();
@@ -359,6 +359,9 @@ impl TemperatureCache {
         let hue = sanitize_degrees_double(lab.b.atan2(lab.a).to_degrees());
         let chroma = lab.a.hypot(lab.b);
 
-        -0.5 + 0.02 * chroma.powf(1.07) * (sanitize_degrees_double(hue - 50.0).to_radians()).cos()
+        (0.02 * chroma.powf(1.07)).mul_add(
+            (sanitize_degrees_double(hue - 50.0).to_radians()).cos(),
+            -0.5,
+        )
     }
 }

@@ -2,11 +2,11 @@
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-use core::{array::IntoIter, fmt};
+use std::{array::IntoIter, fmt};
 
 use ahash::HashMap;
 
-use crate::{dynamic_color::DynamicScheme, Argb};
+use crate::{color::Argb, dynamic_color::DynamicScheme};
 
 pub mod variant;
 

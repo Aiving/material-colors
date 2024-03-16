@@ -1,4 +1,4 @@
-use crate::Argb;
+use crate::color::Argb;
 
 use super::{
     PointProvider, PointProviderLab, Quantizer, QuantizerResult, QuantizerWsmeans, QuantizerWu,

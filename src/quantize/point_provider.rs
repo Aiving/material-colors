@@ -1,4 +1,4 @@
-use crate::{color::Lab, Argb};
+use crate::color::{Argb, Lab};
 
 pub trait PointProvider {
     fn new() -> Self

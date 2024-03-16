@@ -1,7 +1,10 @@
 #[cfg(feature = "image")]
 #[tokio::test]
 async fn main() -> Result<(), reqwest::Error> {
-    use material_colors::{FilterType, ImageReader, Theme};
+    use material_colors::{
+        image::{FilterType, ImageReader},
+        theme::ThemeBuilder,
+    };
 
     let image = reqwest::get("https://picsum.photos/id/866/1920/1080")
         .await?
@@ -13,11 +16,9 @@ async fn main() -> Result<(), reqwest::Error> {
 
     data.resize(128, 128, FilterType::Lanczos3);
 
-    let color = ImageReader::extract_color(&data);
-
-    println!("{}", color);
-
-    _ = Theme::from_source_color(color, Vec::new());
+    _ = ThemeBuilder::default()
+        .source(ImageReader::extract_color(&data))
+        .build();
 
     // Do whatever you want...
 

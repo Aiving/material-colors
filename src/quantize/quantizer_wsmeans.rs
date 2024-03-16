@@ -3,10 +3,11 @@ use indexmap::IndexMap;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
-use crate::color::Lab;
-use crate::quantize::point_provider_lab::PointProviderLab;
-use crate::utils::random::Random;
-use crate::Argb;
+use crate::{
+    color::{Argb, Lab},
+    quantize::point_provider_lab::PointProviderLab,
+    utils::random::Random,
+};
 
 use super::point_provider::PointProvider;
 use super::quantizer::QuantizerResult;

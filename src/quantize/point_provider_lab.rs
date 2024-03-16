@@ -1,4 +1,4 @@
-use crate::{color::Lab, Argb};
+use crate::color::{Argb, Lab};
 
 use super::PointProvider;
 
@@ -20,7 +20,7 @@ impl PointProvider for PointProviderLab {
 
         // This relatively minor optimization is helpful because this method is
         // called at least once for each pixel in an image.
-        (one.l - two.l).powi(2) + (one.a - two.a).powi(2) + (one.b - two.b).powi(2)
+        (one.b - two.b).mul_add(one.b - two.b, (one.l - two.l).mul_add(one.l - two.l, (one.a - two.a).powi(2)))
     }
 
     fn new() -> Self {

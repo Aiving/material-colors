@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use indexmap::IndexMap;
 
-use crate::Argb;
+use crate::color::Argb;
 
 use super::{Quantizer, QuantizerResult};
 
@@ -19,13 +19,10 @@ impl Quantizer for QuantizerMap {
         let mut color_to_count = IndexMap::<Argb, u32>::default();
 
         for pixel in pixels {
-            let current_pixel_count = color_to_count.get_mut(pixel);
-
-            if let Some(current_pixel_count) = current_pixel_count {
-                *current_pixel_count += 1;
-            } else {
-                color_to_count.insert(*pixel, 1);
-            }
+            color_to_count
+                .entry(*pixel)
+                .and_modify(|current_pixel_count| *current_pixel_count += 1)
+                .or_insert(1);
         }
 
         QuantizerResult {

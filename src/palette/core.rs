@@ -1,6 +1,6 @@
-use core::fmt;
+use std::fmt;
 
-use crate::{hct::Cam16, Argb};
+use crate::{color::Argb, hct::Cam16};
 
 use super::TonalPalette;
 
@@ -38,7 +38,7 @@ impl CorePalette {
         }
     }
 
-    /// Create a [CorePalette] from a source Argb color.
+    /// Create a [`CorePalette`] from a source Argb color.
     pub fn of(argb: Argb) -> Self {
         let cam = Cam16::from(argb);
 
@@ -56,7 +56,7 @@ impl CorePalette {
         )
     }
 
-    /// Create a content [CorePalette] from a source Argb color.
+    /// Create a content [`CorePalette`] from a source Argb color.
     pub fn content_of(argb: Argb) -> Self {
         let cam = Cam16::from(argb);
 

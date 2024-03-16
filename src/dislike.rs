@@ -1,4 +1,4 @@
-use crate::Hct;
+use crate::hct::Hct;
 
 pub fn is_disliked(hct: &Hct) -> bool {
     let hue_passes = (90.0..=111.0).contains(&hct.get_hue().round());

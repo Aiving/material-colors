@@ -1,4 +1,4 @@
-use crate::{dislike::fix_if_disliked, Hct};
+use crate::{dislike::fix_if_disliked, hct::Hct};
 
 use super::{ContrastCurve, DynamicColor, DynamicScheme, ToneDeltaPair, TonePolarity, Variant};
 

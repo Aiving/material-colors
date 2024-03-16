@@ -1,4 +1,10 @@
-use crate::{blend::harmonize, Argb, CorePalette, Scheme, SchemeTonalSpot, TonalPalette};
+use crate::{
+    blend::harmonize,
+    color::Argb,
+    dynamic_color::{DynamicScheme, Variant},
+    palette::{CorePalette, Palette, TonalPalette},
+    scheme::Scheme,
+};
 
 #[cfg(feature = "serde")]
 use serde::Serialize;
@@ -35,9 +41,7 @@ pub struct CustomColorGroup {
 impl CustomColorGroup {
     /// Generate custom color group from source and target color
     ///
-
-    ///
-    /// @link https://m3.material.io/styles/color/the-color-system/color-roles
+    /// @link <https://m3.material.io/styles/color/the-color-system/color-roles>
     fn new(source: Argb, color: CustomColor) -> Self {
         let mut value = color.value;
 
@@ -88,29 +92,126 @@ pub struct Palettes {
     pub error: TonalPalette,
 }
 
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-pub struct Theme {
-    pub source: Argb,
-    pub schemes: Schemes,
-    pub palettes: Palettes,
-    pub custom_colors: Vec<CustomColorGroup>,
+pub struct ThemeBuilder {
+    source: Argb,
+    variant: Variant,
+    primary: Option<Argb>,
+    secondary: Option<Argb>,
+    tertiary: Option<Argb>,
+    error: Option<Argb>,
+    neutral: Option<Argb>,
+    neutral_variant: Option<Argb>,
+    custom_colors: Vec<CustomColor>,
 }
 
-impl Theme {
-    /// Generatse a theme from a source color
-    pub fn from_source_color(source: Argb, custom_colors: Vec<CustomColor>) -> Self {
-        let palette = CorePalette::of(source);
-
+impl ThemeBuilder {
+    pub const fn new(variant: Variant) -> Self {
         Self {
-            source,
+            source: Argb::new(255, 66, 133, 244),
+            variant,
+            primary: None,
+            secondary: None,
+            tertiary: None,
+            error: None,
+            neutral: None,
+            neutral_variant: None,
+            custom_colors: Vec::new(),
+        }
+    }
+
+    #[must_use]
+    pub const fn source(mut self, color: Argb) -> Self {
+        self.source = color;
+
+        self
+    }
+
+    #[must_use]
+    pub const fn override_palette(mut self, palette: &Palette, color: Argb) -> Self {
+        match palette {
+            Palette::Primary => self.primary = Some(color),
+            Palette::Secondary => self.secondary = Some(color),
+            Palette::Tertiary => self.tertiary = Some(color),
+            Palette::Error => self.error = Some(color),
+            Palette::Neutral => self.neutral = Some(color),
+            Palette::NeutralVariant => self.neutral_variant = Some(color),
+        }
+
+        self
+    }
+
+    #[must_use]
+    pub fn custom_color<N: Into<String>>(
+        mut self,
+        name: N,
+        value: Argb,
+        blend: bool,
+    ) -> Self {
+        self.custom_colors.push(CustomColor {
+            value,
+            name: name.into(),
+            blend,
+        });
+
+        self
+    }
+
+    pub fn build(self) -> Theme {
+        let palette = CorePalette::of(self.source);
+
+        let mut light = DynamicScheme::by_variant(self.source, &self.variant, false, None);
+        let mut dark = DynamicScheme::by_variant(self.source, &self.variant, true, None);
+
+        if let Some(color) = self.primary {
+            let palette = TonalPalette::by_variant(&color.into(), &self.variant, &Palette::Primary);
+
+            light.primary_palette = palette;
+            dark.primary_palette = palette;
+        }
+
+        if let Some(color) = self.secondary {
+            let palette =
+                TonalPalette::by_variant(&color.into(), &self.variant, &Palette::Secondary);
+
+            light.secondary_palette = palette;
+            dark.secondary_palette = palette;
+        }
+
+        if let Some(color) = self.tertiary {
+            let palette =
+                TonalPalette::by_variant(&color.into(), &self.variant, &Palette::Tertiary);
+
+            light.tertiary_palette = palette;
+            dark.tertiary_palette = palette;
+        }
+
+        if let Some(color) = self.error {
+            let palette = TonalPalette::by_variant(&color.into(), &self.variant, &Palette::Error);
+
+            light.error_palette = palette;
+            dark.error_palette = palette;
+        }
+
+        if let Some(color) = self.neutral {
+            let palette = TonalPalette::by_variant(&color.into(), &self.variant, &Palette::Neutral);
+
+            light.neutral_palette = palette;
+            dark.neutral_palette = palette;
+        }
+
+        if let Some(color) = self.neutral_variant {
+            let palette =
+                TonalPalette::by_variant(&color.into(), &self.variant, &Palette::NeutralVariant);
+
+            light.neutral_variant_palette = palette;
+            dark.neutral_variant_palette = palette;
+        }
+
+        Theme {
+            source: self.source,
             schemes: Schemes {
-                light: SchemeTonalSpot::new(source.into(), false, None)
-                    .scheme
-                    .into(),
-                dark: SchemeTonalSpot::new(source.into(), true, None)
-                    .scheme
-                    .into(),
+                light: light.into(),
+                dark: dark.into(),
             },
             palettes: Palettes {
                 primary: palette.primary,
@@ -120,10 +221,26 @@ impl Theme {
                 neutral_variant: palette.neutral_variant,
                 error: palette.error,
             },
-            custom_colors: custom_colors
+            custom_colors: self
+                .custom_colors
                 .into_iter()
-                .map(|c| CustomColorGroup::new(source, c))
+                .map(|c| CustomColorGroup::new(self.source, c))
                 .collect(),
         }
     }
+}
+
+impl Default for ThemeBuilder {
+    fn default() -> Self {
+        Self::new(Variant::TonalSpot)
+    }
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub struct Theme {
+    pub source: Argb,
+    pub schemes: Schemes,
+    pub palettes: Palettes,
+    pub custom_colors: Vec<CustomColorGroup>,
 }

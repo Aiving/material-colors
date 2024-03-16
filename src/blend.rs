@@ -1,6 +1,7 @@
 use crate::{
+    color::Argb,
+    hct::Hct,
     utils::math::{difference_degrees, rotate_direction, sanitize_degrees_double},
-    Argb, Hct,
 };
 
 pub fn harmonize(design_color: Argb, source_color: Argb) -> Argb {

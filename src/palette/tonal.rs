@@ -1,8 +1,18 @@
-use core::fmt;
+use std::fmt;
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-use crate::{Argb, Hct};
+use crate::{
+    color::Argb,
+    dynamic_color::Variant,
+    hct::Hct,
+    scheme::variant::{
+        SchemeContent, SchemeExpressive, SchemeFidelity, SchemeFruitSalad, SchemeMonochrome,
+        SchemeNeutral, SchemeRainbow, SchemeTonalSpot, SchemeVibrant,
+    },
+};
+
+use super::Palette;
 
 /// A convenience class for retrieving colors that are constant in hue and
 /// chroma, but vary in tone.
@@ -52,6 +62,20 @@ impl TonalPalette {
     /// Create a Tonal Palette from hue and chroma of [hct].
     pub const fn from_hct(hct: Hct) -> Self {
         Self::new(hct.get_hue(), hct.get_chroma(), hct)
+    }
+
+    pub fn by_variant(source_hct: &Hct, scheme: &Variant, variant: &Palette) -> Self {
+        match scheme {
+            Variant::Monochrome => SchemeMonochrome::palette(source_hct, variant),
+            Variant::Neutral => SchemeNeutral::palette(source_hct, variant),
+            Variant::TonalSpot => SchemeTonalSpot::palette(source_hct, variant),
+            Variant::Vibrant => SchemeVibrant::palette(source_hct, variant),
+            Variant::Expressive => SchemeExpressive::palette(source_hct, variant),
+            Variant::Fidelity => SchemeFidelity::palette(source_hct, variant),
+            Variant::Content => SchemeContent::palette(source_hct, variant),
+            Variant::Rainbow => SchemeRainbow::palette(source_hct, variant),
+            Variant::FruitSalad => SchemeFruitSalad::palette(source_hct, variant),
+        }
     }
 
     /// Create a Tonal Palette from hue and chroma, which generates a key color.

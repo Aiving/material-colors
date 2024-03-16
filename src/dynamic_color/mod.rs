@@ -3,8 +3,10 @@
 use ahash::HashMap;
 
 use crate::{
+    color::Argb,
     contrast::{darker, darker_unsafe, lighter, lighter_unsafe, ratio_of_tones},
-    Argb, Hct, TonalPalette,
+    hct::Hct,
+    palette::TonalPalette,
 };
 
 pub use {
@@ -54,7 +56,7 @@ pub struct DynamicColor {
 }
 
 impl DynamicColor {
-    /// The base constructor for DynamicColor.
+    /// The base constructor for `DynamicColor`.
     ///
     /// _Strongly_ prefer using one of the convenience constructors. This class is
     /// arguably too flexible to ensure it can support any scenario. Functional
@@ -67,21 +69,21 @@ impl DynamicColor {
     /// always, in every case.
     ///
     /// - Parameters:
-    ///   - name: The name of the dynamic color.
-    ///   - palette: Function that provides a TonalPalette given DynamicScheme.
-    ///       A TonalPalette is defined by a hue and chroma, so this
+    ///   - `name`: The name of the dynamic color.
+    ///   - `palette`: Function that provides a [`TonalPalette`] given [`DynamicScheme`].
+    ///       A [`TonalPalette`] is defined by a hue and chroma, so this
     ///       replaces the need to specify hue/chroma. By providing a tonal palette,
     ///       when contrast adjustments are made, intended chroma can be preserved.
-    ///   - tone: Function that provides a tone, given a DynamicScheme.
-    ///   - isBackground: Whether this dynamic color is a background, with
+    ///   - `tone`: Function that provides a tone, given a [`DynamicScheme`].
+    ///   - `isBackground`: Whether this dynamic color is a background, with
     ///       some other color as the foreground.
-    ///   - background: The background of the dynamic color (as a function of a
-    ///       `DynamicScheme`), if it exists.
-    ///   - secondBackground: A second background of the dynamic color (as a function
-    ///       of a `DynamicScheme`), if it exists.
-    ///   - contrastCurve: A `ContrastCurve` object specifying how its contrast
+    ///   - `background`: The background of the dynamic color (as a function of a
+    ///       [`DynamicScheme`]), if it exists.
+    ///   - `secondBackground`: A second background of the dynamic color (as a function
+    ///       of a [`DynamicScheme`]), if it exists.
+    ///   - `contrastCurve`: A [`ContrastCurve`] object specifying how its contrast
     ///       against its background should behave in various contrast levels options.
-    ///   - toneDeltaPair: A `ToneDeltaPair` object specifying a tone delta
+    ///   - `toneDeltaPair`: A [`ToneDeltaPair`] object specifying a tone delta
     ///       constraint between two colors. One of them must be the color being constructed.
     ///
     /// Unlikely to be useful unless a design system has some distortions

@@ -1,4 +1,4 @@
-use core::f64::consts::PI;
+use std::f64::consts::PI;
 
 use crate::{
     color::{y_from_lstar, WHITE_POINT_D65},
@@ -45,7 +45,7 @@ impl ViewingConditions {
         Self::make(None, None, None, None, None)
     }
 
-    /// Convenience constructor for [ViewingConditions].
+    /// Convenience constructor for [`ViewingConditions`].
     ///
     /// # Parameters affecting color appearance include:
     /// * `whitePoint` - coordinates of white in Xyz color space.
@@ -76,9 +76,9 @@ impl ViewingConditions {
         let background_lstar = (0.1_f64).max(background_lstar);
         // Transform test illuminant white in Xyz to 'cone'/'rgb' responses
         let xyz = white_point;
-        let r_w = xyz[0] * 0.401288 + xyz[1] * 0.650173 + xyz[2] * -0.051461;
-        let g_w = xyz[0] * -0.250268 + xyz[1] * 1.204414 + xyz[2] * 0.045854;
-        let b_w = xyz[0] * -0.002079 + xyz[1] * 0.048952 + xyz[2] * 0.953127;
+        let r_w = xyz[2].mul_add(-0.051461, xyz[0].mul_add(0.401288, xyz[1] * 0.650173));
+        let g_w = xyz[2].mul_add(0.045854, xyz[0].mul_add(-0.250268, xyz[1] * 1.204414));
+        let b_w = xyz[2].mul_add(0.953127, xyz[0].mul_add(-0.002079, xyz[1] * 0.048952));
 
         // Scale input surround, domain (0, 2), to CAM16 surround, domain (0.8, 1.0)
         assert!((0.0..=2.0).contains(&surround));
@@ -94,7 +94,7 @@ impl ViewingConditions {
         let d = if discounting_illuminant {
             1.0
         } else {
-            f * (1.0 - ((1.0 / 3.6) * ((-adapting_luminance - 42.0) / 92.0).exp()))
+            f * (1.0f64 / 3.6f64).mul_add(-((-adapting_luminance - 42.0) / 92.0).exp(), 1.0)
         };
         // Per Li et al, if D is greater than 1 or less than 0, set it to 1 or 0.
         let d = d.clamp(0.0, 1.0);
@@ -112,9 +112,9 @@ impl ViewingConditions {
         // account for scaling of appearance relative to the white point relative
         // luminance. This part should simply use 100 as luminance.
         let rgb_d = [
-            d * (100.0 / r_w) + 1.0 - d,
-            d * (100.0 / g_w) + 1.0 - d,
-            d * (100.0 / b_w) + 1.0 - d,
+            d.mul_add(100.0 / r_w, 1.0) - d,
+            d.mul_add(100.0 / g_w, 1.0) - d,
+            d.mul_add(100.0 / b_w, 1.0) - d,
         ];
 
         // Factor used in calculating meaningful factors
@@ -123,8 +123,10 @@ impl ViewingConditions {
         let k4_f = 1.0 - k4;
 
         // Luminance-level adaptation factor
-        let fl =
-            (k4 * adapting_luminance) + (0.1 * k4_f * k4_f * (5.0 * adapting_luminance).cbrt());
+        let fl = k4.mul_add(
+            adapting_luminance,
+            0.1 * k4_f * k4_f * (5.0 * adapting_luminance).cbrt(),
+        );
         // Intermediate factor, ratio of background relative luminance to white relative luminance
         let n = y_from_lstar(background_lstar) / white_point[1];
 
@@ -150,7 +152,7 @@ impl ViewingConditions {
             (400.0 * rgb_afactors[2]) / (rgb_afactors[2] + 27.13),
         ];
 
-        let aw = (40.0 * rgb_a[0] + 20.0 * rgb_a[1] + rgb_a[2]) / 20.0 * nbb;
+        let aw = (40.0f64.mul_add(rgb_a[0], 20.0 * rgb_a[1]) + rgb_a[2]) / 20.0 * nbb;
 
         Self {
             white_point,

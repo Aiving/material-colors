@@ -7,14 +7,14 @@ pub use images::imageops::FilterType;
 
 use images::{imageops::resize, io::Reader, RgbaImage};
 
-use crate::{quantize::Quantizer, quantize::QuantizerCelebi, score::Score, Argb};
+use crate::{color::Argb, quantize::Quantizer, quantize::QuantizerCelebi, score::Score};
 
 pub struct Image {
     image: RgbaImage,
 }
 
 impl Image {
-    pub fn new(image: RgbaImage) -> Self {
+    pub const fn new(image: RgbaImage) -> Self {
         Self { image }
     }
 
@@ -73,7 +73,7 @@ impl ImageReader {
 
     /// Get the source color from an image.
     ///
-    /// [`image`] A struct that implements the AsPixels trait
+    /// `image` A struct that implements the [`AsPixels`] trait
     ///
     /// Returns source color - the color most suitable for creating a UI theme
     pub fn extract_color<I>(image: &I) -> Argb
