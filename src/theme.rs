@@ -105,7 +105,7 @@ pub struct ThemeBuilder {
 }
 
 impl ThemeBuilder {
-    /// Creates a new theme builder with a custom source color.
+    /// Creates a theme builder with a custom source color.
     #[must_use]
     pub const fn with_source(source: Argb) -> Self {
         Self {
@@ -121,28 +121,28 @@ impl ThemeBuilder {
         }
     }
 
-    /// Sets the primary color used to generate the theme.
+    /// Sets the primary color of the theme.
     #[must_use]
     pub const fn primary(mut self, color: Argb) -> Self {
         self.primary = Some(color);
         self
     }
 
-    /// Sets the secondary color used to generate the theme.
+    /// Sets the secondary color of the theme.
     #[must_use]
     pub const fn secondary(mut self, color: Argb) -> Self {
         self.secondary = Some(color);
         self
     }
 
-    /// Sets the tertiary color used to generate the theme.
+    /// Sets the tertiary color of the theme.
     #[must_use]
     pub const fn tertiary(mut self, color: Argb) -> Self {
         self.tertiary = Some(color);
         self
     }
 
-    /// Sets the error color used to generate the theme.
+    /// Sets the error color of the theme.
     #[must_use]
     pub const fn error(mut self, color: Argb) -> Self {
         self.error = Some(color);
@@ -174,6 +174,7 @@ impl ThemeBuilder {
         self
     }
 
+    #[must_use]
     pub fn build(self) -> Theme {
         let palette = CorePalette::of(self.source);
 
