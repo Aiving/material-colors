@@ -105,7 +105,6 @@ pub struct ThemeBuilder {
 }
 
 impl ThemeBuilder {
-
     /// Creates a new theme builder with a custom source color.
     #[must_use]
     pub const fn with_source(source: Argb) -> Self {
@@ -122,17 +121,45 @@ impl ThemeBuilder {
         }
     }
 
+    /// Sets the primary color used to generate the theme.
     #[must_use]
-    pub const fn override_palette(mut self, palette: &Palette, color: Argb) -> Self {
-        match palette {
-            Palette::Primary => self.primary = Some(color),
-            Palette::Secondary => self.secondary = Some(color),
-            Palette::Tertiary => self.tertiary = Some(color),
-            Palette::Error => self.error = Some(color),
-            Palette::Neutral => self.neutral = Some(color),
-            Palette::NeutralVariant => self.neutral_variant = Some(color),
-        }
+    pub const fn primary(mut self, color: Argb) -> Self {
+        self.primary = Some(color);
+        self
+    }
 
+    /// Sets the secondary color used to generate the theme.
+    #[must_use]
+    pub const fn secondary(mut self, color: Argb) -> Self {
+        self.secondary = Some(color);
+        self
+    }
+
+    /// Sets the tertiary color used to generate the theme.
+    #[must_use]
+    pub const fn tertiary(mut self, color: Argb) -> Self {
+        self.tertiary = Some(color);
+        self
+    }
+
+    /// Sets the error color used to generate the theme.
+    #[must_use]
+    pub const fn error(mut self, color: Argb) -> Self {
+        self.error = Some(color);
+        self
+    }
+
+    /// Sets the neutral color, used for background and surfaces.
+    #[must_use]
+    pub const fn neutral(mut self, color: Argb) -> Self {
+        self.neutral = Some(color);
+        self
+    }
+
+    /// Sets the neutral variant color, used for for medium emphasis and variants.
+    #[must_use]
+    pub const fn neutral_variant(mut self, color: Argb) -> Self {
+        self.neutral_variant = Some(color);
         self
     }
 
