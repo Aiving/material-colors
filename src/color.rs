@@ -38,7 +38,8 @@ pub struct Rgb {
 /// ## Examples:
 /// ```rust
 /// use std::str::FromStr;
-///
+/// use material_colors::color::Argb;
+/// 
 /// // from_str can accept any valid HEX color, like abc, abcabc, #abc, or #abcabc.
 /// let color = Argb::from_str("aae5a4").unwrap();
 /// ```
