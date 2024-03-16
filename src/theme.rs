@@ -163,14 +163,12 @@ impl ThemeBuilder {
         self
     }
 
+    /// Sets the custom colors, used as complementary tones.
+    /// 
+    /// Custom colors are also known as extended colors.
     #[must_use]
-    pub fn custom_color<N: Into<String>>(mut self, name: N, value: Argb, blend: bool) -> Self {
-        self.custom_colors.push(CustomColor {
-            value,
-            name: name.into(),
-            blend,
-        });
-
+    pub fn custom_colors(mut self, custom_colors: Vec<CustomColor>) -> Self {
+        self.custom_colors = custom_colors;
         self
     }
 
