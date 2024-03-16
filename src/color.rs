@@ -40,8 +40,11 @@ pub struct Rgb {
 /// use std::str::FromStr;
 /// use material_colors::color::Argb;
 /// 
-/// // from_str can accept any valid HEX color, like abc, abcabc, #abc, or #abcabc.
-/// let color = Argb::from_str("aae5a4").unwrap();
+/// // from_str can accept any valid HEX color
+/// let color = Argb::from_str("abc").unwrap();
+/// let color = Argb::from_str("abcabc").unwrap();
+/// let color = Argb::from_str("#abc").unwrap();
+/// let color = Argb::from_str("#abcabc").unwrap();
 /// ```
 ///
 /// [`from_str`]: std::str::FromStr::from_str
