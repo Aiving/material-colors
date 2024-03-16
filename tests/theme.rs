@@ -9,9 +9,7 @@ use material_colors::{
 
 #[test]
 fn test_theme() -> Result<(), Error> {
-    let theme = ThemeBuilder::default()
-        .source(Argb::from_str("aae5a4")?)
-        .build();
+    let theme = ThemeBuilder::with_source(Argb::from_str("aae5a4")?).build();
 
     assert_eq!(
         theme.schemes.dark,

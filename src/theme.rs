@@ -105,10 +105,13 @@ pub struct ThemeBuilder {
 }
 
 impl ThemeBuilder {
-    pub const fn new(variant: Variant) -> Self {
+
+    /// Creates a new theme builder with a custom source color.
+    #[must_use]
+    pub const fn with_source(source: Argb) -> Self {
         Self {
-            source: Argb::new(255, 66, 133, 244),
-            variant,
+            source,
+            variant: Variant::TonalSpot,
             primary: None,
             secondary: None,
             tertiary: None,
@@ -117,13 +120,6 @@ impl ThemeBuilder {
             neutral_variant: None,
             custom_colors: Vec::new(),
         }
-    }
-
-    #[must_use]
-    pub const fn source(mut self, color: Argb) -> Self {
-        self.source = color;
-
-        self
     }
 
     #[must_use]
@@ -141,12 +137,7 @@ impl ThemeBuilder {
     }
 
     #[must_use]
-    pub fn custom_color<N: Into<String>>(
-        mut self,
-        name: N,
-        value: Argb,
-        blend: bool,
-    ) -> Self {
+    pub fn custom_color<N: Into<String>>(mut self, name: N, value: Argb, blend: bool) -> Self {
         self.custom_colors.push(CustomColor {
             value,
             name: name.into(),
@@ -227,12 +218,6 @@ impl ThemeBuilder {
                 .map(|c| CustomColorGroup::new(self.source, c))
                 .collect(),
         }
-    }
-}
-
-impl Default for ThemeBuilder {
-    fn default() -> Self {
-        Self::new(Variant::TonalSpot)
     }
 }
 
