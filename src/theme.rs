@@ -121,6 +121,13 @@ impl ThemeBuilder {
         }
     }
 
+    /// Sets the theme variant.
+    #[must_use]
+    pub const fn variant(mut self, variant: Variant) -> Self {
+        self.variant = variant;
+        self
+    }
+
     /// Sets the primary color of the theme.
     #[must_use]
     pub const fn primary(mut self, color: Argb) -> Self {
@@ -164,7 +171,7 @@ impl ThemeBuilder {
     }
 
     /// Sets the custom colors, used as complementary tones.
-    /// 
+    ///
     /// Custom colors are also known as extended colors.
     #[must_use]
     pub fn custom_colors(mut self, custom_colors: Vec<CustomColor>) -> Self {
