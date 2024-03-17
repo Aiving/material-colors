@@ -95,6 +95,7 @@ pub struct Palettes {
 pub struct ThemeBuilder {
     source: Argb,
     variant: Variant,
+    color_match: bool,
     primary: Option<Argb>,
     secondary: Option<Argb>,
     tertiary: Option<Argb>,
@@ -111,6 +112,7 @@ impl ThemeBuilder {
         Self {
             source,
             variant: Variant::TonalSpot,
+            color_match: false,
             primary: None,
             secondary: None,
             tertiary: None,
@@ -125,6 +127,7 @@ impl ThemeBuilder {
     #[must_use]
     pub const fn variant(mut self, variant: Variant) -> Self {
         self.variant = variant;
+
         self
     }
 
@@ -132,6 +135,7 @@ impl ThemeBuilder {
     #[must_use]
     pub const fn primary(mut self, color: Argb) -> Self {
         self.primary = Some(color);
+
         self
     }
 
@@ -139,6 +143,7 @@ impl ThemeBuilder {
     #[must_use]
     pub const fn secondary(mut self, color: Argb) -> Self {
         self.secondary = Some(color);
+
         self
     }
 
@@ -146,6 +151,7 @@ impl ThemeBuilder {
     #[must_use]
     pub const fn tertiary(mut self, color: Argb) -> Self {
         self.tertiary = Some(color);
+
         self
     }
 
@@ -153,6 +159,7 @@ impl ThemeBuilder {
     #[must_use]
     pub const fn error(mut self, color: Argb) -> Self {
         self.error = Some(color);
+
         self
     }
 
@@ -160,6 +167,7 @@ impl ThemeBuilder {
     #[must_use]
     pub const fn neutral(mut self, color: Argb) -> Self {
         self.neutral = Some(color);
+
         self
     }
 
@@ -167,6 +175,7 @@ impl ThemeBuilder {
     #[must_use]
     pub const fn neutral_variant(mut self, color: Argb) -> Self {
         self.neutral_variant = Some(color);
+
         self
     }
 
@@ -176,12 +185,24 @@ impl ThemeBuilder {
     #[must_use]
     pub fn custom_colors(mut self, custom_colors: Vec<CustomColor>) -> Self {
         self.custom_colors = custom_colors;
+
         self
     }
 
     #[must_use]
-    pub fn build(self) -> Theme {
+    pub const fn color_match(mut self, enabled: bool) -> Self {
+        self.color_match = enabled;
+
+        self
+    }
+
+    #[must_use]
+    pub fn build(mut self) -> Theme {
         let palette = CorePalette::of(self.source);
+
+        if self.color_match {
+            self.variant = Variant::Fidelity;
+        }
 
         let mut light = DynamicScheme::by_variant(self.source, &self.variant, false, None);
         let mut dark = DynamicScheme::by_variant(self.source, &self.variant, true, None);
@@ -248,7 +269,7 @@ impl ThemeBuilder {
             custom_colors: self
                 .custom_colors
                 .into_iter()
-                .map(|c| CustomColorGroup::new(self.source, c))
+                .map(|color| CustomColorGroup::new(self.source, color))
                 .collect(),
         }
     }
