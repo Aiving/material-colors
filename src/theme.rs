@@ -45,11 +45,8 @@ impl CustomColorGroup {
     fn new(source: Argb, color: CustomColor) -> Self {
         let mut value = color.value;
 
-        let from = value;
-        let to = source;
-
         if color.blend {
-            value = harmonize(from, to);
+            value = harmonize(value, source);
         }
 
         let palette = CorePalette::of(value);
