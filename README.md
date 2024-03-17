@@ -13,9 +13,7 @@ use std::str::FromStr;
 use material_colors::{color::Argb, theme::ThemeBuilder};
 
 fn main() {
-    let theme = ThemeBuilder::default()
-        .source(Argb::from_str("aae5a4").unwrap())
-        .build();
+    let theme = ThemeBuilder::with_source(Argb::from_str("aae5a4").unwrap()).build();
 
     // Do whatever you want...
 }
@@ -45,9 +43,7 @@ async fn main() -> Result<(), reqwest::Error> {
     // However, if you don't like the results, you can always try other FilterType values.
     data.resize(128, 128, FilterType::Lanczos3);
 
-    let theme = ThemeBuilder::default()
-        .source(ImageReader::extract_color(&data))
-        .build();
+    let theme = ThemeBuilder::with_source(ImageReader::extract_color(&data)).build();
 
     // Do whatever you want...
 

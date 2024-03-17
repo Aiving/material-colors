@@ -105,10 +105,12 @@ pub struct ThemeBuilder {
 }
 
 impl ThemeBuilder {
-    pub const fn new(variant: Variant) -> Self {
+    /// Creates a theme builder with a custom source color.
+    #[must_use]
+    pub const fn with_source(source: Argb) -> Self {
         Self {
-            source: Argb::new(255, 66, 133, 244),
-            variant,
+            source,
+            variant: Variant::TonalSpot,
             primary: None,
             secondary: None,
             tertiary: None,
@@ -119,43 +121,65 @@ impl ThemeBuilder {
         }
     }
 
+    /// Sets the theme variant.
     #[must_use]
-    pub const fn source(mut self, color: Argb) -> Self {
-        self.source = color;
+    pub const fn variant(mut self, variant: Variant) -> Self {
+        self.variant = variant;
+        self
+    }
 
+    /// Sets the primary color of the theme.
+    #[must_use]
+    pub const fn primary(mut self, color: Argb) -> Self {
+        self.primary = Some(color);
+        self
+    }
+
+    /// Sets the secondary color of the theme.
+    #[must_use]
+    pub const fn secondary(mut self, color: Argb) -> Self {
+        self.secondary = Some(color);
+        self
+    }
+
+    /// Sets the tertiary color of the theme.
+    #[must_use]
+    pub const fn tertiary(mut self, color: Argb) -> Self {
+        self.tertiary = Some(color);
+        self
+    }
+
+    /// Sets the error color of the theme.
+    #[must_use]
+    pub const fn error(mut self, color: Argb) -> Self {
+        self.error = Some(color);
+        self
+    }
+
+    /// Sets the neutral color, used for background and surfaces.
+    #[must_use]
+    pub const fn neutral(mut self, color: Argb) -> Self {
+        self.neutral = Some(color);
+        self
+    }
+
+    /// Sets the neutral variant color, used for for medium emphasis and variants.
+    #[must_use]
+    pub const fn neutral_variant(mut self, color: Argb) -> Self {
+        self.neutral_variant = Some(color);
+        self
+    }
+
+    /// Sets the custom colors, used as complementary tones.
+    ///
+    /// Custom colors are also known as extended colors.
+    #[must_use]
+    pub fn custom_colors(mut self, custom_colors: Vec<CustomColor>) -> Self {
+        self.custom_colors = custom_colors;
         self
     }
 
     #[must_use]
-    pub const fn override_palette(mut self, palette: &Palette, color: Argb) -> Self {
-        match palette {
-            Palette::Primary => self.primary = Some(color),
-            Palette::Secondary => self.secondary = Some(color),
-            Palette::Tertiary => self.tertiary = Some(color),
-            Palette::Error => self.error = Some(color),
-            Palette::Neutral => self.neutral = Some(color),
-            Palette::NeutralVariant => self.neutral_variant = Some(color),
-        }
-
-        self
-    }
-
-    #[must_use]
-    pub fn custom_color<N: Into<String>>(
-        mut self,
-        name: N,
-        value: Argb,
-        blend: bool,
-    ) -> Self {
-        self.custom_colors.push(CustomColor {
-            value,
-            name: name.into(),
-            blend,
-        });
-
-        self
-    }
-
     pub fn build(self) -> Theme {
         let palette = CorePalette::of(self.source);
 
@@ -227,12 +251,6 @@ impl ThemeBuilder {
                 .map(|c| CustomColorGroup::new(self.source, c))
                 .collect(),
         }
-    }
-}
-
-impl Default for ThemeBuilder {
-    fn default() -> Self {
-        Self::new(Variant::TonalSpot)
     }
 }
 

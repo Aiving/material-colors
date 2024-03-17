@@ -16,9 +16,7 @@ async fn main() -> Result<(), reqwest::Error> {
 
     data.resize(128, 128, FilterType::Lanczos3);
 
-    _ = ThemeBuilder::default()
-        .source(ImageReader::extract_color(&data))
-        .build();
+    _ = ThemeBuilder::with_source(ImageReader::extract_color(&data)).build();
 
     // Do whatever you want...
 
