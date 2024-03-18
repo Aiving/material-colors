@@ -6,6 +6,7 @@ use std::{array::IntoIter, fmt};
 
 use ahash::HashMap;
 
+use crate::palette::CorePalette;
 use crate::{color::Argb, dynamic_color::DynamicScheme};
 
 pub mod variant;
@@ -362,5 +363,268 @@ impl From<Scheme> for HashMap<String, String> {
         map.into_iter()
             .map(|(key, value)| (key, value.as_hex()))
             .collect()
+    }
+}
+
+/// This is similar to `MaterialLightColorSchemeFromPalette` and `MaterialDarkColorSchemeFromPalette` in the C++ implementation of Material Color Utilities.
+///
+/// We use this to test scheme generation from a core palette.
+#[derive(PartialEq, Debug)]
+pub struct SchemeFromPalette {
+    pub primary: Argb,
+    pub on_primary: Argb,
+    pub primary_container: Argb,
+    pub on_primary_container: Argb,
+    pub secondary: Argb,
+    pub on_secondary: Argb,
+    pub secondary_container: Argb,
+    pub on_secondary_container: Argb,
+    pub tertiary: Argb,
+    pub on_tertiary: Argb,
+    pub tertiary_container: Argb,
+    pub on_tertiary_container: Argb,
+    pub error: Argb,
+    pub on_error: Argb,
+    pub error_container: Argb,
+    pub on_error_container: Argb,
+    pub surface: Argb,
+    pub on_surface: Argb,
+    pub surface_variant: Argb,
+    pub on_surface_variant: Argb,
+    pub outline: Argb,
+    pub outline_variant: Argb,
+    pub background: Argb,
+    pub on_background: Argb,
+    pub shadow: Argb,
+    pub scrim: Argb,
+    pub inverse_surface: Argb,
+    pub inverse_on_surface: Argb,
+    pub inverse_primary: Argb,
+}
+
+impl SchemeFromPalette {
+    /// Generates a light colour scheme from a core palette.
+    /// This has less fields than [`Scheme`]
+    pub fn light(argb: Argb) -> Self {
+        let palette = CorePalette::of(argb);
+
+        Self {
+            primary: palette.primary.tone(40),
+            on_primary: palette.primary.tone(100),
+            primary_container: palette.primary.tone(90),
+            on_primary_container: palette.primary.tone(10),
+            secondary: palette.secondary.tone(40),
+            on_secondary: palette.secondary.tone(100),
+            secondary_container: palette.secondary.tone(90),
+            on_secondary_container: palette.secondary.tone(10),
+            tertiary: palette.tertiary.tone(40),
+            on_tertiary: palette.tertiary.tone(100),
+            tertiary_container: palette.tertiary.tone(90),
+            on_tertiary_container: palette.tertiary.tone(10),
+            error: palette.error.tone(40),
+            on_error: palette.error.tone(100),
+            error_container: palette.error.tone(90),
+            on_error_container: palette.error.tone(10),
+            background: palette.neutral.tone(99),
+            on_background: palette.neutral.tone(10),
+            surface: palette.neutral.tone(99),
+            on_surface: palette.neutral.tone(10),
+            surface_variant: palette.neutral_variant.tone(90),
+            on_surface_variant: palette.neutral_variant.tone(30),
+            outline: palette.neutral_variant.tone(50),
+            outline_variant: palette.neutral_variant.tone(80),
+            shadow: palette.neutral.tone(0),
+            scrim: palette.neutral.tone(0),
+            inverse_surface: palette.neutral.tone(20),
+            inverse_on_surface: palette.neutral.tone(95),
+            inverse_primary: palette.primary.tone(80),
+        }
+    }
+
+    pub fn dark(argb: Argb) -> Self {
+        let palette = CorePalette::of(argb);
+
+        Self {
+            primary: palette.primary.tone(80),
+            on_primary: palette.primary.tone(20),
+            primary_container: palette.primary.tone(30),
+            on_primary_container: palette.primary.tone(90),
+            secondary: palette.secondary.tone(80),
+            on_secondary: palette.secondary.tone(20),
+            secondary_container: palette.secondary.tone(30),
+            on_secondary_container: palette.secondary.tone(90),
+            tertiary: palette.tertiary.tone(80),
+            on_tertiary: palette.tertiary.tone(20),
+            tertiary_container: palette.tertiary.tone(30),
+            on_tertiary_container: palette.tertiary.tone(90),
+            error: palette.error.tone(80),
+            on_error: palette.error.tone(20),
+            error_container: palette.error.tone(30),
+            on_error_container: palette.error.tone(80),
+            background: palette.neutral.tone(10),
+            on_background: palette.neutral.tone(90),
+            surface: palette.neutral.tone(10),
+            on_surface: palette.neutral.tone(90),
+            surface_variant: palette.neutral_variant.tone(30),
+            on_surface_variant: palette.neutral_variant.tone(80),
+            outline: palette.neutral_variant.tone(60),
+            outline_variant: palette.neutral_variant.tone(30),
+            shadow: palette.neutral.tone(0),
+            scrim: palette.neutral.tone(0),
+            inverse_surface: palette.neutral.tone(90),
+            inverse_on_surface: palette.neutral.tone(20),
+            inverse_primary: palette.primary.tone(40),
+        }
+    }
+}
+
+impl PartialEq<Scheme> for SchemeFromPalette {
+    fn eq(&self, other: &Scheme) -> bool {
+        self.primary == other.primary
+            && self.on_primary == other.on_primary
+            && self.primary_container == other.primary_container
+            && self.on_primary_container == other.on_primary_container
+            && self.secondary == other.secondary
+            && self.on_secondary == other.on_secondary
+            && self.secondary_container == other.secondary_container
+            && self.on_secondary_container == other.on_secondary_container
+            && self.tertiary == other.tertiary
+            && self.on_tertiary == other.on_tertiary
+            && self.tertiary_container == other.tertiary_container
+            && self.on_tertiary_container == other.on_tertiary_container
+            && self.error == other.error
+            && self.on_error == other.on_error
+            && self.error_container == other.error_container
+            && self.on_error_container == other.on_error_container
+            && self.surface == other.surface
+            && self.on_surface == other.on_surface
+            && self.surface_variant == other.surface_variant
+            && self.on_surface_variant == other.on_surface_variant
+            && self.outline == other.outline
+            && self.outline_variant == other.outline_variant
+            && self.background == other.background
+            && self.on_background == other.on_background
+            && self.shadow == other.shadow
+            && self.scrim == other.scrim
+            && self.inverse_surface == other.inverse_surface
+            && self.inverse_on_surface == other.inverse_on_surface
+            && self.inverse_primary == other.inverse_primary
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::scheme::SchemeFromPalette;
+    use crate::{color::Argb, theme::ThemeBuilder, Error};
+    use float_cmp::assert_approx_eq;
+    use std::str::FromStr;
+
+    #[test]
+    fn test_surface_tones() -> Result<(), Error> {
+        let c = Argb::from_str("ff0000")?;
+
+        let light = SchemeFromPalette::light(c);
+        let dark = SchemeFromPalette::dark(c);
+
+        assert_approx_eq!(f64, Argb::as_lstar(&light.surface), 99.0, epsilon = 0.1); // 99.015;
+        assert_approx_eq!(f64, Argb::as_lstar(&dark.surface), 10.0, epsilon = 0.1); // 9.923
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_blue_scheme() -> Result<(), Error> {
+        let c = Argb::from_str("0000ff")?;
+
+        let light = SchemeFromPalette::light(c);
+        let dark = SchemeFromPalette::dark(c);
+
+        assert_eq!(Argb::as_hex(&light.primary), "343dff");
+        assert_eq!(Argb::as_hex(&dark.primary), "bec2ff");
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_light_scheme_from_high_chroma_colour() -> Result<(), Error> {
+        let c = Argb::from_str("fa2bec")?;
+
+        let scheme = SchemeFromPalette::light(c);
+
+        let expected = SchemeFromPalette {
+            primary: Argb::from_str("ab00a2")?,
+            on_primary: Argb::from_str("ffffff")?,
+            primary_container: Argb::from_str("ffd7f3")?,
+            on_primary_container: Argb::from_str("390035")?,
+            secondary: Argb::from_str("6e5868")?,
+            on_secondary: Argb::from_str("ffffff")?,
+            secondary_container: Argb::from_str("f8daee")?,
+            on_secondary_container: Argb::from_str("271624")?,
+            tertiary: Argb::from_str("815343")?,
+            on_tertiary: Argb::from_str("ffffff")?,
+            tertiary_container: Argb::from_str("ffdbd0")?,
+            on_tertiary_container: Argb::from_str("321207")?,
+            error: Argb::from_str("ba1a1a")?,
+            on_error: Argb::from_str("ffffff")?,
+            error_container: Argb::from_str("ffdad6")?,
+            on_error_container: Argb::from_str("410002")?,
+            background: Argb::from_str("fffbff")?,
+            on_background: Argb::from_str("1f1a1d")?,
+            surface: Argb::from_str("fffbff")?,
+            on_surface: Argb::from_str("1f1a1d")?,
+            surface_variant: Argb::from_str("eedee7")?,
+            on_surface_variant: Argb::from_str("4e444b")?,
+            outline: Argb::from_str("80747b")?,
+            outline_variant: Argb::from_str("d2c2cb")?,
+            shadow: Argb::from_str("000000")?,
+            scrim: Argb::from_str("000000")?,
+            inverse_surface: Argb::from_str("342f32")?,
+            inverse_on_surface: Argb::from_str("f8eef2")?,
+            inverse_primary: Argb::from_str("ffabee")?,
+        };
+        Ok(())
+    }
+
+    #[test]
+    fn test_dark_scheme_from_high_chroma_colour() -> Result<(), Error> {
+        let c = Argb::from_str("fa2bec")?;
+
+        let scheme = SchemeFromPalette::dark(c);
+
+        let expected = SchemeFromPalette {
+            primary: Argb::from_str("ffabee")?,
+            on_primary: Argb::from_str("5c0057")?,
+            primary_container: Argb::from_str("83007b")?,
+            on_primary_container: Argb::from_str("ffd7f3")?,
+            secondary: Argb::from_str("dbbed1")?,
+            on_secondary: Argb::from_str("3e2a39")?,
+            secondary_container: Argb::from_str("554050")?,
+            on_secondary_container: Argb::from_str("f8daee")?,
+            tertiary: Argb::from_str("f5b9a5")?,
+            on_tertiary: Argb::from_str("4c2619")?,
+            tertiary_container: Argb::from_str("663c2d")?,
+            on_tertiary_container: Argb::from_str("ffdbd0")?,
+            error: Argb::from_str("ffb4ab")?,
+            on_error: Argb::from_str("690005")?,
+            error_container: Argb::from_str("93000a")?,
+            on_error_container: Argb::from_str("ffb4ab")?,
+            background: Argb::from_str("1f1a1d")?,
+            on_background: Argb::from_str("eae0e4")?,
+            surface: Argb::from_str("1f1a1d")?,
+            on_surface: Argb::from_str("eae0e4")?,
+            surface_variant: Argb::from_str("4e444b")?,
+            on_surface_variant: Argb::from_str("d2c2cb")?,
+            outline: Argb::from_str("9a8d95")?,
+            outline_variant: Argb::from_str("4e444b")?,
+            shadow: Argb::from_str("000000")?,
+            scrim: Argb::from_str("000000")?,
+            inverse_surface: Argb::from_str("eae0e4")?,
+            inverse_on_surface: Argb::from_str("342f32")?,
+            inverse_primary: Argb::from_str("ab00a2")?,
+        };
+
+        assert_eq!(scheme, expected);
+
+        Ok(())
     }
 }
