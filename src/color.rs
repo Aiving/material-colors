@@ -315,7 +315,16 @@ impl Argb {
         }
     }
 
-    pub fn as_hex(&self) -> String {
+    pub fn to_hex(&self) -> String {
+        format!(
+            "{}{}{}",
+            Self::hex(self.red),
+            Self::hex(self.green),
+            Self::hex(self.blue)
+        )
+    }
+
+    pub fn to_hex_with_pound(&self) -> String {
         format!(
             "#{}{}{}",
             Self::hex(self.red),
@@ -327,7 +336,7 @@ impl Argb {
 
 impl fmt::Display for Argb {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.as_hex())
+        write!(f, "{}", self.to_hex_with_pound())
     }
 }
 

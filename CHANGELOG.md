@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **breaking:** Apply more strictly Clippy lints
 - **breaking:** Replace `func:from_source_color` in `struct:Theme` with `struct:ThemeBuilder`
 - **breaking:** Replace `struct:ParseRgbError` with `enum:Error` `ParseRGB` variant in `mod:error`
+- **breaking:** Replace `func:as_hex` in `struct:Argb` with `func:to_hex` and `func:to_hex_with_pound`
 - **breaking:** Rename `mod:palettes` to `mod:palette`
 - **added:** Add `CHANGELOG`
 - **added:** Add documentation above `struct:Argb`

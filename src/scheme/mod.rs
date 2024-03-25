@@ -360,7 +360,7 @@ impl From<Scheme> for HashMap<String, String> {
         let map: HashMap<String, Argb> = HashMap::from_iter(value);
 
         map.into_iter()
-            .map(|(key, value)| (key, value.as_hex()))
+            .map(|(key, value)| (key, value.to_hex_with_pound()))
             .collect()
     }
 }
