@@ -23,7 +23,7 @@ jobs:
     - name: rustfmt
       run: cargo fmt --all --check
 
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4

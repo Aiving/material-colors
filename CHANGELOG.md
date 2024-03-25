@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **added:** Add documentation above `struct:Argb`
 - **added:** Add `check` job to `actions:CI.yml`
 - **changed:** Rename `actions:tests.yml` to `actions:CI.yml`
+- **changed:** Rename `build` job to `test` in `actions:CI.yml`
 - **changed:** Remove unnecessary comments about warnings count from the `README`
 - **changed:** Update tests
 - **changed:** Update examples in `README`
