@@ -1,7 +1,7 @@
 /// Set of themes supported by Dynamic Color.
 /// Instantiate the corresponding subclass, ex. [`SchemeTonalSpot`], to create
 /// colors corresponding to the theme.
-/// 
+///
 /// [`SchemeTonalSpot`]: crate::scheme::variant::SchemeTonalSpot
 #[derive(PartialEq, Eq, PartialOrd, Clone)]
 pub enum Variant {

@@ -275,7 +275,8 @@ impl Cam16 {
         let h_sin = h_rad.sin();
         let h_cos = h_rad.cos();
 
-        let gamma = 23.0 * (p2 + 0.305) * t / (108.0 * t).mul_add(h_sin, 23.0f64.mul_add(p1, 11.0 * t * h_cos));
+        let gamma = 23.0 * (p2 + 0.305) * t
+            / (108.0 * t).mul_add(h_sin, 23.0f64.mul_add(p1, 11.0 * t * h_cos));
         let a = gamma * h_cos;
         let b = gamma * h_sin;
         let r_a = 288.0f64.mul_add(b, 460.0f64.mul_add(p2, 451.0 * a)) / 1403.0;

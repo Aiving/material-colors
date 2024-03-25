@@ -1,6 +1,6 @@
-use std::fmt;
 #[cfg(feature = "serde")]
 use serde::Serialize;
+use std::fmt;
 
 use crate::{
     color::Argb,

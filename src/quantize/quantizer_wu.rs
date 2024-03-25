@@ -1,8 +1,8 @@
 #![allow(clippy::too_many_arguments)]
 
-use std::fmt;
 use indexmap::IndexMap;
 use std::collections::HashMap;
+use std::fmt;
 
 use crate::color::{Argb, Rgb};
 
@@ -95,7 +95,9 @@ impl QuantizerWu {
             self.moments_b[index] += u32::from(blue) * count;
 
             self.moments[index] += f64::from(count)
-                * (f64::from(red).mul_add(f64::from(red), f64::from(green).powi(2)) + f64::from(blue)).powi(2);
+                * (f64::from(red).mul_add(f64::from(red), f64::from(green).powi(2))
+                    + f64::from(blue))
+                .powi(2);
         }
     }
 
