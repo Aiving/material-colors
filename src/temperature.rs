@@ -365,3 +365,112 @@ impl TemperatureCache {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use float_cmp::assert_approx_eq;
+
+    use crate::color::Argb;
+    use crate::hct::Hct;
+    use crate::Error;
+
+    use super::TemperatureCache;
+
+    #[test]
+    fn test_raw_temperature() -> Result<(), Error> {
+        let blue_hct = Hct::new(Argb::from_str("0000ff")?);
+        let red_hct = Hct::new(Argb::from_str("ff0000")?);
+        let green_hct = Hct::new(Argb::from_str("00ff00")?);
+        let white_hct = Hct::new(Argb::from_str("ffffff")?);
+        let black_hct = Hct::new(Argb::from_str("000000")?);
+
+        let blue_temp = TemperatureCache::raw_temperature(blue_hct);
+        let red_temp = TemperatureCache::raw_temperature(red_hct);
+        let green_temp = TemperatureCache::raw_temperature(green_hct);
+        let white_temp = TemperatureCache::raw_temperature(white_hct);
+        let black_temp = TemperatureCache::raw_temperature(black_hct);
+
+        assert_approx_eq!(f64, -1.393, blue_temp, epsilon = 0.001);
+        assert_approx_eq!(f64, 2.351, red_temp, epsilon = 0.001);
+        assert_approx_eq!(f64, -0.267, green_temp, epsilon = 0.001);
+        assert_approx_eq!(f64, -0.5, white_temp, epsilon = 0.001);
+        assert_approx_eq!(f64, -0.5, black_temp, epsilon = 0.001);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_complement() -> Result<(), Error> {
+        let blue_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_str("0000ff")?))
+            .complement()
+            .into();
+        let red_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_str("ff0000")?))
+            .complement()
+            .into();
+        let green_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_str("00ff00")?))
+            .complement()
+            .into();
+        let white_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_str("ffffff")?))
+            .complement()
+            .into();
+        let black_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_str("000000")?))
+            .complement()
+            .into();
+
+        assert_eq!(Argb::from_str("9d0002")?, blue_complement);
+        assert_eq!(Argb::from_str("007bfc")?, red_complement);
+        assert_eq!(Argb::from_str("ffd2c9")?, green_complement);
+        assert_eq!(Argb::from_str("ffffff")?, white_complement);
+        assert_eq!(Argb::from_str("000000")?, black_complement);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_analogous() -> Result<(), Error> {
+        let blue_analogous =
+            TemperatureCache::new(Hct::new(Argb::from_str("0000ff")?)).analogous(None, None);
+        let red_analogous =
+            TemperatureCache::new(Hct::new(Argb::from_str("ff0000")?)).analogous(None, None);
+        let green_analogous =
+            TemperatureCache::new(Hct::new(Argb::from_str("00ff00")?)).analogous(None, None);
+        let white_analogous =
+            TemperatureCache::new(Hct::new(Argb::from_str("ffffff")?)).analogous(None, None);
+        let black_analogous =
+            TemperatureCache::new(Hct::new(Argb::from_str("000000")?)).analogous(None, None);
+
+        assert_eq!(Argb::from_str("00590c")?, blue_analogous[0].into());
+        assert_eq!(Argb::from_str("00564e")?, blue_analogous[1].into());
+        assert_eq!(Argb::from_str("0000ff")?, blue_analogous[2].into());
+        assert_eq!(Argb::from_str("6700cc")?, blue_analogous[3].into());
+        assert_eq!(Argb::from_str("81009f")?, blue_analogous[4].into());
+
+        assert_eq!(Argb::from_str("f60082")?, red_analogous[0].into());
+        assert_eq!(Argb::from_str("fc004c")?, red_analogous[1].into());
+        assert_eq!(Argb::from_str("ff0000")?, red_analogous[2].into());
+        assert_eq!(Argb::from_str("d95500")?, red_analogous[3].into());
+        assert_eq!(Argb::from_str("af7200")?, red_analogous[4].into());
+
+        assert_eq!(Argb::from_str("cee900")?, green_analogous[0].into());
+        assert_eq!(Argb::from_str("92f500")?, green_analogous[1].into());
+        assert_eq!(Argb::from_str("00ff00")?, green_analogous[2].into());
+        assert_eq!(Argb::from_str("00fd6f")?, green_analogous[3].into());
+        assert_eq!(Argb::from_str("00fab3")?, green_analogous[4].into());
+
+        assert_eq!(Argb::from_str("ffffff")?, white_analogous[0].into());
+        assert_eq!(Argb::from_str("ffffff")?, white_analogous[1].into());
+        assert_eq!(Argb::from_str("ffffff")?, white_analogous[2].into());
+        assert_eq!(Argb::from_str("ffffff")?, white_analogous[3].into());
+        assert_eq!(Argb::from_str("ffffff")?, white_analogous[4].into());
+
+        assert_eq!(Argb::from_str("000000")?, black_analogous[0].into());
+        assert_eq!(Argb::from_str("000000")?, black_analogous[1].into());
+        assert_eq!(Argb::from_str("000000")?, black_analogous[2].into());
+        assert_eq!(Argb::from_str("000000")?, black_analogous[3].into());
+        assert_eq!(Argb::from_str("000000")?, black_analogous[4].into());
+
+        Ok(())
+    }
+}

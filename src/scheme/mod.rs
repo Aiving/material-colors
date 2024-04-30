@@ -369,7 +369,7 @@ impl From<Scheme> for HashMap<String, String> {
 /// This is similar to `MaterialLightColorSchemeFromPalette` and `MaterialDarkColorSchemeFromPalette` in the C++ implementation of Material Color Utilities.
 ///
 /// We use this to test scheme generation from a core palette.
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct SchemeFromPalette {
     pub primary: Argb,
     pub on_primary: Argb,
@@ -403,11 +403,9 @@ pub struct SchemeFromPalette {
 }
 
 impl SchemeFromPalette {
-    /// Generates a light colour scheme from a core palette.
+    /// Generates a light color scheme from a core palette.
     /// This has less fields than [`Scheme`]
-    pub fn light(argb: Argb) -> Self {
-        let palette = CorePalette::of(argb);
-
+    pub fn light_from_palette(palette: &CorePalette) -> Self {
         Self {
             primary: palette.primary.tone(40),
             on_primary: palette.primary.tone(100),
@@ -441,9 +439,9 @@ impl SchemeFromPalette {
         }
     }
 
-    pub fn dark(argb: Argb) -> Self {
-        let palette = CorePalette::of(argb);
-
+    /// Generates a dark color scheme from a core palette.
+    /// This has less fields than [`Scheme`]
+    pub fn dark_from_palette(palette: &CorePalette) -> Self {
         Self {
             primary: palette.primary.tone(80),
             on_primary: palette.primary.tone(20),
@@ -475,6 +473,22 @@ impl SchemeFromPalette {
             inverse_on_surface: palette.neutral.tone(20),
             inverse_primary: palette.primary.tone(40),
         }
+    }
+
+    pub fn light(argb: Argb) -> Self {
+        Self::light_from_palette(&CorePalette::of(argb))
+    }
+
+    pub fn light_content(argb: Argb) -> Self {
+        Self::light_from_palette(&CorePalette::content_of(argb))
+    }
+
+    pub fn dark(argb: Argb) -> Self {
+        Self::dark_from_palette(&CorePalette::of(argb))
+    }
+
+    pub fn dark_content(argb: Argb) -> Self {
+        Self::dark_from_palette(&CorePalette::content_of(argb))
     }
 }
 
@@ -515,7 +529,7 @@ impl PartialEq<Scheme> for SchemeFromPalette {
 #[cfg(test)]
 mod tests {
     use crate::scheme::SchemeFromPalette;
-    use crate::{color::Argb, theme::ThemeBuilder, Error};
+    use crate::{color::Argb, Error};
     use float_cmp::assert_approx_eq;
     use std::str::FromStr;
 
@@ -526,8 +540,8 @@ mod tests {
         let light = SchemeFromPalette::light(c);
         let dark = SchemeFromPalette::dark(c);
 
-        assert_approx_eq!(f64, Argb::as_lstar(&light.surface), 99.0, epsilon = 0.1); // 99.015;
-        assert_approx_eq!(f64, Argb::as_lstar(&dark.surface), 10.0, epsilon = 0.1); // 9.923
+        assert_approx_eq!(f64, light.surface.as_lstar(), 99.0, epsilon = 0.1); // 99.015;
+        assert_approx_eq!(f64, dark.surface.as_lstar(), 10.0, epsilon = 0.1); // 9.923
 
         Ok(())
     }
@@ -539,14 +553,14 @@ mod tests {
         let light = SchemeFromPalette::light(c);
         let dark = SchemeFromPalette::dark(c);
 
-        assert_eq!(Argb::as_hex(&light.primary), "343dff");
-        assert_eq!(Argb::as_hex(&dark.primary), "bec2ff");
+        assert_eq!(light.primary.to_hex(), "343dff");
+        assert_eq!(dark.primary.to_hex(), "bec2ff");
 
         Ok(())
     }
 
     #[test]
-    fn test_light_scheme_from_high_chroma_colour() -> Result<(), Error> {
+    fn test_light_scheme_from_high_chroma_color() -> Result<(), Error> {
         let c = Argb::from_str("fa2bec")?;
 
         let scheme = SchemeFromPalette::light(c);
@@ -582,11 +596,14 @@ mod tests {
             inverse_on_surface: Argb::from_str("f8eef2")?,
             inverse_primary: Argb::from_str("ffabee")?,
         };
+
+        assert_eq!(scheme, expected);
+
         Ok(())
     }
 
     #[test]
-    fn test_dark_scheme_from_high_chroma_colour() -> Result<(), Error> {
+    fn test_dark_scheme_from_high_chroma_color() -> Result<(), Error> {
         let c = Argb::from_str("fa2bec")?;
 
         let scheme = SchemeFromPalette::dark(c);
@@ -603,6 +620,92 @@ mod tests {
             tertiary: Argb::from_str("f5b9a5")?,
             on_tertiary: Argb::from_str("4c2619")?,
             tertiary_container: Argb::from_str("663c2d")?,
+            on_tertiary_container: Argb::from_str("ffdbd0")?,
+            error: Argb::from_str("ffb4ab")?,
+            on_error: Argb::from_str("690005")?,
+            error_container: Argb::from_str("93000a")?,
+            on_error_container: Argb::from_str("ffb4ab")?,
+            background: Argb::from_str("1f1a1d")?,
+            on_background: Argb::from_str("eae0e4")?,
+            surface: Argb::from_str("1f1a1d")?,
+            on_surface: Argb::from_str("eae0e4")?,
+            surface_variant: Argb::from_str("4e444b")?,
+            on_surface_variant: Argb::from_str("d2c2cb")?,
+            outline: Argb::from_str("9a8d95")?,
+            outline_variant: Argb::from_str("4e444b")?,
+            shadow: Argb::from_str("000000")?,
+            scrim: Argb::from_str("000000")?,
+            inverse_surface: Argb::from_str("eae0e4")?,
+            inverse_on_surface: Argb::from_str("342f32")?,
+            inverse_primary: Argb::from_str("ab00a2")?,
+        };
+
+        assert_eq!(scheme, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_light_content_scheme_from_high_chroma_color() -> Result<(), Error> {
+        let c = Argb::from_str("fa2bec")?;
+
+        let scheme = SchemeFromPalette::light_content(c);
+
+        let expected = SchemeFromPalette {
+            primary: Argb::from_str("ab00a2")?,
+            on_primary: Argb::from_str("ffffff")?,
+            primary_container: Argb::from_str("ffd7f3")?,
+            on_primary_container: Argb::from_str("390035")?,
+            secondary: Argb::from_str("7f4e75")?,
+            on_secondary: Argb::from_str("ffffff")?,
+            secondary_container: Argb::from_str("ffd7f3")?,
+            on_secondary_container: Argb::from_str("330b2f")?,
+            tertiary: Argb::from_str("9c4323")?,
+            on_tertiary: Argb::from_str("ffffff")?,
+            tertiary_container: Argb::from_str("ffdbd0")?,
+            on_tertiary_container: Argb::from_str("390c00")?,
+            error: Argb::from_str("ba1a1a")?,
+            on_error: Argb::from_str("ffffff")?,
+            error_container: Argb::from_str("ffdad6")?,
+            on_error_container: Argb::from_str("410002")?,
+            background: Argb::from_str("fffbff")?,
+            on_background: Argb::from_str("1f1a1d")?,
+            surface: Argb::from_str("fffbff")?,
+            on_surface: Argb::from_str("1f1a1d")?,
+            surface_variant: Argb::from_str("eedee7")?,
+            on_surface_variant: Argb::from_str("4e444b")?,
+            outline: Argb::from_str("80747b")?,
+            outline_variant: Argb::from_str("d2c2cb")?,
+            shadow: Argb::from_str("000000")?,
+            scrim: Argb::from_str("000000")?,
+            inverse_surface: Argb::from_str("342f32")?,
+            inverse_on_surface: Argb::from_str("f8eef2")?,
+            inverse_primary: Argb::from_str("ffabee")?,
+        };
+
+        assert_eq!(scheme, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_dark_content_scheme_from_high_chroma_color() -> Result<(), Error> {
+        let c = Argb::from_str("fa2bec")?;
+
+        let scheme = SchemeFromPalette::dark_content(c);
+
+        let expected = SchemeFromPalette {
+            primary: Argb::from_str("ffabee")?,
+            on_primary: Argb::from_str("5c0057")?,
+            primary_container: Argb::from_str("83007b")?,
+            on_primary_container: Argb::from_str("ffd7f3")?,
+            secondary: Argb::from_str("f0b4e1")?,
+            on_secondary: Argb::from_str("4b2145")?,
+            secondary_container: Argb::from_str("64375c")?,
+            on_secondary_container: Argb::from_str("ffd7f3")?,
+            tertiary: Argb::from_str("ffb59c")?,
+            on_tertiary: Argb::from_str("5c1900")?,
+            tertiary_container: Argb::from_str("7d2c0d")?,
             on_tertiary_container: Argb::from_str("ffdbd0")?,
             error: Argb::from_str("ffb4ab")?,
             on_error: Argb::from_str("690005")?,
