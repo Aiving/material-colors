@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.3.0 (May 1st, 2024)
 
 - **breaking:** Move the functions within `mod:theme` into structs for a more idiomatic approach
 - **breaking:** Update exports
@@ -17,12 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **added:** Add `CHANGELOG`
 - **added:** Add documentation above `struct:Argb`
 - **added:** Add `check` job to `actions:CI.yml`
-- **added:** Implement tests from C++ for `mod:scheme`, `mod:score` and `mod:temperature`.
+- **added:** Implement tests from C++ for `mod:scheme`, `mod:score` and `mod:temperature`
 - **changed:** Rename `actions:tests.yml` to `actions:CI.yml`
 - **changed:** Rename `build` job to `test` in `actions:CI.yml`
 - **changed:** Remove unnecessary comments about warnings count from the `README`
 - **changed:** Update tests
 - **changed:** Update examples in `README`
+- **changed:** Update dependencies
 - **fixed:** Restore `trait:Serialize` on `struct:Argb` and implement it for a new color types
 
 ## 0.2.1 (March 14th, 2024)
