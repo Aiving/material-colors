@@ -93,7 +93,10 @@ impl QuantizerWsmeans {
                 .and_modify(|value| *value += 1)
                 .or_insert(1);
 
-            if pixel_to_count.get(input_pixel).is_some_and(|count| count == &1) {
+            if pixel_to_count
+                .get(input_pixel)
+                .is_some_and(|count| count == &1)
+            {
                 point_count += 1;
 
                 points.push(point_provider.lab_from_int(input_pixel));
