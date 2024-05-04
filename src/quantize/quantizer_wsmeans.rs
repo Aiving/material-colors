@@ -12,8 +12,6 @@ use crate::{
 use super::point_provider::PointProvider;
 use super::quantizer::QuantizerResult;
 
-const MIN_MOVEMENT_DISTANCE: f64 = 3.0;
-
 #[derive(Debug)]
 pub struct DistanceAndIndex {
     pub distance: f64,
@@ -80,7 +78,7 @@ impl QuantizerWsmeans {
         default_value! {
             starting_clusters: Vec<Argb> = vec![];
             point_provider: PointProviderLab = PointProviderLab::new();
-            max_iterations: i32 = 10;
+            max_iterations: i32 = 5;
             _return_input_pixel_to_cluster_pixel: bool = false;
         };
 
@@ -90,16 +88,12 @@ impl QuantizerWsmeans {
         let mut point_count = 0;
 
         for input_pixel in input_pixels {
-            let mut pixel_count = pixel_to_count.get(input_pixel).copied();
+            pixel_to_count
+                .entry(*input_pixel)
+                .and_modify(|value| *value += 1)
+                .or_insert(1);
 
-            if let Some(value) = pixel_count {
-                pixel_count = Some(value + 1);
-            } else {
-                pixel_count = Some(1);
-            }
-            pixel_to_count.insert(*input_pixel, pixel_count.unwrap());
-
-            if pixel_count.is_some_and(|count| count == 1) {
+            if pixel_to_count.get(input_pixel).is_some_and(|count| count == &1) {
                 point_count += 1;
 
                 points.push(point_provider.lab_from_int(input_pixel));
@@ -255,13 +249,8 @@ impl QuantizerWsmeans {
                 }
 
                 if let Some(new_cluster_index) = new_cluster_index {
-                    let distance_change =
-                        (minimum_distance.sqrt() - previous_distance.sqrt()).abs();
-
-                    if distance_change > MIN_MOVEMENT_DISTANCE {
-                        points_moved += 1;
-                        cluster_indices[i] = new_cluster_index;
-                    }
+                    points_moved += 1;
+                    cluster_indices[i] = new_cluster_index;
                 }
             }
 

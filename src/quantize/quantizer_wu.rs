@@ -95,9 +95,10 @@ impl QuantizerWu {
             self.moments_b[index] += u32::from(blue) * count;
 
             self.moments[index] += f64::from(count)
-                * (f64::from(red).mul_add(f64::from(red), f64::from(green).powi(2))
-                    + f64::from(blue))
-                .powi(2);
+                * f64::from(blue).mul_add(
+                    f64::from(blue),
+                    f64::from(red).mul_add(f64::from(red), f64::from(green).powi(2)),
+                );
         }
     }
 
@@ -225,12 +226,12 @@ impl QuantizerWu {
 
         for i in 0..color_count {
             let cube = &self.cubes[i];
-            let weight = Self::volume(cube, &self.weights);
+            let weight = f64::from(Self::volume(cube, &self.weights));
 
-            if weight > 0 {
-                let r = (Self::volume(cube, &self.moments_r) / weight) as u8;
-                let g = (Self::volume(cube, &self.moments_g) / weight) as u8;
-                let b = (Self::volume(cube, &self.moments_b) / weight) as u8;
+            if weight > 0.0 {
+                let r = (f64::from(Self::volume(cube, &self.moments_r)) / weight).round() as u8;
+                let g = (f64::from(Self::volume(cube, &self.moments_g)) / weight).round() as u8;
+                let b = (f64::from(Self::volume(cube, &self.moments_b)) / weight).round() as u8;
 
                 let color = Rgb::new(r, g, b).into();
 
@@ -242,9 +243,9 @@ impl QuantizerWu {
     }
 
     pub fn variance(&self, cube: &Cube) -> f64 {
-        let dr = Self::volume(cube, &self.moments_r);
-        let dg = Self::volume(cube, &self.moments_g);
-        let db = Self::volume(cube, &self.moments_b);
+        let dr = f64::from(Self::volume(cube, &self.moments_r));
+        let dg = f64::from(Self::volume(cube, &self.moments_g));
+        let db = f64::from(Self::volume(cube, &self.moments_b));
 
         let [Rgb {
             red: r0,
@@ -265,13 +266,10 @@ impl QuantizerWu {
             + self.moments[Self::get_index(r0, g0, b1)]
             - self.moments[Self::get_index(r0, g0, b0)];
 
-        let hypotenuse = dr
-            .wrapping_pow(2)
-            .wrapping_add(dg.wrapping_pow(2))
-            .wrapping_add(db.wrapping_pow(2));
-        let volume_ = Self::volume(cube, &self.weights);
+        let hypotenuse = db.mul_add(db, dr.mul_add(dr, dg.powi(2)));
+        let volume_ = f64::from(Self::volume(cube, &self.weights));
 
-        xx - f64::from(hypotenuse / volume_)
+        xx - (hypotenuse / volume_)
     }
 
     pub fn cut(&mut self, next: usize, i: usize) -> bool {
@@ -343,13 +341,13 @@ impl QuantizerWu {
                 two.pixels[0].blue = one.pixels[0].blue;
             }
             Direction::Green => {
-                one.pixels[1].blue = max_gresult.cut_location.unwrap_or_default();
+                one.pixels[1].green = max_gresult.cut_location.unwrap_or_default();
                 two.pixels[0].red = one.pixels[0].red;
                 two.pixels[0].green = one.pixels[1].green;
                 two.pixels[0].blue = one.pixels[0].blue;
             }
             Direction::Blue => {
-                one.pixels[1].green = max_bresult.cut_location.unwrap_or_default();
+                one.pixels[1].blue = max_bresult.cut_location.unwrap_or_default();
                 two.pixels[0].red = one.pixels[0].red;
                 two.pixels[0].green = one.pixels[0].green;
                 two.pixels[0].blue = one.pixels[1].blue;
@@ -389,40 +387,34 @@ impl QuantizerWu {
         let mut cut = None;
 
         for i in first..last {
-            let mut half_r = bottom_r.wrapping_add(Self::top(cube, direction, i, &self.moments_r));
-            let mut half_g = bottom_g.wrapping_add(Self::top(cube, direction, i, &self.moments_g));
-            let mut half_b = bottom_b.wrapping_add(Self::top(cube, direction, i, &self.moments_b));
-            let mut half_w = bottom_w.wrapping_add(Self::top(cube, direction, i, &self.weights));
+            let mut half_r =
+                f64::from(bottom_r) + f64::from(Self::top(cube, direction, i, &self.moments_r));
+            let mut half_g =
+                f64::from(bottom_g) + f64::from(Self::top(cube, direction, i, &self.moments_g));
+            let mut half_b =
+                f64::from(bottom_b) + f64::from(Self::top(cube, direction, i, &self.moments_b));
+            let mut half_w =
+                f64::from(bottom_w) + f64::from(Self::top(cube, direction, i, &self.weights));
 
-            if half_w == 0 {
+            if half_w == 0.0 {
                 continue;
             }
 
-            let mut temp_numerator = f64::from(
-                half_r
-                    .wrapping_pow(2)
-                    .wrapping_add(half_g.wrapping_pow(2))
-                    .wrapping_add(half_b.wrapping_pow(2)),
-            );
-            let mut temp_denominator = f64::from(half_w);
+            let mut temp_numerator = half_b.mul_add(half_b, half_r.mul_add(half_r, half_g.powi(2)));
+            let mut temp_denominator = half_w;
             let mut temp = temp_numerator / temp_denominator;
 
-            half_r = whole_r.wrapping_sub(half_r);
-            half_g = whole_g.wrapping_sub(half_g);
-            half_b = whole_b.wrapping_sub(half_b);
-            half_w = whole_w.wrapping_sub(half_w);
+            half_r = f64::from(whole_r) - half_r;
+            half_g = f64::from(whole_g) - half_g;
+            half_b = f64::from(whole_b) - half_b;
+            half_w = f64::from(whole_w) - half_w;
 
-            if half_w == 0 {
+            if half_w == 0.0 {
                 continue;
             }
 
-            temp_numerator = f64::from(
-                half_r
-                    .wrapping_pow(2)
-                    .wrapping_add(half_g.wrapping_pow(2))
-                    .wrapping_add(half_b.wrapping_pow(2)),
-            );
-            temp_denominator = f64::from(half_w);
+            temp_numerator = half_b.mul_add(half_b, half_r.mul_add(half_r, half_g.powi(2)));
+            temp_denominator = half_w;
             temp += temp_numerator / temp_denominator;
 
             if temp > max {
@@ -558,12 +550,12 @@ impl fmt::Display for Cube {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Box R {} -> {} G {} -> {} B {} -> {} VOL = {}",
+            "Box: R {} -> {} G {} -> {} B {} -> {} VOL = {}",
             self.pixels[0].red,
-            self.pixels[0].green,
-            self.pixels[0].blue,
             self.pixels[1].red,
+            self.pixels[0].green,
             self.pixels[1].green,
+            self.pixels[0].blue,
             self.pixels[1].blue,
             self.vol
         )
