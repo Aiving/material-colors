@@ -21,7 +21,7 @@ fn main() {
 
 From image:
 
-> ⚠️ Before obtaining an array of ARGB pixels for the image, **it is recommended** (but not necessary if your image is already small in size or you just don't mind about execution time) to adjust its dimensions to 128x128 (by `resize` function from `image` crate, for example). The reason is described [**here**](https://github.com/material-foundation/material-color-utilities/blob/main/extract_colors.md).
+> ⚠️ Before obtaining an array of ARGB pixels for the image, **it is recommended** (but not necessary if your image is already small in size or you just don't mind about execution time) to adjust its dimensions to 128x128 by `func:resize` from `struct:Image` provided by `struct:ImageReader`. The reason is described [**here**](https://github.com/material-foundation/material-color-utilities/blob/main/extract_colors.md).
 
 ```rust
 use material_colors::{
