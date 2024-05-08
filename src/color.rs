@@ -158,7 +158,7 @@ impl From<Lab> for Argb {
         let y = y_normalized * white_point[1];
         let z = z_normalized * white_point[2];
 
-        Rgb::new(x as u8, y as u8, z as u8).into()
+        Xyz::new(x, y, z).into()
     }
 }
 
@@ -200,7 +200,7 @@ impl From<Argb> for Lab {
         let fy = lab_f(y_normalized);
         let fz = lab_f(z_normalized);
 
-        let l = 116.0_f64.mul_add(fy, -16.0);
+        let l = 116.0f64.mul_add(fy, -16.0);
         let a = 500.0 * (fx - fy);
         let b = 200.0 * (fy - fz);
 
@@ -400,12 +400,12 @@ pub fn delinearized(rgb_component: f64) -> u8 {
         1.055f64.mul_add(normalized.powf(1.0 / 2.4), -0.055)
     };
 
-    (delinearized * 255.0).round().clamp(0.0, 255.0) as u8
+    ((delinearized * 255.0).round() as u8).clamp(0, 255)
 }
 
 fn lab_f(t: f64) -> f64 {
     let e = 216.0 / 24389.0;
-    let kappa = 24389.0_f64 / 27.0;
+    let kappa: f64 = 24389.0 / 27.0;
 
     if t > e {
         t.cbrt()
@@ -423,5 +423,234 @@ fn lab_invf(ft: f64) -> f64 {
         ft3
     } else {
         116.0f64.mul_add(ft, -16.0) / kappa
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use float_cmp::assert_approx_eq;
+
+    use crate::color::{delinearized, linearized, lstar_from_y, y_from_lstar, Argb, Xyz};
+
+    use super::Lab;
+
+    fn _range(start: f64, stop: f64, case_count: i64) -> Vec<f64> {
+        let step_size = (stop - start) / (case_count as f64 - 1.0);
+
+        (0..case_count)
+            .map(|index| step_size.mul_add(index as f64, start))
+            .collect()
+    }
+
+    fn rgb_range() -> Vec<u8> {
+        _range(0.0, 255.0, 8)
+            .into_iter()
+            .map(|element| element.round() as u8)
+            .collect()
+    }
+
+    fn full_rgb_range() -> Vec<u8> {
+        (0..=255).collect()
+    }
+
+    #[test]
+    fn test_range_integrity() {
+        let range = _range(3.0, 9999.0, 1234);
+
+        for (i, value) in range.into_iter().enumerate().take(1234) {
+            assert_approx_eq!(
+                f64,
+                value,
+                8.1070559611f64.mul_add(i as f64, 3.0),
+                epsilon = 1e-5
+            );
+        }
+    }
+
+    #[test]
+    fn test_yto_lstar_to_y() {
+        for y in _range(0.0, 100.0, 1001) {
+            let result = y_from_lstar(lstar_from_y(y));
+
+            assert_approx_eq!(f64, result, y, epsilon = 1e-5);
+        }
+    }
+
+    #[test]
+    fn test_lstar_to_yto_lstar() {
+        for lstar in _range(0.0, 100.0, 1001) {
+            let result = lstar_from_y(y_from_lstar(lstar));
+
+            assert_approx_eq!(f64, result, lstar, epsilon = 1e-5);
+        }
+    }
+
+    #[test]
+    fn test_yfrom_lstar() {
+        assert_approx_eq!(f64, y_from_lstar(0.0), 0.0, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(0.1), 0.0110705, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(0.2), 0.0221411, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(0.3), 0.0332116, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(0.4), 0.0442822, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(0.5), 0.0553528, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(1.0), 0.1107056, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(2.0), 0.2214112, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(3.0), 0.3321169, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(4.0), 0.4428225, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(5.0), 0.5535282, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(8.0), 0.8856451, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(10.0), 1.1260199, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(15.0), 1.9085832, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(20.0), 2.9890524, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(25.0), 4.4154767, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(30.0), 6.2359055, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(40.0), 11.2509737, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(50.0), 18.4186518, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(60.0), 28.1233342, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(70.0), 40.7494157, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(80.0), 56.6812907, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(90.0), 76.3033539, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(95.0), 87.6183294, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(99.0), 97.4360239, epsilon = 1e-5);
+        assert_approx_eq!(f64, y_from_lstar(100.0), 100.0, epsilon = 1e-5);
+    }
+
+    #[test]
+    fn test_lstar_from_y() {
+        assert_approx_eq!(f64, lstar_from_y(0.0), 0.0, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(0.1), 0.9032962, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(0.2), 1.8065925, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(0.3), 2.7098888, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(0.4), 3.6131851, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(0.5), 4.5164814, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(0.8856451), 8.0, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(1.0), 8.9914424, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(2.0), 15.4872443, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(3.0), 20.0438970, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(4.0), 23.6714419, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(5.0), 26.7347653, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(10.0), 37.8424304, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(15.0), 45.6341970, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(20.0), 51.8372115, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(25.0), 57.0754208, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(30.0), 61.6542222, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(40.0), 69.4695307, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(50.0), 76.0692610, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(60.0), 81.8381891, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(70.0), 86.9968642, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(80.0), 91.6848609, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(90.0), 95.9967686, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(95.0), 98.0335184, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(99.0), 99.6120372, epsilon = 1e-5);
+        assert_approx_eq!(f64, lstar_from_y(100.0), 100.0, epsilon = 1e-5);
+    }
+
+    #[test]
+    fn test_ycontinuity() {
+        let epsilon = 1e-6;
+        let delta = 1e-8;
+        let left = 8.0 - delta;
+        let mid = 8.0;
+        let right = 8.0 + delta;
+
+        assert_approx_eq!(
+            f64,
+            y_from_lstar(left),
+            y_from_lstar(mid),
+            epsilon = epsilon
+        );
+        assert_approx_eq!(
+            f64,
+            y_from_lstar(right),
+            y_from_lstar(mid),
+            epsilon = epsilon
+        );
+    }
+
+    #[test]
+    fn test_rgb_to_xyz_to_rgb() {
+        for r in rgb_range() {
+            for g in rgb_range() {
+                for b in rgb_range() {
+                    let argb = Argb::new(255, r, g, b);
+                    let xyz = Xyz::from(argb);
+                    let converted = Argb::from(xyz);
+
+                    assert_approx_eq!(f64, f64::from(converted.red), f64::from(r), epsilon = 1.5);
+                    assert_approx_eq!(f64, f64::from(converted.green), f64::from(g), epsilon = 1.5);
+                    assert_approx_eq!(f64, f64::from(converted.blue), f64::from(b), epsilon = 1.5);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_rgb_to_lab_to_rgb() {
+        for r in rgb_range() {
+            for g in rgb_range() {
+                for b in rgb_range() {
+                    let argb = Argb::new(255, r, g, b);
+                    let lab = Lab::from(argb);
+                    let converted = Argb::from(lab);
+                    
+                    println!("{r}-{g}-{b}");
+
+                    assert_approx_eq!(f64, f64::from(converted.red), f64::from(r), epsilon = 1.5);
+                    assert_approx_eq!(f64, f64::from(converted.green), f64::from(g), epsilon = 1.5);
+                    assert_approx_eq!(f64, f64::from(converted.blue), f64::from(b), epsilon = 1.5);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_rgb_to_lstar_to_rgb() {
+        let full_rgb_range = full_rgb_range();
+
+        for component in full_rgb_range {
+            let argb = Argb::new(255, component, component, component);
+            let lstar = argb.as_lstar();
+            let converted = Argb::from_lstar(lstar);
+
+            assert_eq!(converted, argb);
+        }
+    }
+
+    #[test]
+    fn test_rgb_to_lstar_to_ycommutes() {
+        for r in rgb_range() {
+            for g in rgb_range() {
+                for b in rgb_range() {
+                    let argb = Argb::new(255, r, g, b);
+                    let lstar = argb.as_lstar();
+                    let y = y_from_lstar(lstar);
+                    let y2 = Xyz::from(argb).y;
+
+                    assert_approx_eq!(f64, y, y2, epsilon = 1e-5);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_lstar_to_rgb_to_ycommutes() {
+        for lstar in _range(0.0, 100.0, 1001) {
+            let argb = Argb::from_lstar(lstar);
+            let y = Xyz::from(argb).y;
+            let y2 = y_from_lstar(lstar);
+
+            assert_approx_eq!(f64, y, y2, epsilon = 1.0);
+        }
+    }
+
+    #[test]
+    fn test_linearize_delinearize() {
+        let full_rgb_range = full_rgb_range();
+
+        for rgb_component in full_rgb_range {
+            let converted = delinearized(linearized(rgb_component));
+
+            assert_eq!(converted, rgb_component);
+        }
     }
 }

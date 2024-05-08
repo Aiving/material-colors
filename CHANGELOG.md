@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.2 (May 8th, 2024)
+
+- **added**: Add tests for `mod:color`
+- **changed**: Change type of `arg:max_colors` in `trait:Quantizer`'s `func:quantize` from `i32` to `usize`;
+- **changed**: Rewrite `struct:QuantierWsmeans` in `mod:quantize/quantizer_wsmeans`;
+- **changed**: Rewrite `struct:QuantierWu` in `mod:quantize/quantizer_wu`;
+- **fixed**: Fix color extraction from images (FULLY)
+
 ## 0.3.1 (May 4th, 2024)
 
 - **fixed**: Fix color extraction from images (PARTIALLY)

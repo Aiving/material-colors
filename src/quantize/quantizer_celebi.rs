@@ -11,7 +11,7 @@ impl Quantizer for QuantizerCelebi {
     fn quantize(
         &mut self,
         pixels: &[Argb],
-        max_colors: i32,
+        max_colors: usize,
         return_input_pixel_to_cluster_pixel: Option<bool>,
     ) -> QuantizerResult {
         let wu_result = QuantizerWu::default().quantize(pixels, max_colors, None);
@@ -19,7 +19,7 @@ impl Quantizer for QuantizerCelebi {
         QuantizerWsmeans::quantize(
             pixels,
             max_colors,
-            Some(wu_result.color_to_count.into_keys().collect()),
+            Some(&wu_result.color_to_count.into_keys().collect::<Vec<_>>()),
             Some(PointProviderLab::new()),
             None,
             return_input_pixel_to_cluster_pixel,

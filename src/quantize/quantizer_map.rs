@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use indexmap::IndexMap;
 
 use crate::color::Argb;
@@ -13,7 +11,7 @@ impl Quantizer for QuantizerMap {
     fn quantize(
         &mut self,
         pixels: &[Argb],
-        _max_colors: i32,
+        _max_colors: usize,
         _return_input_pixel_to_cluster_pixel: Option<bool>,
     ) -> QuantizerResult {
         let mut color_to_count = IndexMap::<Argb, u32>::default();
@@ -27,7 +25,7 @@ impl Quantizer for QuantizerMap {
 
         QuantizerResult {
             color_to_count,
-            input_pixel_to_cluster_pixel: HashMap::default(),
+            input_pixel_to_cluster_pixel: IndexMap::default(),
         }
     }
 }

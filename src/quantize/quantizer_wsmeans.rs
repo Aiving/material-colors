@@ -1,98 +1,91 @@
+use std::time::Instant;
+
 use indexmap::IndexMap;
 
-use std::cmp::Ordering;
-use std::collections::HashMap;
+use crate::color::{Argb, Lab};
+use crate::utils::random::Random;
 
-use crate::{
-    color::{Argb, Lab},
-    quantize::point_provider_lab::PointProviderLab,
-    utils::random::Random,
-};
+use super::{PointProvider, PointProviderLab, QuantizerResult};
 
-use super::point_provider::PointProvider;
-use super::quantizer::QuantizerResult;
-
-#[derive(Debug)]
-pub struct DistanceAndIndex {
-    pub distance: f64,
-    pub index: usize,
+struct DistanceAndIndex {
+    distance: f64,
+    index: usize,
 }
 
-impl PartialEq for DistanceAndIndex {
-    fn eq(&self, other: &Self) -> bool {
-        self.distance == other.distance
+impl DistanceAndIndex {
+    pub const fn new(distance: f64, index: usize) -> Self {
+        Self { distance, index }
     }
 }
 
 impl Eq for DistanceAndIndex {}
-
-impl PartialOrd for DistanceAndIndex {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
+impl PartialEq for DistanceAndIndex {
+    fn eq(&self, other: &Self) -> bool {
+        self.distance != other.distance
     }
 }
 
 impl Ord for DistanceAndIndex {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.distance.partial_cmp(&other.distance).unwrap()
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        if self.distance < other.distance {
+            std::cmp::Ordering::Less
+        } else if self.distance > other.distance {
+            std::cmp::Ordering::Greater
+        } else {
+            std::cmp::Ordering::Equal
+        }
     }
 }
 
-macro_rules! default_value {
-    ($argument_name:ident:$argument_ty:ty = $default_value:expr) => {
-        let $argument_name: $argument_ty = $argument_name.unwrap_or($default_value);
-    };
-    ($($argument_name:ident:$argument_ty:ty = $default_value:expr);*;) => {
-        $(
-            let default_value = $default_value;
-            let $argument_name: $argument_ty = $argument_name.unwrap_or(default_value);
-        )*
-    };
+impl PartialOrd for DistanceAndIndex {
+    fn lt(&self, other: &Self) -> bool {
+        self.distance < other.distance
+    }
+
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
-#[derive(Default)]
 pub struct QuantizerWsmeans;
 
 impl QuantizerWsmeans {
     const DEBUG: bool = false;
 
-    pub fn debug_log<T: Into<String>>(log: T) {
-        let log: String = log.into();
-
+    fn debug_log<T: Into<String>>(log: T) {
         if Self::DEBUG {
+            let log: String = log.into();
+
             println!("{log}");
         }
     }
 
-    pub fn quantize(
+    pub fn quantize<>(
         input_pixels: &[Argb],
-        max_colors: i32,
-        starting_clusters: Option<Vec<Argb>>,
-        point_provider: Option<PointProviderLab>,
-        max_iterations: Option<i32>,
-        // Currently unused...
-        _return_input_pixel_to_cluster_pixel: Option<bool>,
+        max_colors: usize,
+        starting_clusters: Option<&[Argb]>,            // = [],
+        point_provider: Option<PointProviderLab>,      // = PointProviderLab(),
+        max_iterations: Option<i32>,                   // = 5,
+        return_input_pixel_to_cluster_pixel: Option<bool>, // = false
     ) -> QuantizerResult {
-        let mut random = Random::new(0x42688);
+        let starting_clusters = starting_clusters.unwrap_or(&[]);
+        let point_provider = point_provider.unwrap_or_else(PointProviderLab::new);
+        let max_iterations = max_iterations.unwrap_or(5);
+        let return_input_pixel_to_cluster_pixel = return_input_pixel_to_cluster_pixel.unwrap_or(false);
 
-        default_value! {
-            starting_clusters: Vec<Argb> = vec![];
-            point_provider: PointProviderLab = PointProviderLab::new();
-            max_iterations: i32 = 5;
-            _return_input_pixel_to_cluster_pixel: bool = false;
-        };
-
-        let mut pixel_to_count = IndexMap::<Argb, u32>::default();
+        let mut pixel_to_count: IndexMap<Argb, u32> = IndexMap::new();
         let mut points: Vec<Lab> = vec![];
         let mut pixels: Vec<Argb> = vec![];
         let mut point_count = 0;
 
         for input_pixel in input_pixels {
-            pixel_to_count
-                .entry(*input_pixel)
-                .and_modify(|value| *value += 1)
-                .or_insert(1);
+            let pixel_count = pixel_to_count.get_mut(input_pixel);
 
+            if let Some(pixel_count) = pixel_count {
+                *pixel_count += 1;
+            } else {
+                pixel_to_count.insert(*input_pixel, 1);
+            }
             if pixel_to_count
                 .get(input_pixel)
                 .is_some_and(|count| count == &1)
@@ -104,31 +97,27 @@ impl QuantizerWsmeans {
             }
         }
 
-        let mut counts = vec![0; point_count];
+        let mut counts: Vec<u32> = vec![0; point_count];
 
         for i in 0..point_count {
             let pixel = pixels[i];
-            let count = pixel_to_count.get(&pixel);
 
-            counts[i] = *count.unwrap();
+            if let Some(count) = pixel_to_count.get(&pixel) {
+                counts[i] = *count;
+            }
         }
 
-        let mut cluster_count = (max_colors as usize).min(point_count);
-
-        if !starting_clusters.is_empty() {
-            cluster_count = cluster_count.min(starting_clusters.len());
-        }
+        let cluster_count = max_colors.min(point_count);
 
         let mut clusters = starting_clusters
             .iter()
             .map(|cluster| point_provider.lab_from_int(cluster))
             .collect::<Vec<_>>();
-
         let additional_clusters_needed = cluster_count - clusters.len();
 
         if additional_clusters_needed > 0 {
-            let mut random = Random::new(0x42688);
-            let mut indices: Vec<usize> = vec![];
+            let mut seed_generator = Random::new(0x42688);
+            let mut indices = vec![];
 
             for _ in 0..additional_clusters_needed {
                 // Use existing points rather than generating random centroids.
@@ -147,10 +136,10 @@ impl QuantizerWsmeans {
                 // Rather than generate random centroids, we'll pick centroids that
                 // are actual pixels in the image, and avoid duplicating centroids.
 
-                let mut index = random.next_range(points.len() as i32) as usize;
+                let mut index = seed_generator.next_range(points.len() as i32) as usize;
 
                 while indices.contains(&index) {
-                    index = random.next_range(points.len() as i32) as usize;
+                    index = seed_generator.next_range(points.len() as i32) as usize;
                 }
 
                 indices.push(index);
@@ -167,24 +156,18 @@ impl QuantizerWsmeans {
             points.len()
         ));
 
-        let mut cluster_indices = fill_array(point_count, |_| {
-            random.next_range(cluster_count as i32) as usize
-        });
-
+        let mut cluster_indices = fill_array(point_count, |index| index % cluster_count);
         let mut index_matrix = vec![vec![0; cluster_count]; cluster_count];
-        let mut distance_to_index_matrix = fill_array(cluster_count, |_| {
-            fill_array(cluster_count, |index| DistanceAndIndex {
-                index,
-                distance: 0.0,
-            })
-        });
 
+        let mut distance_to_index_matrix: Vec<Vec<DistanceAndIndex>> = fill_array(cluster_count, |_| {
+            fill_array(cluster_count, |index| DistanceAndIndex::new(0.0, index))
+        });
         let mut pixel_count_sums = vec![0; cluster_count];
 
         for iteration in 0..max_iterations {
             if Self::DEBUG {
-                for item in pixel_count_sums.iter_mut().take(cluster_count) {
-                    *item = 0;
+                for i in pixel_count_sums.iter_mut().take(cluster_count) {
+                    *i = 0;
                 }
 
                 for i in 0..point_count {
@@ -196,8 +179,8 @@ impl QuantizerWsmeans {
 
                 let mut empty_clusters = 0;
 
-                for item in pixel_count_sums.iter().take(cluster_count) {
-                    if *item == 0 {
+                for pixel_count_sum in pixel_count_sums.iter().take(cluster_count) {
+                    if pixel_count_sum == &0 {
                         empty_clusters += 1;
                     }
                 }
@@ -234,7 +217,7 @@ impl QuantizerWsmeans {
                 let previous_distance = point_provider.distance(&point, &previous_cluster);
 
                 let mut minimum_distance = previous_distance;
-                let mut new_cluster_index: Option<usize> = None;
+                let mut new_cluster_index = None;
 
                 for (j, cluster) in clusters.iter().enumerate().take(cluster_count) {
                     if distance_to_index_matrix[previous_cluster_index][j].distance
@@ -258,19 +241,21 @@ impl QuantizerWsmeans {
             }
 
             if points_moved == 0 && iteration > 0 {
-                Self::debug_log(format!("terminated after {iteration} k-means iterations"));
+                Self::debug_log(format!(
+                    "terminated after {iteration} k-means iterations"
+                ));
 
                 break;
             }
 
             Self::debug_log(format!("iteration {} moved {points_moved}", iteration + 1));
 
-            let mut component_asums = vec![0.0; cluster_count];
-            let mut component_bsums = vec![0.0; cluster_count];
-            let mut component_csums = vec![0.0; cluster_count];
+            let mut component_asums: Vec<f64> = vec![0.0; cluster_count];
+            let mut component_bsums: Vec<f64> = vec![0.0; cluster_count];
+            let mut component_csums: Vec<f64> = vec![0.0; cluster_count];
 
-            for item in pixel_count_sums.iter_mut().take(cluster_count) {
-                *item = 0;
+            for pixel_count_sum in pixel_count_sums.iter_mut().take(cluster_count) {
+                *pixel_count_sum = 0;
             }
 
             for i in 0..point_count {
@@ -288,7 +273,7 @@ impl QuantizerWsmeans {
                 let count = pixel_count_sums[i];
 
                 if count == 0 {
-                    clusters[i] = Lab::default();
+                    clusters[i] = Lab::new(0.0, 0.0, 0.0);
 
                     continue;
                 }
@@ -297,11 +282,12 @@ impl QuantizerWsmeans {
                 let b = component_bsums[i] / f64::from(count);
                 let c = component_csums[i] / f64::from(count);
 
-                clusters[i] = Lab { l: a, a: b, b: c };
+                clusters[i] = Lab::new(a, b, c);
             }
         }
 
-        let mut argb_to_population = IndexMap::<Argb, u32>::default();
+        let mut cluster_argbs = vec![];
+        let mut cluster_populations = vec![];
 
         for i in 0..cluster_count {
             let count = pixel_count_sums[i];
@@ -312,24 +298,58 @@ impl QuantizerWsmeans {
 
             let possible_new_cluster = point_provider.lab_to_int(&clusters[i]);
 
-            if argb_to_population.contains_key(&possible_new_cluster) {
+            if cluster_argbs.contains(&possible_new_cluster) {
                 continue;
             }
 
-            argb_to_population.insert(possible_new_cluster, count);
+            cluster_argbs.push(possible_new_cluster);
+
+            cluster_populations.push(count);
+        }
+
+        Self::debug_log(format!(
+            "kmeans finished and generated {} clusters; {cluster_count} were requested",
+            cluster_argbs.len()
+        ));
+
+        let mut input_pixel_to_cluster_pixel: IndexMap<Argb, Argb> = IndexMap::new();
+
+        if return_input_pixel_to_cluster_pixel {
+            let start_time = Instant::now();
+
+            for i in 0..pixels.len() {
+                let input_pixel = pixels[i];
+                let cluster_index = cluster_indices[i];
+                let cluster = clusters[cluster_index];
+                let cluster_pixel = point_provider.lab_to_int(&cluster);
+
+                input_pixel_to_cluster_pixel.insert(input_pixel, cluster_pixel);
+            }
+
+            let time_elapsed = start_time.elapsed().as_millis();
+
+            Self::debug_log(format!(
+                "took {time_elapsed} ms to create input to cluster map"
+            ));
+        }
+
+        let mut color_to_count: IndexMap<Argb, u32> = IndexMap::new();
+
+        for i in 0..cluster_argbs.len() {
+            let key = cluster_argbs[i];
+            let value = cluster_populations[i];
+
+            color_to_count.insert(key, value);
         }
 
         QuantizerResult {
-            color_to_count: argb_to_population,
-            input_pixel_to_cluster_pixel: HashMap::default(),
+            color_to_count,
+            input_pixel_to_cluster_pixel,
         }
     }
 }
 
-fn fill_array<T, F>(count: usize, mut callback: F) -> Vec<T>
-where
-    F: FnMut(usize) -> T,
-{
+fn fill_array<T>(count: usize, callback: impl Fn(usize) -> T) -> Vec<T> {
     let mut results: Vec<T> = vec![];
 
     for index in 0..count {
