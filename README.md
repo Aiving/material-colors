@@ -1,8 +1,6 @@
 # Material colors
 
-A Rust library for generating Material You themes (as well as color schemes)
-
-Most of the code was taken from the Swift version of material-color-utilities, as its code is the easiest to rewrite.
+An unofficial port of the `material-color-utilities` library for creating Material You themes and color schemes.
 
 ## Examples
 
