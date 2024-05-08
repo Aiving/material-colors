@@ -60,18 +60,19 @@ impl QuantizerWsmeans {
         }
     }
 
-    pub fn quantize<>(
+    pub fn quantize(
         input_pixels: &[Argb],
         max_colors: usize,
-        starting_clusters: Option<&[Argb]>,            // = [],
-        point_provider: Option<PointProviderLab>,      // = PointProviderLab(),
-        max_iterations: Option<i32>,                   // = 5,
+        starting_clusters: Option<&[Argb]>,                // = [],
+        point_provider: Option<PointProviderLab>,          // = PointProviderLab(),
+        max_iterations: Option<i32>,                       // = 5,
         return_input_pixel_to_cluster_pixel: Option<bool>, // = false
     ) -> QuantizerResult {
         let starting_clusters = starting_clusters.unwrap_or(&[]);
         let point_provider = point_provider.unwrap_or_else(PointProviderLab::new);
         let max_iterations = max_iterations.unwrap_or(5);
-        let return_input_pixel_to_cluster_pixel = return_input_pixel_to_cluster_pixel.unwrap_or(false);
+        let return_input_pixel_to_cluster_pixel =
+            return_input_pixel_to_cluster_pixel.unwrap_or(false);
 
         let mut pixel_to_count: IndexMap<Argb, u32> = IndexMap::new();
         let mut points: Vec<Lab> = vec![];
@@ -159,9 +160,10 @@ impl QuantizerWsmeans {
         let mut cluster_indices = fill_array(point_count, |index| index % cluster_count);
         let mut index_matrix = vec![vec![0; cluster_count]; cluster_count];
 
-        let mut distance_to_index_matrix: Vec<Vec<DistanceAndIndex>> = fill_array(cluster_count, |_| {
-            fill_array(cluster_count, |index| DistanceAndIndex::new(0.0, index))
-        });
+        let mut distance_to_index_matrix: Vec<Vec<DistanceAndIndex>> =
+            fill_array(cluster_count, |_| {
+                fill_array(cluster_count, |index| DistanceAndIndex::new(0.0, index))
+            });
         let mut pixel_count_sums = vec![0; cluster_count];
 
         for iteration in 0..max_iterations {
@@ -241,9 +243,7 @@ impl QuantizerWsmeans {
             }
 
             if points_moved == 0 && iteration > 0 {
-                Self::debug_log(format!(
-                    "terminated after {iteration} k-means iterations"
-                ));
+                Self::debug_log(format!("terminated after {iteration} k-means iterations"));
 
                 break;
             }
