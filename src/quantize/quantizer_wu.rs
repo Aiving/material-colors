@@ -525,3 +525,90 @@ impl fmt::Display for Cube {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::color::Argb;
+
+    use super::{Quantizer, QuantizerWu};
+
+    const RED: Argb = Argb::from_u32(0xffff0000);
+    const GREEN: Argb = Argb::from_u32(0xff00ff00);
+    const BLUE: Argb = Argb::from_u32(0xff0000ff);
+    // const WHITE: Argb = Argb::from_u32(0xffffffff);
+    // const RANDOM: Argb = Argb::from_u32(0xff426088);
+    const MAX_COLORS: usize = 256;
+
+    #[test]
+    fn test_1rando() {
+        let mut wu = QuantizerWu::default();
+        let result = wu.quantize(&[Argb::from_u32(0xff14_1216)], MAX_COLORS, None);
+        let colors = result.color_to_count.keys().collect::<Vec<_>>();
+
+        assert_eq!(colors.len(), 1);
+        assert_eq!(colors[0], &Argb::from_u32(0xff14_1216));
+    }
+
+    #[test]
+    fn test_1r() {
+        let mut wu = QuantizerWu::default();
+        let result = wu.quantize(&[RED], MAX_COLORS, None);
+        let colors = result.color_to_count.keys().collect::<Vec<_>>();
+
+        assert_eq!(colors.len(), 1);
+        assert_eq!(colors[0], &RED);
+    }
+
+    #[test]
+    fn test_1g() {
+        let mut wu = QuantizerWu::default();
+        let result = wu.quantize(&[GREEN], MAX_COLORS, None);
+        let colors = result.color_to_count.keys().collect::<Vec<_>>();
+
+        assert_eq!(colors.len(), 1);
+        assert_eq!(colors[0], &GREEN);
+    }
+
+    #[test]
+    fn test_1b() {
+        let mut wu = QuantizerWu::default();
+        let result = wu.quantize(&[BLUE], MAX_COLORS, None);
+        let colors = result.color_to_count.keys().collect::<Vec<_>>();
+
+        assert_eq!(colors.len(), 1);
+        assert_eq!(colors[0], &BLUE);
+    }
+
+    #[test]
+    fn test_5b() {
+        let mut wu = QuantizerWu::default();
+        let result = wu.quantize(&[BLUE, BLUE, BLUE, BLUE, BLUE], MAX_COLORS, None);
+        let colors = result.color_to_count.keys().collect::<Vec<_>>();
+
+        assert_eq!(colors.len(), 1);
+        assert_eq!(colors[0], &BLUE);
+    }
+
+    #[test]
+    fn test_2r_3g() {
+        let mut wu = QuantizerWu::default();
+        let result = wu.quantize(&[RED, RED, GREEN, GREEN, GREEN], MAX_COLORS, None);
+
+        assert_eq!(result.color_to_count.keys().len(), 2);
+
+        assert!(result.color_to_count.contains_key(&GREEN));
+        assert!(result.color_to_count.contains_key(&GREEN));
+    }
+
+    #[test]
+    fn test_1r_1g_1b() {
+        let mut wu = QuantizerWu::default();
+        let result = wu.quantize(&[RED, GREEN, BLUE], MAX_COLORS, None);
+
+        assert_eq!(result.color_to_count.keys().len(), 3);
+
+        assert!(result.color_to_count.contains_key(&GREEN));
+        assert!(result.color_to_count.contains_key(&RED));
+        assert!(result.color_to_count.contains_key(&BLUE));
+    }
+}

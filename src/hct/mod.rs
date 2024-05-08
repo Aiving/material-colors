@@ -45,7 +45,7 @@ impl Hct {
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
     pub fn set_hue(&mut self, value: f64) {
-        self._argb = HctSolver::solve_to_int(value, self.get_chroma(), self.get_tone());
+        self._argb = HctSolver::solve_to_argb(value, self.get_chroma(), self.get_tone());
 
         let cam16 = Cam16::from(self._argb);
 
@@ -69,7 +69,7 @@ impl Hct {
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
     pub fn set_chroma(&mut self, value: f64) {
-        self._argb = HctSolver::solve_to_int(self.get_hue(), value, self.get_tone());
+        self._argb = HctSolver::solve_to_argb(self.get_hue(), value, self.get_tone());
 
         let cam16 = Cam16::from(self._argb);
 
@@ -97,7 +97,7 @@ impl Hct {
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
     pub fn set_tone(&mut self, value: f64) {
-        self._argb = HctSolver::solve_to_int(self.get_hue(), self.get_chroma(), value);
+        self._argb = HctSolver::solve_to_argb(self.get_hue(), self.get_chroma(), value);
 
         let cam16 = Cam16::from(self._argb);
 
@@ -123,7 +123,7 @@ impl Hct {
     ///    given hue and tone.
     /// 0 <= [tone] <= 100; informally, lightness. Invalid values are corrected.
     pub fn from(hue: f64, chroma: f64, tone: f64) -> Self {
-        let argb = HctSolver::solve_to_int(hue, chroma, tone);
+        let argb = HctSolver::solve_to_argb(hue, chroma, tone);
 
         Self::new(argb)
     }
@@ -200,5 +200,396 @@ impl From<Argb> for Hct {
 impl From<Hct> for Argb {
     fn from(value: Hct) -> Self {
         value._argb
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::hash::{DefaultHasher, Hash, Hasher};
+
+    use float_cmp::{approx_eq, assert_approx_eq};
+
+    use crate::color::{y_from_lstar, Argb};
+
+    use super::{Cam16, Hct, ViewingConditions};
+
+    const BLACK: Argb = Argb::from_u32(0xFF000000);
+    const WHITE: Argb = Argb::from_u32(0xFFFFFFFF);
+    const RED: Argb = Argb::from_u32(0xFFFF0000);
+    const GREEN: Argb = Argb::from_u32(0xFF00FF00);
+    const BLUE: Argb = Argb::from_u32(0xFF0000FF);
+    const MIDGRAY: Argb = Argb::from_u32(0xFF777777);
+
+    fn hash_value<T: Hash>(value: T) -> u64 {
+        let mut hasher = DefaultHasher::new();
+
+        value.hash(&mut hasher);
+
+        hasher.finish()
+    }
+
+    const fn color_is_on_boundary(argb: Argb) -> bool {
+        argb.red == 0
+            || argb.red == 255
+            || argb.green == 0
+            || argb.green == 255
+            || argb.blue == 0
+            || argb.blue == 255
+    }
+
+    #[test]
+    fn test_hash_code() {
+        let a: Hct = Argb::from_u32(123).into();
+        let b: Hct = Argb::from_u32(123).into();
+
+        assert_eq!(a, b);
+        assert_eq!(hash_value(a), hash_value(b));
+    }
+
+    #[test]
+    fn test_conversions_are_reflexive() {
+        let cam = Cam16::from(RED);
+        let color = cam.viewed(&ViewingConditions::standard());
+
+        assert_eq!(color, RED);
+    }
+
+    #[test]
+    fn test_ymidgray() {
+        assert_approx_eq!(f64, 18.418, y_from_lstar(50.0), epsilon = 0.001);
+    }
+
+    #[test]
+    fn test_yblack() {
+        assert_approx_eq!(f64, 0.0, y_from_lstar(0.0), epsilon = 0.001);
+    }
+
+    #[test]
+    fn test_ywhite() {
+        assert_approx_eq!(f64, 100.0, y_from_lstar(100.0), epsilon = 0.001);
+    }
+
+    #[test]
+    fn test_cam_red() {
+        let cam = Cam16::from(RED);
+
+        assert_approx_eq!(f64, 46.445, cam.j, epsilon = 0.001);
+        assert_approx_eq!(f64, 113.357, cam.chroma, epsilon = 0.001);
+        assert_approx_eq!(f64, 27.408, cam.hue, epsilon = 0.001);
+        assert_approx_eq!(f64, 89.494, cam.m, epsilon = 0.001);
+        assert_approx_eq!(f64, 91.889, cam.s, epsilon = 0.001);
+        assert_approx_eq!(f64, 105.988, cam.q, epsilon = 0.001);
+    }
+
+    #[test]
+    fn test_cam_green() {
+        let cam = Cam16::from(GREEN);
+
+        assert_approx_eq!(f64, 79.331, cam.j, epsilon = 0.001);
+        assert_approx_eq!(f64, 108.410, cam.chroma, epsilon = 0.001);
+        assert_approx_eq!(f64, 142.139, cam.hue, epsilon = 0.001);
+        assert_approx_eq!(f64, 85.587, cam.m, epsilon = 0.001);
+        assert_approx_eq!(f64, 78.604, cam.s, epsilon = 0.001);
+        assert_approx_eq!(f64, 138.520, cam.q, epsilon = 0.001);
+    }
+
+    #[test]
+    fn test_cam_blue() {
+        let cam = Cam16::from(BLUE);
+
+        assert_approx_eq!(f64, 25.465, cam.j, epsilon = 0.001);
+        assert_approx_eq!(f64, 87.230, cam.chroma, epsilon = 0.001);
+        assert_approx_eq!(f64, 282.788, cam.hue, epsilon = 0.001);
+        assert_approx_eq!(f64, 68.867, cam.m, epsilon = 0.001);
+        assert_approx_eq!(f64, 93.674, cam.s, epsilon = 0.001);
+        assert_approx_eq!(f64, 78.481, cam.q, epsilon = 0.001);
+    }
+
+    #[test]
+    fn test_cam_black() {
+        let cam = Cam16::from(BLACK);
+
+        assert_approx_eq!(f64, 0.0, cam.j, epsilon = 0.001);
+        assert_approx_eq!(f64, 0.0, cam.chroma, epsilon = 0.001);
+        assert_approx_eq!(f64, 0.0, cam.hue, epsilon = 0.001);
+        assert_approx_eq!(f64, 0.0, cam.m, epsilon = 0.001);
+        assert_approx_eq!(f64, 0.0, cam.s, epsilon = 0.001);
+        assert_approx_eq!(f64, 0.0, cam.q, epsilon = 0.001);
+    }
+
+    #[test]
+    fn test_cam_white() {
+        let cam = Cam16::from(WHITE);
+
+        assert_approx_eq!(f64, 100.0, cam.j, epsilon = 0.001);
+        assert_approx_eq!(f64, 2.869, cam.chroma, epsilon = 0.001);
+        assert_approx_eq!(f64, 209.492, cam.hue, epsilon = 0.001);
+        assert_approx_eq!(f64, 2.265, cam.m, epsilon = 0.001);
+        assert_approx_eq!(f64, 12.068, cam.s, epsilon = 0.001);
+        assert_approx_eq!(f64, 155.521, cam.q, epsilon = 0.001);
+    }
+
+    #[test]
+    fn test_camut_map_red() {
+        let color_to_test = RED;
+        let cam = Cam16::from(color_to_test);
+        let color = Hct::from(cam.hue, cam.chroma, color_to_test.as_lstar()).into();
+
+        assert_eq!(color_to_test, color);
+    }
+
+    #[test]
+    fn test_camut_map_green() {
+        let color_to_test = GREEN;
+        let cam = Cam16::from(color_to_test);
+        let color = Hct::from(cam.hue, cam.chroma, color_to_test.as_lstar()).into();
+
+        assert_eq!(color_to_test, color);
+    }
+
+    #[test]
+    fn test_camut_map_blue() {
+        let color_to_test = BLUE;
+        let cam = Cam16::from(color_to_test);
+        let color = Hct::from(cam.hue, cam.chroma, color_to_test.as_lstar()).into();
+
+        assert_eq!(color_to_test, color);
+    }
+
+    #[test]
+    fn test_camut_map_white() {
+        let color_to_test = WHITE;
+        let cam = Cam16::from(color_to_test);
+        let color = Hct::from(cam.hue, cam.chroma, color_to_test.as_lstar()).into();
+
+        assert_eq!(color_to_test, color);
+    }
+
+    #[test]
+    fn test_camut_map_midgray() {
+        let color_to_test = MIDGRAY;
+        let cam = Cam16::from(color_to_test);
+        let color = Hct::from(cam.hue, cam.chroma, color_to_test.as_lstar()).into();
+
+        assert_eq!(color_to_test, color);
+    }
+
+    #[test]
+    fn test_camut_map_black() {
+        let color_to_test = BLACK;
+        let cam = Cam16::from(color_to_test);
+        let color = Hct::from(cam.hue, cam.chroma, color_to_test.as_lstar()).into();
+
+        assert_eq!(color_to_test, color);
+    }
+
+    #[test]
+    fn test_hct_returns_sufficiently_close_color() {
+        for hue in (15..361).step_by(30) {
+            for chroma in (0..100).step_by(10) {
+                for tone in (20..80).step_by(10) {
+                    let hct_request_description = format!("H{hue} C{chroma} T{tone}");
+                    let hct_color = Hct::from(f64::from(hue), f64::from(chroma), f64::from(tone));
+
+                    if chroma > 0 {
+                        assert!(
+                            approx_eq!(f64, hct_color.get_hue(), f64::from(hue), epsilon = 4.0),
+                            "Hue should be close for {hct_request_description}"
+                        );
+                    }
+
+                    assert!(
+                        (0.0..(f64::from(chroma) + 2.5)).contains(&hct_color.get_chroma()),
+                        "Chroma should be close or less for {hct_request_description}"
+                    );
+
+                    if hct_color.get_chroma() < f64::from(chroma) - 2.5 {
+                        assert!(
+                            color_is_on_boundary(hct_color.into()),
+                            "HCT request for non-sRGB color should return a color on the boundary of the sRGB cube for {hct_request_description}, but got {} instead",
+                            Argb::from(hct_color).to_hex_with_pound()
+                        );
+                    }
+
+                    assert!(
+                        approx_eq!(f64, hct_color.get_tone(), f64::from(tone), epsilon = 0.5),
+                        "Tone should be close for {hct_request_description}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_cam16_to_xyz_without_array() {
+        let color_to_test = RED;
+        let cam = Cam16::from(color_to_test);
+        let xyz = cam.xyz_in_viewing_conditions(&ViewingConditions::s_rgb());
+
+        assert_approx_eq!(f64, xyz.x, 41.23, epsilon = 0.01);
+        assert_approx_eq!(f64, xyz.y, 21.26, epsilon = 0.01);
+        assert_approx_eq!(f64, xyz.z, 1.93, epsilon = 0.01);
+    }
+
+    #[test]
+    fn test_color_relativity_red_in_black() {
+        let color_to_test = RED;
+        let hct: Hct = color_to_test.into();
+
+        let result =
+            hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
+
+        assert_eq!(Argb::from(result), Argb::from_u32(0xFF9F5C51));
+    }
+
+    #[test]
+    fn test_color_relativity_red_in_white() {
+        let color_to_test = RED;
+        let hct: Hct = color_to_test.into();
+
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(
+            None,
+            None,
+            Some(100.0),
+            None,
+            None,
+        ));
+
+        assert_eq!(Argb::from(result), Argb::from_u32(0xFFFF5D48));
+    }
+
+    #[test]
+    fn test_color_relativity_green_in_black() {
+        let color_to_test = GREEN;
+        let hct: Hct = color_to_test.into();
+
+        let result =
+            hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
+
+        assert_eq!(Argb::from(result), Argb::from_u32(0xFFACD69D));
+    }
+
+    #[test]
+    fn test_color_relativity_green_in_white() {
+        let color_to_test = GREEN;
+        let hct: Hct = color_to_test.into();
+
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(
+            None,
+            None,
+            Some(100.0),
+            None,
+            None,
+        ));
+
+        assert_eq!(Argb::from(result), Argb::from_u32(0xFF8EFF77));
+    }
+
+    #[test]
+    fn test_color_relativity_blue_in_black() {
+        let color_to_test = BLUE;
+        let hct: Hct = color_to_test.into();
+
+        let result =
+            hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
+
+        assert_eq!(Argb::from(result), Argb::from_u32(0xFF343654));
+    }
+
+    #[test]
+    fn test_color_relativity_blue_in_white() {
+        let color_to_test = BLUE;
+        let hct: Hct = color_to_test.into();
+
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(
+            None,
+            None,
+            Some(100.0),
+            None,
+            None,
+        ));
+
+        assert_eq!(Argb::from(result), Argb::from_u32(0xFF3F49FF));
+    }
+
+    #[test]
+    fn test_color_relativity_white_in_black() {
+        let color_to_test = WHITE;
+        let hct: Hct = color_to_test.into();
+
+        let result =
+            hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
+
+        assert_eq!(Argb::from(result), Argb::from_u32(0xFFFFFFFF));
+    }
+
+    #[test]
+    fn test_color_relativity_white_in_white() {
+        let color_to_test = WHITE;
+        let hct: Hct = color_to_test.into();
+
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(
+            None,
+            None,
+            Some(100.0),
+            None,
+            None,
+        ));
+
+        assert_eq!(Argb::from(result), Argb::from_u32(0xFFFFFFFF));
+    }
+
+    #[test]
+    fn test_color_relativity_midgray_in_black() {
+        let color_to_test = MIDGRAY;
+        let hct: Hct = color_to_test.into();
+
+        let result =
+            hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
+
+        assert_eq!(Argb::from(result), Argb::from_u32(0xFF605F5F));
+    }
+
+    #[test]
+    fn test_color_relativity_midgray_in_white() {
+        let color_to_test = MIDGRAY;
+        let hct: Hct = color_to_test.into();
+
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(
+            None,
+            None,
+            Some(100.0),
+            None,
+            None,
+        ));
+
+        assert_eq!(Argb::from(result), Argb::from_u32(0xFF8E8E8E));
+    }
+
+    #[test]
+    fn test_color_relativity_black_in_black() {
+        let color_to_test = BLACK;
+        let hct: Hct = color_to_test.into();
+
+        let result =
+            hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
+
+        assert_eq!(Argb::from(result), Argb::from_u32(0xFF000000));
+    }
+
+    #[test]
+    fn test_color_relativity_black_in_white() {
+        let color_to_test = BLACK;
+        let hct: Hct = color_to_test.into();
+
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(
+            None,
+            None,
+            Some(100.0),
+            None,
+            None,
+        ));
+
+        assert_eq!(Argb::from(result), Argb::from_u32(0xFF000000));
     }
 }

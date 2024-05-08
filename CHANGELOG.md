@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- **added**: Add tests for:
+  - 🟢 `mod:blend`
+  - 🟢 `mod:contrast`
+  - 🟢 `mod:dislike`
+  - 🟢 `mod:dynamic_color/dynamic_scheme`
+  - ⭕ `mod:dynamic_color`
+  - 🟢 `mod:hct/cam16`
+  - 🟢 `mod:hct`
+  - 🟢 `mod:hct/viewing_conditions`
+  - ⭕ `mod:palette/core`
+  - ⭕ `mod:palette/tonal`
+  - 🟢 `mod:quantize/quantizer_celebi`
+  - 🟢 `mod:quantize/quantizer_wsmeans`
+  - 🟢 `mod:quantize/quantizer_wu`
+  - 🟢 `mod:scheme/content`
+  - 🟢 `mod:utils/math`
+
+(Tests marked with a empty red circle are currently failing)
+
 ## 0.3.2 (May 8th, 2024)
 
 - **added**: Add tests for `mod:color`

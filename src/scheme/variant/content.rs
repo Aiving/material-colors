@@ -56,3 +56,42 @@ impl SchemeContent {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::color::Argb;
+    use crate::dynamic_color::MaterialDynamicColors;
+
+    use super::SchemeContent;
+
+    #[test]
+    fn test_light_theme_min_contrast_objectionabe_tertiary_container_lightens() {
+        let scheme =
+            SchemeContent::new(Argb::from_u32(0xff850096).into(), false, Some(-1.0)).scheme;
+
+        assert_eq!(
+            MaterialDynamicColors::tertiary_container().get_argb(&scheme),
+            Argb::from_u32(0xffffccd7)
+        );
+    }
+
+    #[test]
+    fn test_light_theme_standard_contrast_objectionabe_tertiary_container_lightens() {
+        let scheme = SchemeContent::new(Argb::from_u32(0xff850096).into(), false, Some(0.0)).scheme;
+
+        assert_eq!(
+            MaterialDynamicColors::tertiary_container().get_argb(&scheme),
+            Argb::from_u32(0xff980249)
+        );
+    }
+
+    #[test]
+    fn test_light_theme_max_contrast_objectionabe_tertiary_container_darkens() {
+        let scheme = SchemeContent::new(Argb::from_u32(0xff850096).into(), false, Some(1.0)).scheme;
+
+        assert_eq!(
+            MaterialDynamicColors::tertiary_container().get_argb(&scheme),
+            Argb::from_u32(0xff930046)
+        );
+    }
+}

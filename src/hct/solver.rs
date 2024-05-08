@@ -2,7 +2,7 @@ use std::f64::consts::PI;
 
 use crate::{
     color::{y_from_lstar, Argb, LinearRgb},
-    utils::math::{matrix_multiply, sanitize_degrees_double},
+    utils::math::{matrix_multiply, sanitize_degrees_double, signum},
 };
 
 use super::{Cam16, ViewingConditions};
@@ -323,7 +323,7 @@ impl HctSolver {
     fn chromatic_adaptation(component: f64) -> f64 {
         let af = component.abs().powf(0.42);
 
-        component.signum() * 400.0 * af / (af + 27.13)
+        signum(component) * 400.0 * af / (af + 27.13)
     }
 
     /// Returns the hue of [linrgb], a linear Rgb color, in CAM16, in
@@ -555,7 +555,7 @@ impl HctSolver {
         let adapted_abs = adapted.abs();
         let base = (27.13 * adapted_abs / (400.0 - adapted_abs)).max(0.0);
 
-        adapted.signum() * base.powf(1.0 / 0.42)
+        signum(adapted) * base.powf(1.0 / 0.42)
     }
 
     /// Finds a color with the given hue, chroma, and Y.
@@ -643,13 +643,13 @@ impl HctSolver {
     /// `lstar`, respectively. If it is impossible to satisfy all three
     /// constraints, the hue and L* will be sufficiently close, and the
     /// chroma will be maximized.
-    pub fn solve_to_int(hue_degrees: f64, chroma: f64, lstar: f64) -> Argb {
+    pub fn solve_to_argb(hue_degrees: f64, chroma: f64, lstar: f64) -> Argb {
         if chroma < 0.0001 || !(0.0001..=99.9999).contains(&lstar) {
             return Argb::from_lstar(lstar);
         }
 
         let hue_degrees = sanitize_degrees_double(hue_degrees);
-        let hue_radians = hue_degrees / 180.0 * PI;
+        let hue_radians = hue_degrees.to_radians();
 
         let y = y_from_lstar(lstar);
 
@@ -674,6 +674,6 @@ impl HctSolver {
     /// constraints, the hue and L* will be sufficiently close, and the
     /// chroma will be maximized.
     pub fn solve_to_cam(hue_degrees: f64, chroma: f64, lstar: f64) -> Cam16 {
-        Cam16::from(Self::solve_to_int(hue_degrees, chroma, lstar))
+        Cam16::from(Self::solve_to_argb(hue_degrees, chroma, lstar))
     }
 }

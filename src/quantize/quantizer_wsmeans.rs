@@ -358,3 +358,75 @@ fn fill_array<T>(count: usize, callback: impl Fn(usize) -> T) -> Vec<T> {
 
     results
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::color::Argb;
+
+    use super::QuantizerWsmeans;
+
+    const RED: Argb = Argb::from_u32(0xffff0000);
+    const GREEN: Argb = Argb::from_u32(0xff00ff00);
+    const BLUE: Argb = Argb::from_u32(0xff0000ff);
+    // const WHITE: Argb = Argb::from_u32(0xffffffff);
+    // const RANDOM: Argb = Argb::from_u32(0xff426088);
+    const MAX_COLORS: usize = 256;
+
+    #[test]
+    fn test_1rando() {
+        let result = QuantizerWsmeans::quantize(
+            &[Argb::from_u32(0xff141216)],
+            MAX_COLORS,
+            None,
+            None,
+            None,
+            None,
+        );
+        let colors = result.color_to_count.keys().collect::<Vec<_>>();
+
+        assert_eq!(colors[0], &Argb::from_u32(0xff141216));
+    }
+
+    #[test]
+    fn test_1r() {
+        let result = QuantizerWsmeans::quantize(&[RED], MAX_COLORS, None, None, None, None);
+        let colors = result.color_to_count.keys().collect::<Vec<_>>();
+
+        assert_eq!(colors.len(), 1);
+        assert_eq!(colors[0], &RED);
+    }
+
+    #[test]
+    fn test_1g() {
+        let result = QuantizerWsmeans::quantize(&[GREEN], MAX_COLORS, None, None, None, None);
+        let colors = result.color_to_count.keys().collect::<Vec<_>>();
+
+        assert_eq!(colors.len(), 1);
+        assert_eq!(colors[0], &GREEN);
+    }
+
+    #[test]
+    fn test_1b() {
+        let result = QuantizerWsmeans::quantize(&[BLUE], MAX_COLORS, None, None, None, None);
+        let colors = result.color_to_count.keys().collect::<Vec<_>>();
+
+        assert_eq!(colors.len(), 1);
+        assert_eq!(colors[0], &BLUE);
+    }
+
+    #[test]
+    fn test_5b() {
+        let result = QuantizerWsmeans::quantize(
+            &[BLUE, BLUE, BLUE, BLUE, BLUE],
+            MAX_COLORS,
+            None,
+            None,
+            None,
+            None,
+        );
+        let colors = result.color_to_count.keys().collect::<Vec<_>>();
+
+        assert_eq!(colors.len(), 1);
+        assert_eq!(colors[0], &BLUE);
+    }
+}

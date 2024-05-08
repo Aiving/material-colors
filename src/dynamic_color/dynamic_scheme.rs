@@ -130,6 +130,11 @@ impl DynamicScheme {
             return sanitize_degrees_double(source_hue + rotations[0]);
         }
 
+        
+        if hues.is_empty() || rotations.is_empty() {
+            return source_hue;
+        }
+
         let size = hues.len();
         let mut i = 0;
 
@@ -384,5 +389,50 @@ impl Hash for DynamicScheme {
         self.source_color_argb.hash(state);
         self.source_color_hct.hash(state);
         self.is_dark.hash(state);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use float_cmp::assert_approx_eq;
+
+    use crate::dynamic_color::DynamicScheme;
+    use crate::hct::Hct;
+
+    #[test]
+    fn test_0_length_input() {
+        let hue = DynamicScheme::get_rotated_hue(Hct::from(43.0, 16.0, 16.0).get_hue(), &[], &[]);
+
+        assert_approx_eq!(f64, hue, 43.0, epsilon = 1.0);
+    }
+
+    #[test]
+    fn test_1_length_input_no_rotation() {
+        let hue =
+            DynamicScheme::get_rotated_hue(Hct::from(43.0, 16.0, 16.0).get_hue(), &[0.0], &[0.0]);
+
+        assert_approx_eq!(f64, hue, 43.0, epsilon = 1.0);
+    }
+
+    #[test]
+    fn test_on_boundary_rotation_correct() {
+        let hue = DynamicScheme::get_rotated_hue(
+            Hct::from(43.0, 16.0, 16.0).get_hue(),
+            &[0.0, 42.0, 360.0],
+            &[0.0, 15.0, 0.0],
+        );
+
+        assert_approx_eq!(f64, hue, 43.0 + 15.0, epsilon = 1.0);
+    }
+
+    #[test]
+    fn test_rotation_result_larger_than_360_degrees_wraps() {
+        let hue = DynamicScheme::get_rotated_hue(
+            Hct::from(43.0, 16.0, 16.0).get_hue(),
+            &[0.0, 42.0, 360.0],
+            &[0.0, 480.0, 0.0],
+        );
+
+        assert_approx_eq!(f64, hue, 163.0, epsilon = 1.0);
     }
 }

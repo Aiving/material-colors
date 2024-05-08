@@ -428,3 +428,482 @@ impl DynamicColor {
         tone.round() <= 49.0
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use ahash::HashMap;
+    use float_cmp::assert_approx_eq;
+
+    use crate::color::Argb;
+    use crate::contrast::ratio_of_tones;
+    use crate::hct::Hct;
+    use crate::scheme::variant::{
+        SchemeContent, SchemeFidelity, SchemeMonochrome, SchemeTonalSpot,
+    };
+
+    use super::{DynamicColor, MaterialDynamicColors};
+
+    #[test]
+    fn test_contrast_pairs() {
+        let seed_colors: [Hct; 4] = [
+            Argb::from_u32(0xFFFF0000).into(),
+            Argb::from_u32(0xFFFFFF00).into(),
+            Argb::from_u32(0xFF00FF00).into(),
+            Argb::from_u32(0xFF0000FF).into(),
+        ];
+
+        let contrast_levels = [-1.0, -0.5, 0.0, 0.5, 1.0];
+
+        let mut _colors: HashMap<&str, DynamicColor> = HashMap::from_iter([
+            ("background", MaterialDynamicColors::background()),
+            ("onBackground", MaterialDynamicColors::on_background()),
+            ("surface", MaterialDynamicColors::surface()),
+            ("surfaceDim", MaterialDynamicColors::surface_dim()),
+            ("surfaceBright", MaterialDynamicColors::surface_bright()),
+            (
+                "surfaceContainerLowest",
+                MaterialDynamicColors::surface_container_lowest(),
+            ),
+            (
+                "surfaceContainerLow",
+                MaterialDynamicColors::surface_container_low(),
+            ),
+            (
+                "surfaceContainer",
+                MaterialDynamicColors::surface_container(),
+            ),
+            (
+                "surfaceContainerHigh",
+                MaterialDynamicColors::surface_container_high(),
+            ),
+            (
+                "surfaceContainerHighest",
+                MaterialDynamicColors::surface_container_highest(),
+            ),
+            ("onSurface", MaterialDynamicColors::on_surface()),
+            ("surfaceVariant", MaterialDynamicColors::surface_variant()),
+            (
+                "onSurfaceVariant",
+                MaterialDynamicColors::on_surface_variant(),
+            ),
+            ("inverseSurface", MaterialDynamicColors::inverse_surface()),
+            (
+                "inverseOnSurface",
+                MaterialDynamicColors::inverse_on_surface(),
+            ),
+            ("outline", MaterialDynamicColors::outline()),
+            ("outlineVariant", MaterialDynamicColors::outline_variant()),
+            ("shadow", MaterialDynamicColors::shadow()),
+            ("scrim", MaterialDynamicColors::scrim()),
+            ("surfaceTint", MaterialDynamicColors::surface_tint()),
+            ("primary", MaterialDynamicColors::primary()),
+            ("onPrimary", MaterialDynamicColors::on_primary()),
+            (
+                "primaryContainer",
+                MaterialDynamicColors::primary_container(),
+            ),
+            (
+                "onPrimaryContainer",
+                MaterialDynamicColors::on_primary_container(),
+            ),
+            ("inversePrimary", MaterialDynamicColors::inverse_primary()),
+            ("secondary", MaterialDynamicColors::secondary()),
+            ("onSecondary", MaterialDynamicColors::on_secondary()),
+            (
+                "secondaryContainer",
+                MaterialDynamicColors::secondary_container(),
+            ),
+            (
+                "onSecondaryContainer",
+                MaterialDynamicColors::on_secondary_container(),
+            ),
+            ("tertiary", MaterialDynamicColors::tertiary()),
+            ("onTertiary", MaterialDynamicColors::on_tertiary()),
+            (
+                "tertiaryContainer",
+                MaterialDynamicColors::tertiary_container(),
+            ),
+            (
+                "onTertiaryContainer",
+                MaterialDynamicColors::on_tertiary_container(),
+            ),
+            ("error", MaterialDynamicColors::error()),
+            ("onError", MaterialDynamicColors::on_error()),
+            ("errorContainer", MaterialDynamicColors::error_container()),
+            (
+                "onErrorContainer",
+                MaterialDynamicColors::on_error_container(),
+            ),
+        ]);
+
+        for color in seed_colors {
+            for contrast_level in contrast_levels {
+                for is_dark in [false, true] {
+                    for (scheme_name, scheme) in [
+                        (
+                            "SchemeContent",
+                            SchemeContent::new(color, is_dark, Some(contrast_level)).scheme,
+                        ),
+                        (
+                            "SchemeMonochrome",
+                            SchemeMonochrome::new(color, is_dark, Some(contrast_level)).scheme,
+                        ),
+                        (
+                            "SchemeTonalSpot",
+                            SchemeTonalSpot::new(color, is_dark, Some(contrast_level)).scheme,
+                        ),
+                        (
+                            "SchemeFidelity",
+                            SchemeFidelity::new(color, is_dark, Some(contrast_level)).scheme,
+                        ),
+                    ] {
+                        println!("Scheme: {scheme_name}; Seed color: {color}; Contrast level: {contrast_level}; Dark: {is_dark}");
+
+                        for (fg_name, bg_name) in [
+                            ("onPrimary", "primary"),
+                            ("onPrimaryContainer", "primaryContainer"),
+                            ("onSecondary", "secondary"),
+                            ("onSecondaryContainer", "secondaryContainer"),
+                            ("onTertiary", "tertiary"),
+                            ("onTertiaryContainer", "tertiaryContainer"),
+                            ("onError", "error"),
+                            ("onErrorContainer", "errorContainer"),
+                            ("onBackground", "background"),
+                            ("onSurfaceVariant", "surfaceBright"),
+                            ("onSurfaceVariant", "surfaceDim"),
+                        ] {
+                            let foreground_tone = _colors
+                                .get_mut(fg_name)
+                                .unwrap()
+                                .get_hct(&scheme)
+                                .get_tone();
+                            let background_tone = _colors
+                                .get_mut(bg_name)
+                                .unwrap()
+                                .get_hct(&scheme)
+                                .get_tone();
+                            let contrast = ratio_of_tones(foreground_tone, background_tone);
+
+                            let minimum_requirement = if contrast_level >= 0.0 { 4.5 } else { 3.0 };
+
+                            assert!(
+                              contrast >= minimum_requirement,
+                              "Contrast {contrast} is too low between foreground ({fg_name}; {foreground_tone}) and ({bg_name}; {background_tone})"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Tests for fixed colors.
+    #[test]
+    fn test_fixed_colors_in_non_monochrome_schemes() {
+        let scheme =
+            SchemeTonalSpot::new(Argb::from_u32(0xFFFF0000).into(), true, Some(0.0)).scheme;
+
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::primary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            90.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::primary_fixed_dim()
+                .get_hct(&scheme)
+                .get_tone(),
+            80.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_primary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            10.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_primary_fixed_variant()
+                .get_hct(&scheme)
+                .get_tone(),
+            30.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::secondary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            90.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::secondary_fixed_dim()
+                .get_hct(&scheme)
+                .get_tone(),
+            80.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_secondary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            10.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_secondary_fixed_variant()
+                .get_hct(&scheme)
+                .get_tone(),
+            30.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::tertiary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            90.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::tertiary_fixed_dim()
+                .get_hct(&scheme)
+                .get_tone(),
+            80.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_tertiary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            10.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_tertiary_fixed_variant()
+                .get_hct(&scheme)
+                .get_tone(),
+            30.0,
+            epsilon = 1.0
+        );
+    }
+
+    #[test]
+    fn test_fixed_colors_in_light_monochrome_schemes() {
+        let scheme =
+            SchemeMonochrome::new(Argb::from_u32(0xFFFF0000).into(), false, Some(0.0)).scheme;
+
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::primary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            40.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::primary_fixed_dim()
+                .get_hct(&scheme)
+                .get_tone(),
+            30.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_primary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            100.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_primary_fixed_variant()
+                .get_hct(&scheme)
+                .get_tone(),
+            90.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::secondary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            80.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::secondary_fixed_dim()
+                .get_hct(&scheme)
+                .get_tone(),
+            70.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_secondary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            10.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_secondary_fixed_variant()
+                .get_hct(&scheme)
+                .get_tone(),
+            25.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::tertiary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            40.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::tertiary_fixed_dim()
+                .get_hct(&scheme)
+                .get_tone(),
+            30.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_tertiary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            100.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_tertiary_fixed_variant()
+                .get_hct(&scheme)
+                .get_tone(),
+            90.0,
+            epsilon = 1.0
+        );
+    }
+
+    #[test]
+    fn test_fixed_colors_in_dark_monochrome_schemes() {
+        let scheme =
+            SchemeMonochrome::new(Argb::from_u32(0xFFFF0000).into(), true, Some(0.0)).scheme;
+
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::primary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            40.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::primary_fixed_dim()
+                .get_hct(&scheme)
+                .get_tone(),
+            30.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_primary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            100.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_primary_fixed_variant()
+                .get_hct(&scheme)
+                .get_tone(),
+            90.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::secondary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            80.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::secondary_fixed_dim()
+                .get_hct(&scheme)
+                .get_tone(),
+            70.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_secondary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            10.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_secondary_fixed_variant()
+                .get_hct(&scheme)
+                .get_tone(),
+            25.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::tertiary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            40.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::tertiary_fixed_dim()
+                .get_hct(&scheme)
+                .get_tone(),
+            30.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_tertiary_fixed()
+                .get_hct(&scheme)
+                .get_tone(),
+            100.0,
+            epsilon = 1.0
+        );
+        assert_approx_eq!(
+            f64,
+            MaterialDynamicColors::on_tertiary_fixed_variant()
+                .get_hct(&scheme)
+                .get_tone(),
+            90.0,
+            epsilon = 1.0
+        );
+    }
+}

@@ -528,206 +528,193 @@ impl PartialEq<Scheme> for SchemeFromPalette {
 
 #[cfg(test)]
 mod tests {
+    use crate::color::Argb;
     use crate::scheme::SchemeFromPalette;
-    use crate::{color::Argb, Error};
     use float_cmp::assert_approx_eq;
-    use std::str::FromStr;
 
     #[test]
-    fn test_surface_tones() -> Result<(), Error> {
-        let c = Argb::from_str("ff0000")?;
+    fn test_surface_tones() {
+        let c = Argb::from_u32(0xffff0000);
 
         let light = SchemeFromPalette::light(c);
         let dark = SchemeFromPalette::dark(c);
 
         assert_approx_eq!(f64, light.surface.as_lstar(), 99.0, epsilon = 0.1); // 99.015;
         assert_approx_eq!(f64, dark.surface.as_lstar(), 10.0, epsilon = 0.1); // 9.923
-
-        Ok(())
     }
 
     #[test]
-    fn test_blue_scheme() -> Result<(), Error> {
-        let c = Argb::from_str("0000ff")?;
+    fn test_blue_scheme() {
+        let c = Argb::from_u32(0xff0000ff);
 
         let light = SchemeFromPalette::light(c);
         let dark = SchemeFromPalette::dark(c);
 
         assert_eq!(light.primary.to_hex(), "343dff");
         assert_eq!(dark.primary.to_hex(), "bec2ff");
-
-        Ok(())
     }
 
     #[test]
-    fn test_light_scheme_from_high_chroma_color() -> Result<(), Error> {
-        let c = Argb::from_str("fa2bec")?;
+    fn test_light_scheme_from_high_chroma_color() {
+        let c = Argb::from_u32(0xfffa2bec);
 
         let scheme = SchemeFromPalette::light(c);
 
         let expected = SchemeFromPalette {
-            primary: Argb::from_str("ab00a2")?,
-            on_primary: Argb::from_str("ffffff")?,
-            primary_container: Argb::from_str("ffd7f3")?,
-            on_primary_container: Argb::from_str("390035")?,
-            secondary: Argb::from_str("6e5868")?,
-            on_secondary: Argb::from_str("ffffff")?,
-            secondary_container: Argb::from_str("f8daee")?,
-            on_secondary_container: Argb::from_str("271624")?,
-            tertiary: Argb::from_str("815343")?,
-            on_tertiary: Argb::from_str("ffffff")?,
-            tertiary_container: Argb::from_str("ffdbd0")?,
-            on_tertiary_container: Argb::from_str("321207")?,
-            error: Argb::from_str("ba1a1a")?,
-            on_error: Argb::from_str("ffffff")?,
-            error_container: Argb::from_str("ffdad6")?,
-            on_error_container: Argb::from_str("410002")?,
-            background: Argb::from_str("fffbff")?,
-            on_background: Argb::from_str("1f1a1d")?,
-            surface: Argb::from_str("fffbff")?,
-            on_surface: Argb::from_str("1f1a1d")?,
-            surface_variant: Argb::from_str("eedee7")?,
-            on_surface_variant: Argb::from_str("4e444b")?,
-            outline: Argb::from_str("80747b")?,
-            outline_variant: Argb::from_str("d2c2cb")?,
-            shadow: Argb::from_str("000000")?,
-            scrim: Argb::from_str("000000")?,
-            inverse_surface: Argb::from_str("342f32")?,
-            inverse_on_surface: Argb::from_str("f8eef2")?,
-            inverse_primary: Argb::from_str("ffabee")?,
+            primary: Argb::from_u32(0xffab00a2),
+            on_primary: Argb::from_u32(0xffffffff),
+            primary_container: Argb::from_u32(0xffffd7f3),
+            on_primary_container: Argb::from_u32(0xff390035),
+            secondary: Argb::from_u32(0xff6e5868),
+            on_secondary: Argb::from_u32(0xffffffff),
+            secondary_container: Argb::from_u32(0xfff8daee),
+            on_secondary_container: Argb::from_u32(0xff271624),
+            tertiary: Argb::from_u32(0xff815343),
+            on_tertiary: Argb::from_u32(0xffffffff),
+            tertiary_container: Argb::from_u32(0xffffdbd0),
+            on_tertiary_container: Argb::from_u32(0xff321207),
+            error: Argb::from_u32(0xffba1a1a),
+            on_error: Argb::from_u32(0xffffffff),
+            error_container: Argb::from_u32(0xffffdad6),
+            on_error_container: Argb::from_u32(0xff410002),
+            background: Argb::from_u32(0xfffffbff),
+            on_background: Argb::from_u32(0xff1f1a1d),
+            surface: Argb::from_u32(0xfffffbff),
+            on_surface: Argb::from_u32(0xff1f1a1d),
+            surface_variant: Argb::from_u32(0xffeedee7),
+            on_surface_variant: Argb::from_u32(0xff4e444b),
+            outline: Argb::from_u32(0xff80747b),
+            outline_variant: Argb::from_u32(0xffd2c2cb),
+            shadow: Argb::from_u32(0xff000000),
+            scrim: Argb::from_u32(0xff000000),
+            inverse_surface: Argb::from_u32(0xff342f32),
+            inverse_on_surface: Argb::from_u32(0xfff8eef2),
+            inverse_primary: Argb::from_u32(0xffffabee),
         };
 
         assert_eq!(scheme, expected);
-
-        Ok(())
     }
 
     #[test]
-    fn test_dark_scheme_from_high_chroma_color() -> Result<(), Error> {
-        let c = Argb::from_str("fa2bec")?;
+    fn test_dark_scheme_from_high_chroma_color() {
+        let c = Argb::from_u32(0xfffa2bec);
 
         let scheme = SchemeFromPalette::dark(c);
 
         let expected = SchemeFromPalette {
-            primary: Argb::from_str("ffabee")?,
-            on_primary: Argb::from_str("5c0057")?,
-            primary_container: Argb::from_str("83007b")?,
-            on_primary_container: Argb::from_str("ffd7f3")?,
-            secondary: Argb::from_str("dbbed1")?,
-            on_secondary: Argb::from_str("3e2a39")?,
-            secondary_container: Argb::from_str("554050")?,
-            on_secondary_container: Argb::from_str("f8daee")?,
-            tertiary: Argb::from_str("f5b9a5")?,
-            on_tertiary: Argb::from_str("4c2619")?,
-            tertiary_container: Argb::from_str("663c2d")?,
-            on_tertiary_container: Argb::from_str("ffdbd0")?,
-            error: Argb::from_str("ffb4ab")?,
-            on_error: Argb::from_str("690005")?,
-            error_container: Argb::from_str("93000a")?,
-            on_error_container: Argb::from_str("ffb4ab")?,
-            background: Argb::from_str("1f1a1d")?,
-            on_background: Argb::from_str("eae0e4")?,
-            surface: Argb::from_str("1f1a1d")?,
-            on_surface: Argb::from_str("eae0e4")?,
-            surface_variant: Argb::from_str("4e444b")?,
-            on_surface_variant: Argb::from_str("d2c2cb")?,
-            outline: Argb::from_str("9a8d95")?,
-            outline_variant: Argb::from_str("4e444b")?,
-            shadow: Argb::from_str("000000")?,
-            scrim: Argb::from_str("000000")?,
-            inverse_surface: Argb::from_str("eae0e4")?,
-            inverse_on_surface: Argb::from_str("342f32")?,
-            inverse_primary: Argb::from_str("ab00a2")?,
+            primary: Argb::from_u32(0xffffabee),
+            on_primary: Argb::from_u32(0xff5c0057),
+            primary_container: Argb::from_u32(0xff83007b),
+            on_primary_container: Argb::from_u32(0xffffd7f3),
+            secondary: Argb::from_u32(0xffdbbed1),
+            on_secondary: Argb::from_u32(0xff3e2a39),
+            secondary_container: Argb::from_u32(0xff554050),
+            on_secondary_container: Argb::from_u32(0xfff8daee),
+            tertiary: Argb::from_u32(0xfff5b9a5),
+            on_tertiary: Argb::from_u32(0xff4c2619),
+            tertiary_container: Argb::from_u32(0xff663c2d),
+            on_tertiary_container: Argb::from_u32(0xffffdbd0),
+            error: Argb::from_u32(0xffffb4ab),
+            on_error: Argb::from_u32(0xff690005),
+            error_container: Argb::from_u32(0xff93000a),
+            on_error_container: Argb::from_u32(0xffffb4ab),
+            background: Argb::from_u32(0xff1f1a1d),
+            on_background: Argb::from_u32(0xffeae0e4),
+            surface: Argb::from_u32(0xff1f1a1d),
+            on_surface: Argb::from_u32(0xffeae0e4),
+            surface_variant: Argb::from_u32(0xff4e444b),
+            on_surface_variant: Argb::from_u32(0xffd2c2cb),
+            outline: Argb::from_u32(0xff9a8d95),
+            outline_variant: Argb::from_u32(0xff4e444b),
+            shadow: Argb::from_u32(0xff000000),
+            scrim: Argb::from_u32(0xff000000),
+            inverse_surface: Argb::from_u32(0xffeae0e4),
+            inverse_on_surface: Argb::from_u32(0xff342f32),
+            inverse_primary: Argb::from_u32(0xffab00a2),
         };
 
         assert_eq!(scheme, expected);
-
-        Ok(())
     }
 
     #[test]
-    fn test_light_content_scheme_from_high_chroma_color() -> Result<(), Error> {
-        let c = Argb::from_str("fa2bec")?;
+    fn test_light_content_scheme_from_high_chroma_color() {
+        let c = Argb::from_u32(0xfffa2bec);
 
         let scheme = SchemeFromPalette::light_content(c);
 
         let expected = SchemeFromPalette {
-            primary: Argb::from_str("ab00a2")?,
-            on_primary: Argb::from_str("ffffff")?,
-            primary_container: Argb::from_str("ffd7f3")?,
-            on_primary_container: Argb::from_str("390035")?,
-            secondary: Argb::from_str("7f4e75")?,
-            on_secondary: Argb::from_str("ffffff")?,
-            secondary_container: Argb::from_str("ffd7f3")?,
-            on_secondary_container: Argb::from_str("330b2f")?,
-            tertiary: Argb::from_str("9c4323")?,
-            on_tertiary: Argb::from_str("ffffff")?,
-            tertiary_container: Argb::from_str("ffdbd0")?,
-            on_tertiary_container: Argb::from_str("390c00")?,
-            error: Argb::from_str("ba1a1a")?,
-            on_error: Argb::from_str("ffffff")?,
-            error_container: Argb::from_str("ffdad6")?,
-            on_error_container: Argb::from_str("410002")?,
-            background: Argb::from_str("fffbff")?,
-            on_background: Argb::from_str("1f1a1d")?,
-            surface: Argb::from_str("fffbff")?,
-            on_surface: Argb::from_str("1f1a1d")?,
-            surface_variant: Argb::from_str("eedee7")?,
-            on_surface_variant: Argb::from_str("4e444b")?,
-            outline: Argb::from_str("80747b")?,
-            outline_variant: Argb::from_str("d2c2cb")?,
-            shadow: Argb::from_str("000000")?,
-            scrim: Argb::from_str("000000")?,
-            inverse_surface: Argb::from_str("342f32")?,
-            inverse_on_surface: Argb::from_str("f8eef2")?,
-            inverse_primary: Argb::from_str("ffabee")?,
+            primary: Argb::from_u32(0xffab00a2),
+            on_primary: Argb::from_u32(0xffffffff),
+            primary_container: Argb::from_u32(0xffffd7f3),
+            on_primary_container: Argb::from_u32(0xff390035),
+            secondary: Argb::from_u32(0xff7f4e75),
+            on_secondary: Argb::from_u32(0xffffffff),
+            secondary_container: Argb::from_u32(0xffffd7f3),
+            on_secondary_container: Argb::from_u32(0xff330b2f),
+            tertiary: Argb::from_u32(0xff9c4323),
+            on_tertiary: Argb::from_u32(0xffffffff),
+            tertiary_container: Argb::from_u32(0xffffdbd0),
+            on_tertiary_container: Argb::from_u32(0xff390c00),
+            error: Argb::from_u32(0xffba1a1a),
+            on_error: Argb::from_u32(0xffffffff),
+            error_container: Argb::from_u32(0xffffdad6),
+            on_error_container: Argb::from_u32(0xff410002),
+            background: Argb::from_u32(0xfffffbff),
+            on_background: Argb::from_u32(0xff1f1a1d),
+            surface: Argb::from_u32(0xfffffbff),
+            on_surface: Argb::from_u32(0xff1f1a1d),
+            surface_variant: Argb::from_u32(0xffeedee7),
+            on_surface_variant: Argb::from_u32(0xff4e444b),
+            outline: Argb::from_u32(0xff80747b),
+            outline_variant: Argb::from_u32(0xffd2c2cb),
+            shadow: Argb::from_u32(0xff000000),
+            scrim: Argb::from_u32(0xff000000),
+            inverse_surface: Argb::from_u32(0xff342f32),
+            inverse_on_surface: Argb::from_u32(0xfff8eef2),
+            inverse_primary: Argb::from_u32(0xffffabee),
         };
 
         assert_eq!(scheme, expected);
-
-        Ok(())
     }
 
     #[test]
-    fn test_dark_content_scheme_from_high_chroma_color() -> Result<(), Error> {
-        let c = Argb::from_str("fa2bec")?;
+    fn test_dark_content_scheme_from_high_chroma_color() {
+        let c = Argb::from_u32(0xfffa2bec);
 
         let scheme = SchemeFromPalette::dark_content(c);
 
         let expected = SchemeFromPalette {
-            primary: Argb::from_str("ffabee")?,
-            on_primary: Argb::from_str("5c0057")?,
-            primary_container: Argb::from_str("83007b")?,
-            on_primary_container: Argb::from_str("ffd7f3")?,
-            secondary: Argb::from_str("f0b4e1")?,
-            on_secondary: Argb::from_str("4b2145")?,
-            secondary_container: Argb::from_str("64375c")?,
-            on_secondary_container: Argb::from_str("ffd7f3")?,
-            tertiary: Argb::from_str("ffb59c")?,
-            on_tertiary: Argb::from_str("5c1900")?,
-            tertiary_container: Argb::from_str("7d2c0d")?,
-            on_tertiary_container: Argb::from_str("ffdbd0")?,
-            error: Argb::from_str("ffb4ab")?,
-            on_error: Argb::from_str("690005")?,
-            error_container: Argb::from_str("93000a")?,
-            on_error_container: Argb::from_str("ffb4ab")?,
-            background: Argb::from_str("1f1a1d")?,
-            on_background: Argb::from_str("eae0e4")?,
-            surface: Argb::from_str("1f1a1d")?,
-            on_surface: Argb::from_str("eae0e4")?,
-            surface_variant: Argb::from_str("4e444b")?,
-            on_surface_variant: Argb::from_str("d2c2cb")?,
-            outline: Argb::from_str("9a8d95")?,
-            outline_variant: Argb::from_str("4e444b")?,
-            shadow: Argb::from_str("000000")?,
-            scrim: Argb::from_str("000000")?,
-            inverse_surface: Argb::from_str("eae0e4")?,
-            inverse_on_surface: Argb::from_str("342f32")?,
-            inverse_primary: Argb::from_str("ab00a2")?,
+            primary: Argb::from_u32(0xffffabee),
+            on_primary: Argb::from_u32(0xff5c0057),
+            primary_container: Argb::from_u32(0xff83007b),
+            on_primary_container: Argb::from_u32(0xffffd7f3),
+            secondary: Argb::from_u32(0xfff0b4e1),
+            on_secondary: Argb::from_u32(0xff4b2145),
+            secondary_container: Argb::from_u32(0xff64375c),
+            on_secondary_container: Argb::from_u32(0xffffd7f3),
+            tertiary: Argb::from_u32(0xffffb59c),
+            on_tertiary: Argb::from_u32(0xff5c1900),
+            tertiary_container: Argb::from_u32(0xff7d2c0d),
+            on_tertiary_container: Argb::from_u32(0xffffdbd0),
+            error: Argb::from_u32(0xffffb4ab),
+            on_error: Argb::from_u32(0xff690005),
+            error_container: Argb::from_u32(0xff93000a),
+            on_error_container: Argb::from_u32(0xffffb4ab),
+            background: Argb::from_u32(0xff1f1a1d),
+            on_background: Argb::from_u32(0xffeae0e4),
+            surface: Argb::from_u32(0xff1f1a1d),
+            on_surface: Argb::from_u32(0xffeae0e4),
+            surface_variant: Argb::from_u32(0xff4e444b),
+            on_surface_variant: Argb::from_u32(0xffd2c2cb),
+            outline: Argb::from_u32(0xff9a8d95),
+            outline_variant: Argb::from_u32(0xff4e444b),
+            shadow: Argb::from_u32(0xff000000),
+            scrim: Argb::from_u32(0xff000000),
+            inverse_surface: Argb::from_u32(0xffeae0e4),
+            inverse_on_surface: Argb::from_u32(0xff342f32),
+            inverse_primary: Argb::from_u32(0xffab00a2),
         };
 
         assert_eq!(scheme, expected);
-
-        Ok(())
     }
 }

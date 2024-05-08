@@ -1,6 +1,7 @@
+use std::fmt;
+
 #[cfg(feature = "serde")]
 use serde::Serialize;
-use std::fmt;
 
 use crate::{
     color::Argb,
@@ -155,5 +156,47 @@ impl PartialEq for TonalPalette {
 impl fmt::Display for TonalPalette {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "TonalPalette.of({}, {})", self.hue(), self.chroma())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::color::Argb;
+    use crate::hct::Hct;
+    use crate::palette::TonalPalette;
+
+    #[test]
+    fn test_of_tones_of_blue() {
+        let hct: Hct = Argb::from_u32(0xff0000ff).into();
+        let tones = TonalPalette::of(hct.get_hue(), hct.get_chroma());
+
+        assert_eq!(tones.tone(0), Argb::from_u32(0xff000000));
+        assert_eq!(tones.tone(10), Argb::from_u32(0xff00006e));
+        assert_eq!(tones.tone(20), Argb::from_u32(0xff0001ac));
+        assert_eq!(tones.tone(30), Argb::from_u32(0xff0000ef));
+        assert_eq!(tones.tone(40), Argb::from_u32(0xff343dff));
+        assert_eq!(tones.tone(50), Argb::from_u32(0xff5a64ff));
+        assert_eq!(tones.tone(60), Argb::from_u32(0xff7c84ff));
+        assert_eq!(tones.tone(70), Argb::from_u32(0xff9da3ff));
+        assert_eq!(tones.tone(80), Argb::from_u32(0xffbec2ff));
+        assert_eq!(tones.tone(90), Argb::from_u32(0xffe0e0ff));
+        assert_eq!(tones.tone(95), Argb::from_u32(0xfff1efff));
+        assert_eq!(tones.tone(99), Argb::from_u32(0xfffffbff));
+        assert_eq!(tones.tone(100), Argb::from_u32(0xffffffff));
+
+        // Tone not in [TonalPalette.commonTones]
+        assert_eq!(tones.tone(3), Argb::from_u32(0xff00003c));
+    }
+
+    #[test]
+    fn test_of_operator_and_hash() {
+        let hct_ab: Hct = Argb::from_u32(0xff0000ff).into();
+        let tones_a = TonalPalette::of(hct_ab.get_hue(), hct_ab.get_chroma());
+        let tones_b = TonalPalette::of(hct_ab.get_hue(), hct_ab.get_chroma());
+        let hct_c: Hct = Argb::from_u32(0xff123456).into();
+        let tones_c = TonalPalette::of(hct_c.get_hue(), hct_c.get_chroma());
+
+        assert_eq!(tones_a, tones_b);
+        assert!(tones_b != tones_c);
     }
 }

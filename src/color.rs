@@ -208,51 +208,34 @@ impl From<Argb> for Lab {
     }
 }
 
-const fn hex_digit_to_rgb(number: u32) -> Rgb {
-    let r = number >> 16;
-    let g = (number >> 8) & 0x00FF;
-    let b = number & 0x0000_00FF;
-
-    Rgb::new(r as u8, g as u8, b as u8)
-}
-
-const HASH: u8 = b'#';
+const HASH: char = '#';
 
 impl FromStr for Argb {
     type Err = Error;
 
     fn from_str(hex: &str) -> Result<Self, Self::Err> {
-        let s = hex.as_bytes();
-        let mut buff: [u8; 6] = [0; 6];
-        let mut buff_len = 0;
+        let hex = hex.strip_prefix(HASH).unwrap_or(hex);
 
-        for b in s {
-            if !b.is_ascii() || buff_len == 6 {
-                return Err(Error::ParseRGB);
-            }
-
-            let bl = b.to_ascii_lowercase();
-
-            if bl == HASH {
-                continue;
-            }
-
-            if bl.is_ascii_hexdigit() {
-                buff[buff_len] = bl;
-                buff_len += 1;
-            } else {
-                return Err(Error::ParseRGB);
-            }
+        if ![3, 6, 8].contains(&hex.len()) {
+            return Err(Error::ParseRGB);
         }
 
-        if buff_len == 3 {
-            buff = [buff[0], buff[0], buff[1], buff[1], buff[2], buff[2]];
-        }
+        let hex_str = if hex.len() == 3 {
+            format!(
+                "FF{a}{a}{b}{b}{c}{c}",
+                a = hex.get(..1).unwrap(),
+                b = hex.get(1..2).unwrap(),
+                c = hex.get(2..3).unwrap()
+            )
+        } else if hex.len() == 6 {
+            format!("FF{hex}")
+        } else {
+            hex.to_string()
+        };
 
-        let hex_str = core::str::from_utf8(&buff).map_err(|_| Error::ParseRGB)?;
-        let hex_digit = u32::from_str_radix(hex_str, 16).map_err(|_| Error::ParseRGB)?;
+        let hex_digit = u32::from_str_radix(&hex_str, 16).map_err(|_| Error::ParseRGB)?;
 
-        Ok(hex_digit_to_rgb(hex_digit).into())
+        Ok(Self::from_u32(hex_digit))
     }
 }
 
@@ -281,6 +264,15 @@ impl Argb {
             red,
             green,
             blue,
+        }
+    }
+
+    pub const fn from_u32(value: u32) -> Self {
+        Self {
+            alpha: ((value >> 24) & 0xFF) as u8,
+            red: ((value >> 16) & 0xFF) as u8,
+            green: ((value >> 8) & 0xFF) as u8,
+            blue: ((value) & 0xFF) as u8,
         }
     }
 
