@@ -32,7 +32,7 @@ pub struct Rgb {
     pub blue: u8,
 }
 
-/// ARGB representation of color. Can be created using [`Argb::new`] or
+/// ARGB representation of color. Can be created using [`Argb::new`], [`Argb::from_u32`] or
 /// [`from_str`].
 ///
 /// ## Examples:
@@ -42,9 +42,11 @@ pub struct Rgb {
 ///
 /// // from_str can accept any valid HEX color
 /// let color = Argb::from_str("abc").unwrap();
-/// let color = Argb::from_str("abcabc").unwrap();
+/// let color = Argb::from_str("aabbcc").unwrap();
+/// let color = Argb::from_str("aabbccdd").unwrap();
 /// let color = Argb::from_str("#abc").unwrap();
-/// let color = Argb::from_str("#abcabc").unwrap();
+/// let color = Argb::from_str("#aabbcc").unwrap();
+/// let color = Argb::from_str("#aabbccdd").unwrap();
 /// ```
 ///
 /// [`from_str`]: std::str::FromStr::from_str
