@@ -130,7 +130,6 @@ impl DynamicScheme {
             return sanitize_degrees_double(source_hue + rotations[0]);
         }
 
-        
         if hues.is_empty() || rotations.is_empty() {
             return source_hue;
         }
