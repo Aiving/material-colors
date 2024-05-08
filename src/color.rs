@@ -592,7 +592,7 @@ mod tests {
                     let argb = Argb::new(255, r, g, b);
                     let lab = Lab::from(argb);
                     let converted = Argb::from(lab);
-                    
+
                     println!("{r}-{g}-{b}");
 
                     assert_approx_eq!(f64, f64::from(converted.red), f64::from(r), epsilon = 1.5);
