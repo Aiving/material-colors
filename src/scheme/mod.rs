@@ -45,6 +45,7 @@ pub struct Scheme {
     pub on_error_container: Argb,
     pub surface_dim: Argb,
     pub surface: Argb,
+    pub surface_tint: Argb,
     pub surface_bright: Argb,
     pub surface_container_lowest: Argb,
     pub surface_container_low: Argb,
@@ -101,6 +102,7 @@ impl fmt::Display for Scheme {
             .field("on_error_container", &self.on_error_container)
             .field("surface_dim", &self.surface_dim)
             .field("surface", &self.surface)
+            .field("surface_tint", &self.surface_tint)
             .field("surface_bright", &self.surface_bright)
             .field("surface_container_lowest", &self.surface_container_lowest)
             .field("surface_container_low", &self.surface_container_low)
@@ -155,6 +157,7 @@ impl Scheme {
         on_error_container: Argb,
         surface_dim: Argb,
         surface: Argb,
+        surface_tint: Argb,
         surface_bright: Argb,
         surface_container_lowest: Argb,
         surface_container_low: Argb,
@@ -205,6 +208,7 @@ impl Scheme {
             on_error_container,
             surface_dim,
             surface,
+            surface_tint,
             surface_bright,
             surface_container_lowest,
             surface_container_low,
@@ -260,6 +264,7 @@ impl From<DynamicScheme> for Scheme {
             scheme.on_error_container(),
             scheme.surface_dim(),
             scheme.surface(),
+            scheme.surface_tint(),
             scheme.surface_bright(),
             scheme.surface_container_lowest(),
             scheme.surface_container_low(),
@@ -284,7 +289,7 @@ impl From<DynamicScheme> for Scheme {
 impl IntoIterator for Scheme {
     type Item = (String, Argb);
 
-    type IntoIter = IntoIter<(String, Argb), 48>;
+    type IntoIter = IntoIter<(String, Argb), 49>;
 
     fn into_iter(self) -> Self::IntoIter {
         [
@@ -328,6 +333,7 @@ impl IntoIterator for Scheme {
             ("on_error_container".into(), self.on_error_container),
             ("surface_dim".into(), self.surface_dim),
             ("surface".into(), self.surface),
+            ("surface_tint".into(), self.surface_tint),
             ("surface_bright".into(), self.surface_bright),
             (
                 "surface_container_lowest".into(),
