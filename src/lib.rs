@@ -16,8 +16,8 @@
     clippy::missing_panics_doc,
     clippy::missing_errors_doc,
     clippy::implicit_hasher,  // we use ahash on Scheme
-    // clippy::suboptimal_flops, // some more cases can be optimized
     // nursery lints for later
+    clippy::while_float,
     clippy::large_stack_frames,
     clippy::cognitive_complexity
 )]

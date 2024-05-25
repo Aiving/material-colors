@@ -372,9 +372,9 @@ impl HctSolver {
     /// Returns the intersection point of:
     /// - the segment with [source] and [target] as its endpoints, and
     /// - the plane
-    /// ... R = [coordinate] if [axis] == 0
-    /// ... G = [coordinate] if [axis] == 1
-    /// ... B = [coordinate] if [axis] == 2
+    ///   ... R = [coordinate] if [axis] == 0
+    ///   ... G = [coordinate] if [axis] == 1
+    ///   ... B = [coordinate] if [axis] == 2
     fn set_coordinate(
         source: [f64; 3],
         coordinate: f64,

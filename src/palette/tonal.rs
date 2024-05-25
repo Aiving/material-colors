@@ -21,9 +21,9 @@ use super::Palette;
 /// This class can be instantiated in two ways:
 /// 1. [of] From hue and chroma. (preferred)
 /// 2. [fromList] From a fixed-size ([TonalPalette.commonSize]) list of ints
-/// representing ARBG colors. Correctness (constant hue and chroma) of the input
-/// is not enforced. [get] will only return the input colors, corresponding to
-/// [commonTones].
+///    representing ARBG colors. Correctness (constant hue and chroma) of the input
+///    is not enforced. [get] will only return the input colors, corresponding to
+///    [commonTones].
 #[derive(Clone, Copy, Debug, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct TonalPalette {

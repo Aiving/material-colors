@@ -24,9 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `mod:scheme/content`
   - `mod:utils/math`
 
+- **changed**: Allow `clippy:while_float` lint
 - **fixed**: Fix stack overflow in `struct:QuantizerWu` creation
 - **fixed**: Fix `func:on_secondary_container` in `struct:MaterialDynamicColors`
 - **fixed**: Fix `func:critical_plane_below` and `func:critical_plane_above` in `struct:HctSolver`
+- **fixed**: Fix `clippy:doc_lazy_continuation` lint in `mod:hct/solver` and `mod:palette/tonal`
 
 ## 0.3.2 (May 8th, 2024)
 
