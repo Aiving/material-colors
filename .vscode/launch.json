@@ -1,0 +1,65 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'material_colors'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=material-colors"
+                ],
+                "filter": {
+                    "name": "material_colors",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'theme'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=theme",
+                    "--package=material-colors"
+                ],
+                "filter": {
+                    "name": "theme",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'image'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=image",
+                    "--package=material-colors"
+                ],
+                "filter": {
+                    "name": "image",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

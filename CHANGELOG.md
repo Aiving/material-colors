@@ -8,25 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - **added**: Add tests for:
-  - 🟢 `mod:blend`
-  - 🟢 `mod:contrast`
-  - 🟢 `mod:dislike`
-  - 🟢 `mod:dynamic_color/dynamic_scheme`
-  - ⭕ `mod:dynamic_color`
-  - 🟢 `mod:hct/cam16`
-  - 🟢 `mod:hct`
-  - 🟢 `mod:hct/viewing_conditions`
-  - ⭕ `mod:palette/core`
-  - ⭕ `mod:palette/tonal`
-  - 🟢 `mod:quantize/quantizer_celebi`
-  - 🟢 `mod:quantize/quantizer_wsmeans`
-  - 🟢 `mod:quantize/quantizer_wu`
-  - 🟢 `mod:scheme/content`
-  - 🟢 `mod:utils/math`
+  - `mod:blend`
+  - `mod:contrast`
+  - `mod:dislike`
+  - `mod:dynamic_color/dynamic_scheme`
+  - `mod:dynamic_color`
+  - `mod:hct/cam16`
+  - `mod:hct`
+  - `mod:hct/viewing_conditions`
+  - `mod:palette/core`
+  - `mod:palette/tonal`
+  - `mod:quantize/quantizer_celebi`
+  - `mod:quantize/quantizer_wsmeans`
+  - `mod:quantize/quantizer_wu`
+  - `mod:scheme/content`
+  - `mod:utils/math`
 
-(Tests marked with a empty red circle are currently failing)
-
-- **fixed**: Fix stack overflow in QuantizerWu creation
+- **fixed**: Fix stack overflow in `struct:QuantizerWu` creation
+- **fixed**: Fix `func:on_secondary_container` in `struct:MaterialDynamicColors`
+- **fixed**: Fix `func:critical_plane_below` and `func:critical_plane_above` in `struct:HctSolver`
 
 ## 0.3.2 (May 8th, 2024)
 
@@ -70,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **added:** Add support for the serde with the `serde` feature
 - **changed:** Update dependencies
 - **changed:** Update tests
-- **fixed:** Fix `secondary_container` color in dynamic colors
+- **fixed:** Fix `func:secondary_container` in `struct:MaterialDynamicColors`
 
 ## 0.1.6 (February 2nd, 2024)
 

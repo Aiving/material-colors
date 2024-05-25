@@ -322,7 +322,13 @@ impl MaterialDynamicColors {
 
     define_key! {
       background secondary_container => secondary_palette;
-      [tone, scheme] => if _is_monochrome(scheme) { if scheme.is_dark { 30.0 } else { 85.0 } } else if _is_fidelity(scheme) { if scheme.is_dark { 30.0 } else { 90.0 } } else { Self::_find_desired_chroma_by_tone(scheme.secondary_palette.hue(), scheme.secondary_palette.chroma(), if scheme.is_dark { 30.0 } else { 90.0 }, !scheme.is_dark) };
+      [tone, scheme] => {
+        let initial_tone = if scheme.is_dark { 30.0 } else { 90.0 };
+
+        if _is_monochrome(scheme) { if scheme.is_dark { 30.0 } else { 90.0 } }
+        else if !_is_fidelity(scheme) { initial_tone }
+        else { Self::_find_desired_chroma_by_tone(scheme.secondary_palette.hue(), scheme.secondary_palette.chroma(), initial_tone, !scheme.is_dark) }
+      };
       [background, scheme] => Self::highest_surface(scheme);
       [contrast_curve] => ContrastCurve { low: 1.0, normal: 1.0, medium: 3.0, high: 4.5 };
       [tone_delta_pair, _scheme] => ToneDeltaPair::new(Self::secondary_container(), Self::secondary(), 10.0, TonePolarity::Nearer, false);
@@ -330,8 +336,14 @@ impl MaterialDynamicColors {
 
     define_key! {
       on_secondary_container => secondary_palette;
-      [tone, scheme] => if _is_fidelity(scheme) { DynamicColor::foreground_tone(Self::secondary_container().get_tone(scheme), 4.5) } else if scheme.is_dark { 90.0 } else { 10.0 };
-      [background, scheme] => Self::highest_surface(scheme);
+      [tone, scheme] => if _is_fidelity(scheme) {
+        DynamicColor::foreground_tone((Self::secondary_container().tone)(scheme), 4.5)
+      } else if scheme.is_dark {
+        90.0
+      } else {
+        10.0
+      };
+      [background, _scheme] => Self::secondary_container();
       [contrast_curve] => ContrastCurve { low: 4.5, normal: 7.0, medium: 11.0, high: 21.0 };
     }
 

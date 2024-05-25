@@ -414,7 +414,7 @@ impl QuantizerWu {
         }
     }
 
-    pub fn volume(cube: &Cube, moment: &Box<[i64; TOTAL_SIZE]>) -> i64 {
+    pub fn volume(cube: &Cube, moment: &[i64; TOTAL_SIZE]) -> i64 {
         moment[Self::get_index::<u8>(cube.r(1), cube.g(1), cube.b(1))]
             - moment[Self::get_index::<u8>(cube.r(1), cube.g(1), cube.b(0))]
             - moment[Self::get_index::<u8>(cube.r(1), cube.g(0), cube.b(1))]
@@ -425,7 +425,7 @@ impl QuantizerWu {
             - moment[Self::get_index::<u8>(cube.r(0), cube.g(0), cube.b(0))]
     }
 
-    pub fn bottom(cube: &Cube, direction: &Direction, moment: &Box<[i64; TOTAL_SIZE]>) -> i64 {
+    pub fn bottom(cube: &Cube, direction: &Direction, moment: &[i64; TOTAL_SIZE]) -> i64 {
         match direction {
             Direction::Red => {
                 -moment[Self::get_index::<u8>(cube.r(0), cube.g(1), cube.b(1))]
@@ -448,7 +448,12 @@ impl QuantizerWu {
         }
     }
 
-    pub fn top(cube: &Cube, direction: &Direction, position: i32, moment: &Box<[i64; TOTAL_SIZE]>) -> i64 {
+    pub fn top(
+        cube: &Cube,
+        direction: &Direction,
+        position: i32,
+        moment: &[i64; TOTAL_SIZE],
+    ) -> i64 {
         match direction {
             Direction::Red => {
                 moment[Self::get_index(position as usize, cube.g(1), cube.b(1))]

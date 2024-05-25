@@ -494,12 +494,12 @@ impl HctSolver {
         ]
     }
 
-    fn critical_plane_below(x: f64) -> u8 {
-        (x - 0.5).floor() as u8
+    fn critical_plane_below(x: f64) -> i16 {
+        (x - 0.5).floor() as i16
     }
 
-    fn critical_plane_above(x: f64) -> u8 {
-        (x - 0.5).ceil() as u8
+    fn critical_plane_above(x: f64) -> i16 {
+        (x - 0.5).ceil() as i16
     }
 
     /// Finds a color with the given Y and hue on the boundary of the
@@ -528,10 +528,11 @@ impl HctSolver {
                 };
 
                 for _ in 0..8 {
-                    if (i16::from(r_plane) - i16::from(l_plane)).abs() <= 1 {
+                    if (r_plane - l_plane).abs() <= 1 {
                         break;
                     }
-                    let m_plane = ((f32::from(l_plane) + f32::from(r_plane)) / 2.0).floor() as u8;
+
+                    let m_plane = ((f64::from(l_plane) + f64::from(r_plane)) / 2.0).floor() as i16;
                     let mid_plane_coordinate = CRITICAL_PLANES[m_plane as usize];
                     let mid = Self::set_coordinate(left, mid_plane_coordinate, right, axis);
                     let mid_hue = Self::hue_of(mid);
@@ -660,6 +661,7 @@ impl HctSolver {
         }
 
         let [red, green, blue] = Self::bisect_to_limit(y, hue_radians);
+
         let linrgb = LinearRgb { red, green, blue };
 
         linrgb.into()
