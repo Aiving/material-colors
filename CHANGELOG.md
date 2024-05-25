@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (Tests marked with a empty red circle are currently failing)
 
+- **fixed**: Fix stack overflow in QuantizerWu creation
+
 ## 0.3.2 (May 8th, 2024)
 
 - **added**: Add tests for `mod:color`

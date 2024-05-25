@@ -17,22 +17,22 @@ const SIDE_LENGTH: usize = (1 << INDEX_BITS) + 1;
 const TOTAL_SIZE: usize = SIDE_LENGTH.pow(3);
 
 pub struct QuantizerWu {
-    weights: [i64; TOTAL_SIZE],
-    moments_r: [i64; TOTAL_SIZE],
-    moments_g: [i64; TOTAL_SIZE],
-    moments_b: [i64; TOTAL_SIZE],
-    moments: [f64; TOTAL_SIZE],
+    weights: Box<[i64; TOTAL_SIZE]>,
+    moments_r: Box<[i64; TOTAL_SIZE]>,
+    moments_g: Box<[i64; TOTAL_SIZE]>,
+    moments_b: Box<[i64; TOTAL_SIZE]>,
+    moments: Box<[f64; TOTAL_SIZE]>,
     cubes: Vec<Cube>,
 }
 
 impl Default for QuantizerWu {
     fn default() -> Self {
         Self {
-            weights: [0; TOTAL_SIZE],
-            moments_r: [0; TOTAL_SIZE],
-            moments_g: [0; TOTAL_SIZE],
-            moments_b: [0; TOTAL_SIZE],
-            moments: [0.0; TOTAL_SIZE],
+            weights: Box::new([0; TOTAL_SIZE]),
+            moments_r: Box::new([0; TOTAL_SIZE]),
+            moments_g: Box::new([0; TOTAL_SIZE]),
+            moments_b: Box::new([0; TOTAL_SIZE]),
+            moments: Box::new([0.0; TOTAL_SIZE]),
             cubes: vec![],
         }
     }
@@ -72,11 +72,11 @@ impl QuantizerWu {
     }
 
     pub fn construct_histogram(&mut self, pixels: IndexMap<Argb, u32>) {
-        self.weights = [0; TOTAL_SIZE];
-        self.moments_r = [0; TOTAL_SIZE];
-        self.moments_g = [0; TOTAL_SIZE];
-        self.moments_b = [0; TOTAL_SIZE];
-        self.moments = [0.0; TOTAL_SIZE];
+        self.weights = Box::new([0; TOTAL_SIZE]);
+        self.moments_r = Box::new([0; TOTAL_SIZE]);
+        self.moments_g = Box::new([0; TOTAL_SIZE]);
+        self.moments_b = Box::new([0; TOTAL_SIZE]);
+        self.moments = Box::new([0.0; TOTAL_SIZE]);
 
         for (pixel, count) in pixels {
             let red = pixel.red;
@@ -414,7 +414,7 @@ impl QuantizerWu {
         }
     }
 
-    pub fn volume(cube: &Cube, moment: &[i64]) -> i64 {
+    pub fn volume(cube: &Cube, moment: &Box<[i64; TOTAL_SIZE]>) -> i64 {
         moment[Self::get_index::<u8>(cube.r(1), cube.g(1), cube.b(1))]
             - moment[Self::get_index::<u8>(cube.r(1), cube.g(1), cube.b(0))]
             - moment[Self::get_index::<u8>(cube.r(1), cube.g(0), cube.b(1))]
@@ -425,7 +425,7 @@ impl QuantizerWu {
             - moment[Self::get_index::<u8>(cube.r(0), cube.g(0), cube.b(0))]
     }
 
-    pub fn bottom(cube: &Cube, direction: &Direction, moment: &[i64]) -> i64 {
+    pub fn bottom(cube: &Cube, direction: &Direction, moment: &Box<[i64; TOTAL_SIZE]>) -> i64 {
         match direction {
             Direction::Red => {
                 -moment[Self::get_index::<u8>(cube.r(0), cube.g(1), cube.b(1))]
@@ -448,7 +448,7 @@ impl QuantizerWu {
         }
     }
 
-    pub fn top(cube: &Cube, direction: &Direction, position: i32, moment: &[i64]) -> i64 {
+    pub fn top(cube: &Cube, direction: &Direction, position: i32, moment: &Box<[i64; TOTAL_SIZE]>) -> i64 {
         match direction {
             Direction::Red => {
                 moment[Self::get_index(position as usize, cube.g(1), cube.b(1))]
