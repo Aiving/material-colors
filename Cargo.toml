@@ -1,6 +1,6 @@
 [package]
 name = "material-colors"
-version = "0.3.2"
+version = "0.3.3"
 edition = "2021"
 description = "Up-to-date material-color-utilities port"
 documentation = "https://docs.rs/material-colors"
@@ -15,7 +15,7 @@ categories = ["graphics"]
 ahash = "0.8.11"
 indexmap = "2.2.6"
 images = { package = "image", version = "0.25.1", optional = true }
-serde = { version = "1.0.199", features = ["derive"], optional = true }
+serde = { version = "1.0.203", features = ["derive"], optional = true }
 
 [features]
 image = ["dep:images"]
