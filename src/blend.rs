@@ -51,7 +51,7 @@ pub fn cam16_ucs(from: Argb, to: Argb, amount: f64) -> Argb {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
+    use core::str::FromStr;
 
     use crate::color::Argb;
 

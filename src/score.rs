@@ -1,10 +1,13 @@
-use indexmap::IndexMap;
-
 use crate::{
     color::Argb,
     hct::Hct,
     utils::math::{difference_degrees, sanitize_degrees_int},
 };
+#[cfg(not(feature = "std"))]
+use alloc::{vec, vec::Vec};
+use indexmap::IndexMap;
+#[cfg(feature = "std")]
+use std::{vec, vec::Vec};
 
 #[derive(Debug)]
 struct ScoredHCT {
@@ -111,7 +114,8 @@ impl Score {
         }
 
         // Sorted so that colors with higher scores come first.
-        scored_hcts.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
+        // SAFETY: The score will never be NAN, so using `unwrap_unchecked` is completely safe
+        scored_hcts.sort_by(|a, b| unsafe { b.score.partial_cmp(&a.score).unwrap_unchecked() });
 
         // Iterates through potential hue differences in degrees in order to select
         // the colors with the largest distribution of hues possible. Starting at
@@ -158,330 +162,295 @@ impl Score {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
+    use super::Score;
+    use crate::color::Argb;
     use indexmap::IndexMap;
 
-    use crate::color::Argb;
-    use crate::Error;
-
-    use super::Score;
-
     #[test]
-    fn test_prioritizes_chroma() -> Result<(), Error> {
+    fn test_prioritizes_chroma() {
         let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_str("000000")?, 1),
-            (Argb::from_str("ffffff")?, 1),
-            (Argb::from_str("0000ff")?, 1),
+            (Argb::from_u32(0xff000000), 1),
+            (Argb::from_u32(0xffffffff), 1),
+            (Argb::from_u32(0xff0000ff), 1),
         ]);
 
         let ranked = Score::score(&argb_to_population, None, None, None);
 
         assert_eq!(ranked.len(), 1);
-        assert_eq!(ranked[0], Argb::from_str("0000ff")?);
-
-        Ok(())
+        assert_eq!(ranked[0], Argb::from_u32(0xff0000ff));
     }
 
     #[test]
-    fn test_prioritizes_chroma_when_proportions_equal() -> Result<(), Error> {
+    fn test_prioritizes_chroma_when_proportions_equal() {
         let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_str("ff0000")?, 1),
-            (Argb::from_str("00ff00")?, 1),
-            (Argb::from_str("0000ff")?, 1),
+            (Argb::from_u32(0xffff0000), 1),
+            (Argb::from_u32(0xff00ff00), 1),
+            (Argb::from_u32(0xff0000ff), 1),
         ]);
 
         let ranked = Score::score(&argb_to_population, None, None, None);
 
         assert_eq!(ranked.len(), 3);
-        assert_eq!(ranked[0], Argb::from_str("ff0000")?);
-        assert_eq!(ranked[1], Argb::from_str("00ff00")?);
-        assert_eq!(ranked[2], Argb::from_str("0000ff")?);
-
-        Ok(())
+        assert_eq!(ranked[0], Argb::from_u32(0xffff0000));
+        assert_eq!(ranked[1], Argb::from_u32(0xff00ff00));
+        assert_eq!(ranked[2], Argb::from_u32(0xff0000ff));
     }
 
     #[test]
-    fn test_generates_gblue_when_no_colors_available() -> Result<(), Error> {
+    fn test_generates_gblue_when_no_colors_available() {
         let argb_to_population: IndexMap<Argb, u32> =
-            IndexMap::from_iter([(Argb::from_str("000000")?, 1)]);
+            IndexMap::from_iter([(Argb::from_u32(0xff000000), 1)]);
 
         let ranked = Score::score(&argb_to_population, None, None, None);
 
         assert_eq!(ranked.len(), 1);
-        assert_eq!(ranked[0], Argb::from_str("4285f4")?);
-
-        Ok(())
+        assert_eq!(ranked[0], Argb::from_u32(0xff4285f4));
     }
 
     #[test]
-    fn test_dedupes_nearby_hues() -> Result<(), Error> {
+    fn test_dedupes_nearby_hues() {
         let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_str("008772")?, 1),
-            (Argb::from_str("318477")?, 1),
+            (Argb::from_u32(0xff008772), 1),
+            (Argb::from_u32(0xff318477), 1),
         ]);
 
         let ranked = Score::score(&argb_to_population, None, None, None);
 
         assert_eq!(ranked.len(), 1);
-        assert_eq!(ranked[0], Argb::from_str("008772")?);
-
-        Ok(())
+        assert_eq!(ranked[0], Argb::from_u32(0xff008772));
     }
 
     #[test]
-    fn test_maximizes_hue_distance() -> Result<(), Error> {
+    fn test_maximizes_hue_distance() {
         let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_str("008772")?, 1),
-            (Argb::from_str("008587")?, 1),
-            (Argb::from_str("007ebc")?, 1),
+            (Argb::from_u32(0xff008772), 1),
+            (Argb::from_u32(0xff008587), 1),
+            (Argb::from_u32(0xff007ebc), 1),
         ]);
 
         let ranked = Score::score(&argb_to_population, Some(2), None, None);
 
         assert_eq!(ranked.len(), 2);
-        assert_eq!(ranked[0], Argb::from_str("007ebc")?);
-        assert_eq!(ranked[1], Argb::from_str("008772")?);
-
-        Ok(())
+        assert_eq!(ranked[0], Argb::from_u32(0xff007ebc));
+        assert_eq!(ranked[1], Argb::from_u32(0xff008772));
     }
 
     #[test]
-    fn test_generated_scenario_one() -> Result<(), Error> {
+    fn test_generated_scenario_one() {
         let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_str("7ea16d")?, 67),
-            (Argb::from_str("d8ccae")?, 67),
-            (Argb::from_str("835c0d")?, 49),
+            (Argb::from_u32(0xff7ea16d), 67),
+            (Argb::from_u32(0xffd8ccae), 67),
+            (Argb::from_u32(0xff835c0d), 49),
         ]);
 
         let ranked = Score::score(
             &argb_to_population,
             Some(3),
-            Some(Argb::from_str("8d3819")?),
+            Some(Argb::from_u32(0xff8d3819)),
             Some(false),
         );
 
         assert_eq!(ranked.len(), 3);
-        assert_eq!(ranked[0], Argb::from_str("7ea16d")?);
-        assert_eq!(ranked[1], Argb::from_str("d8ccae")?);
-        assert_eq!(ranked[2], Argb::from_str("835c0d")?);
-
-        Ok(())
+        assert_eq!(ranked[0], Argb::from_u32(0xff7ea16d));
+        assert_eq!(ranked[1], Argb::from_u32(0xffd8ccae));
+        assert_eq!(ranked[2], Argb::from_u32(0xff835c0d));
     }
 
     #[test]
-    fn test_generated_scenario_two() -> Result<(), Error> {
+    fn test_generated_scenario_two() {
         let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_str("d33881")?, 14),
-            (Argb::from_str("3205cc")?, 77),
-            (Argb::from_str("0b48cf")?, 36),
-            (Argb::from_str("a08f5d")?, 81),
+            (Argb::from_u32(0xffd33881), 14),
+            (Argb::from_u32(0xff3205cc), 77),
+            (Argb::from_u32(0xff0b48cf), 36),
+            (Argb::from_u32(0xffa08f5d), 81),
         ]);
 
         let ranked = Score::score(
             &argb_to_population,
             None,
-            Some(Argb::from_str("7d772b")?),
+            Some(Argb::from_u32(0xff7d772b)),
             None,
         );
 
         assert_eq!(ranked.len(), 3);
-        assert_eq!(ranked[0], Argb::from_str("3205cc")?);
-        assert_eq!(ranked[1], Argb::from_str("a08f5d")?);
-        assert_eq!(ranked[2], Argb::from_str("d33881")?);
-
-        Ok(())
+        assert_eq!(ranked[0], Argb::from_u32(0xff3205cc));
+        assert_eq!(ranked[1], Argb::from_u32(0xffa08f5d));
+        assert_eq!(ranked[2], Argb::from_u32(0xffd33881));
     }
 
     #[test]
-    fn test_generated_scenario_three() -> Result<(), Error> {
+    fn test_generated_scenario_three() {
         let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_str("be94a6")?, 23),
-            (Argb::from_str("c33fd7")?, 42),
-            (Argb::from_str("899f36")?, 90),
-            (Argb::from_str("94c574")?, 82),
+            (Argb::from_u32(0xffbe94a6), 23),
+            (Argb::from_u32(0xffc33fd7), 42),
+            (Argb::from_u32(0xff899f36), 90),
+            (Argb::from_u32(0xff94c574), 82),
         ]);
 
         let ranked = Score::score(
             &argb_to_population,
             Some(3),
-            Some(Argb::from_str("aa79a4")?),
+            Some(Argb::from_u32(0xffaa79a4)),
             None,
         );
 
         assert_eq!(ranked.len(), 3);
-        assert_eq!(ranked[0], Argb::from_str("94c574")?);
-        assert_eq!(ranked[1], Argb::from_str("c33fd7")?);
-        assert_eq!(ranked[2], Argb::from_str("be94a6")?);
-
-        Ok(())
+        assert_eq!(ranked[0], Argb::from_u32(0xff94c574));
+        assert_eq!(ranked[1], Argb::from_u32(0xffc33fd7));
+        assert_eq!(ranked[2], Argb::from_u32(0xffbe94a6));
     }
 
     #[test]
-    fn test_generated_scenario_four() -> Result<(), Error> {
+    fn test_generated_scenario_four() {
         let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_str("df241c")?, 85),
-            (Argb::from_str("685859")?, 44),
-            (Argb::from_str("d06d5f")?, 34),
-            (Argb::from_str("561c54")?, 27),
-            (Argb::from_str("713090")?, 88),
+            (Argb::from_u32(0xffdf241c), 85),
+            (Argb::from_u32(0xff685859), 44),
+            (Argb::from_u32(0xffd06d5f), 34),
+            (Argb::from_u32(0xff561c54), 27),
+            (Argb::from_u32(0xff713090), 88),
         ]);
 
         let ranked = Score::score(
             &argb_to_population,
             Some(5),
-            Some(Argb::from_str("58c19c")?),
+            Some(Argb::from_u32(0xff58c19c)),
             Some(false),
         );
 
         assert_eq!(ranked.len(), 2);
-        assert_eq!(ranked[0], Argb::from_str("df241c")?);
-        assert_eq!(ranked[1], Argb::from_str("561c54")?);
-
-        Ok(())
+        assert_eq!(ranked[0], Argb::from_u32(0xffdf241c));
+        assert_eq!(ranked[1], Argb::from_u32(0xff561c54));
     }
 
     #[test]
-    fn test_generated_scenario_five() -> Result<(), Error> {
+    fn test_generated_scenario_five() {
         let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_str("be66f8")?, 41),
-            (Argb::from_str("4bbda9")?, 88),
-            (Argb::from_str("80f6f9")?, 44),
-            (Argb::from_str("ab8017")?, 43),
-            (Argb::from_str("e89307")?, 65),
+            (Argb::from_u32(0xffbe66f8), 41),
+            (Argb::from_u32(0xff4bbda9), 88),
+            (Argb::from_u32(0xff80f6f9), 44),
+            (Argb::from_u32(0xffab8017), 43),
+            (Argb::from_u32(0xffe89307), 65),
         ]);
 
         let ranked = Score::score(
             &argb_to_population,
             Some(3),
-            Some(Argb::from_str("916691")?),
+            Some(Argb::from_u32(0xff916691)),
             Some(false),
         );
 
         assert_eq!(ranked.len(), 3);
-        assert_eq!(ranked[0], Argb::from_str("ab8017")?);
-        assert_eq!(ranked[1], Argb::from_str("4bbda9")?);
-        assert_eq!(ranked[2], Argb::from_str("be66f8")?);
-
-        Ok(())
+        assert_eq!(ranked[0], Argb::from_u32(0xffab8017));
+        assert_eq!(ranked[1], Argb::from_u32(0xff4bbda9));
+        assert_eq!(ranked[2], Argb::from_u32(0xffbe66f8));
     }
 
     #[test]
-    fn test_generated_scenario_six() -> Result<(), Error> {
+    fn test_generated_scenario_six() {
         let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_str("18ea8f")?, 93),
-            (Argb::from_str("327593")?, 18),
-            (Argb::from_str("066a18")?, 74),
-            (Argb::from_str("fa8a23")?, 62),
-            (Argb::from_str("04ca1f")?, 65),
+            (Argb::from_u32(0xff18ea8f), 93),
+            (Argb::from_u32(0xff327593), 18),
+            (Argb::from_u32(0xff066a18), 74),
+            (Argb::from_u32(0xfffa8a23), 62),
+            (Argb::from_u32(0xff04ca1f), 65),
         ]);
 
         let ranked = Score::score(
             &argb_to_population,
             Some(2),
-            Some(Argb::from_str("4c377a")?),
+            Some(Argb::from_u32(0xff4c377a)),
             Some(false),
         );
 
         assert_eq!(ranked.len(), 2);
-        assert_eq!(ranked[0], Argb::from_str("18ea8f")?);
-        assert_eq!(ranked[1], Argb::from_str("fa8a23")?);
-
-        Ok(())
+        assert_eq!(ranked[0], Argb::from_u32(0xff18ea8f));
+        assert_eq!(ranked[1], Argb::from_u32(0xfffa8a23));
     }
 
     #[test]
-    fn test_generated_scenario_seven() -> Result<(), Error> {
+    fn test_generated_scenario_seven() {
         let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_str("2e05ed")?, 23),
-            (Argb::from_str("153e55")?, 90),
-            (Argb::from_str("9ab220")?, 23),
-            (Argb::from_str("153379")?, 66),
-            (Argb::from_str("68bcc3")?, 81),
+            (Argb::from_u32(0xff2e05ed), 23),
+            (Argb::from_u32(0xff153e55), 90),
+            (Argb::from_u32(0xff9ab220), 23),
+            (Argb::from_u32(0xff153379), 66),
+            (Argb::from_u32(0xff68bcc3), 81),
         ]);
 
         let ranked = Score::score(
             &argb_to_population,
             Some(2),
-            Some(Argb::from_str("f588dc")?),
+            Some(Argb::from_u32(0xfff588dc)),
             None,
         );
 
         assert_eq!(ranked.len(), 2);
-        assert_eq!(ranked[0], Argb::from_str("2e05ed")?);
-        assert_eq!(ranked[1], Argb::from_str("9ab220")?);
-
-        Ok(())
+        assert_eq!(ranked[0], Argb::from_u32(0xff2e05ed));
+        assert_eq!(ranked[1], Argb::from_u32(0xff9ab220));
     }
 
     #[test]
-    fn test_generated_scenario_eight() -> Result<(), Error> {
+    fn test_generated_scenario_eight() {
         let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_str("816ec5")?, 24),
-            (Argb::from_str("6dcb94")?, 19),
-            (Argb::from_str("3cae91")?, 98),
-            (Argb::from_str("5b542f")?, 25),
+            (Argb::from_u32(0xff816ec5), 24),
+            (Argb::from_u32(0xff6dcb94), 19),
+            (Argb::from_u32(0xff3cae91), 98),
+            (Argb::from_u32(0xff5b542f), 25),
         ]);
 
         let ranked = Score::score(
             &argb_to_population,
             Some(1),
-            Some(Argb::from_str("84b0fd")?),
+            Some(Argb::from_u32(0xff84b0fd)),
             Some(false),
         );
 
         assert_eq!(ranked.len(), 1);
-        assert_eq!(ranked[0], Argb::from_str("3cae91")?);
-
-        Ok(())
+        assert_eq!(ranked[0], Argb::from_u32(0xff3cae91));
     }
 
     #[test]
-    fn test_generated_scenario_nine() -> Result<(), Error> {
+    fn test_generated_scenario_nine() {
         let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_str("206f86")?, 52),
-            (Argb::from_str("4a620d")?, 96),
-            (Argb::from_str("f51401")?, 85),
-            (Argb::from_str("2b8ebf")?, 3),
-            (Argb::from_str("277766")?, 59),
+            (Argb::from_u32(0xff206f86), 52),
+            (Argb::from_u32(0xff4a620d), 96),
+            (Argb::from_u32(0xfff51401), 85),
+            (Argb::from_u32(0xff2b8ebf), 3),
+            (Argb::from_u32(0xff277766), 59),
         ]);
 
         let ranked = Score::score(
             &argb_to_population,
             Some(3),
-            Some(Argb::from_str("02b415")?),
+            Some(Argb::from_u32(0xff02b415)),
             None,
         );
 
         assert_eq!(ranked.len(), 3);
-        assert_eq!(ranked[0], Argb::from_str("f51401")?);
-        assert_eq!(ranked[1], Argb::from_str("4a620d")?);
-        assert_eq!(ranked[2], Argb::from_str("2b8ebf")?);
-
-        Ok(())
+        assert_eq!(ranked[0], Argb::from_u32(0xfff51401));
+        assert_eq!(ranked[1], Argb::from_u32(0xff4a620d));
+        assert_eq!(ranked[2], Argb::from_u32(0xff2b8ebf));
     }
 
     #[test]
-    fn test_generated_scenario_ten() -> Result<(), Error> {
+    fn test_generated_scenario_ten() {
         let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_str("8b1d99")?, 54),
-            (Argb::from_str("27effe")?, 43),
-            (Argb::from_str("6f558d")?, 2),
-            (Argb::from_str("77fdf2")?, 78),
+            (Argb::from_u32(0xff8b1d99), 54),
+            (Argb::from_u32(0xff27effe), 43),
+            (Argb::from_u32(0xff6f558d), 2),
+            (Argb::from_u32(0xff77fdf2), 78),
         ]);
 
         let ranked = Score::score(
             &argb_to_population,
             None,
-            Some(Argb::from_str("5e7a10")?),
+            Some(Argb::from_u32(0xff5e7a10)),
             None,
         );
 
         assert_eq!(ranked.len(), 3);
-        assert_eq!(ranked[0], Argb::from_str("27effe")?);
-        assert_eq!(ranked[1], Argb::from_str("8b1d99")?);
-        assert_eq!(ranked[2], Argb::from_str("6f558d")?);
-
-        Ok(())
+        assert_eq!(ranked[0], Argb::from_u32(0xff27effe));
+        assert_eq!(ranked[1], Argb::from_u32(0xff8b1d99));
+        assert_eq!(ranked[2], Argb::from_u32(0xff6f558d));
     }
 }

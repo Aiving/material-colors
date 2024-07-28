@@ -5,9 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.4.0 (July 29th, 2024)
 
+- **added**: Add support for `no_std` environments
 - **added**: Add `surface_tint` color
+- **added**: Add MSRV in `README`
+- **changed**: Code cleanup, imports organizing
+- **changed**: Now the use of `image` feature requires `std` feature
+- **changed**: Update dependencies
+  - **`image`**: `v0.25.1` -> `v0.25.2`
+  - **`serde`**: `v1.0.203` -> `v1.0.204`
+- **changed**: Update dev-dependencies
+  - **`reqwest`**: `v0.12.4` -> `v0.12.5`
+  - **`tokio`**: `v1.37.0` -> `v1.39.2`
+- **changed**: Remove `image` from dev-dependencies
 - **changed**: Update tests
 
 ## 0.3.3 (May 25th, 2024)

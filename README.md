@@ -11,7 +11,7 @@ use std::str::FromStr;
 use material_colors::{color::Argb, theme::ThemeBuilder};
 
 fn main() {
-    let theme = ThemeBuilder::with_source(Argb::from_str("aae5a4").unwrap()).build();
+    let theme = ThemeBuilder::with_source(Argb::from_32(0xffaae5a4)).build();
 
     // Do whatever you want...
 }
@@ -48,3 +48,7 @@ async fn main() -> Result<(), reqwest::Error> {
     Ok(())
 }
 ```
+
+## MSRV
+
+The Minimum Supported Rust Version is currently 1.63.0.

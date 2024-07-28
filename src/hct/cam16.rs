@@ -1,9 +1,9 @@
-use std::f64::consts::PI;
-
-use crate::color::{Argb, Xyz};
-use crate::utils::math::signum;
-
 use super::ViewingConditions;
+use crate::{
+    color::{Argb, Xyz},
+    utils::math::signum,
+};
+use core::f64::consts::PI;
 
 /// CAM16, a color appearance model. Colors are not just defined by their hex
 /// code, but rather, a hex code and viewing conditions.
@@ -90,7 +90,11 @@ impl Cam16 {
     }
 
     /// Given color expressed in Xyz and viewed in `viewing_conditions`, convert to
+    /// Cam16
     ///
+    /// # Panics
+    ///
+    /// Will panic if the hue is between 0 and 360
     pub fn from_xyz_in_viewing_conditions(
         x: f64,
         y: f64,
@@ -315,12 +319,9 @@ impl From<Cam16> for Argb {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
+    use crate::{color::Argb, hct::Cam16};
+    use core::str::FromStr;
     use float_cmp::assert_approx_eq;
-
-    use crate::color::Argb;
-    use crate::hct::Cam16;
 
     #[test]
     fn test_cam16() {

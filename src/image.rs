@@ -1,13 +1,11 @@
+use crate::{color::Argb, quantize::Quantizer, quantize::QuantizerCelebi, score::Score};
+pub use images::imageops::FilterType;
+use images::{imageops::resize, ImageReader as Reader, RgbaImage};
 use std::{
     io::{Cursor, Result},
     path::Path,
+    vec::Vec,
 };
-
-pub use images::imageops::FilterType;
-
-use images::{imageops::resize, io::Reader, RgbaImage};
-
-use crate::{color::Argb, quantize::Quantizer, quantize::QuantizerCelebi, score::Score};
 
 pub struct Image {
     image: RgbaImage,
@@ -81,7 +79,7 @@ impl ImageReader {
         I: AsPixels,
     {
         let pixels = image.as_pixels();
-        let result = QuantizerCelebi.quantize(&pixels, 128, None);
+        let result = QuantizerCelebi.quantize(&pixels, 128);
         let ranked = Score::score(&result.color_to_count, None, None, None);
 
         ranked[0]

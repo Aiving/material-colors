@@ -5,9 +5,12 @@ use crate::{
     palette::{CorePalette, Palette, TonalPalette},
     scheme::Scheme,
 };
-
+#[cfg(not(feature = "std"))]
+use alloc::{string::String, vec::Vec};
 #[cfg(feature = "serde")]
 use serde::Serialize;
+#[cfg(feature = "std")]
+use std::{string::String, vec::Vec};
 
 /// Custom color used to pair with a theme
 #[derive(Debug)]

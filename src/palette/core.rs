@@ -1,13 +1,11 @@
-use std::fmt;
-
-use crate::{color::Argb, hct::Cam16};
-
 use super::TonalPalette;
+use crate::{color::Argb, hct::Cam16};
+use core::fmt;
 
 /// An intermediate concept between the key color for a UI theme, and a full
 /// color scheme. 5 tonal palettes are generated, all except one use the same
 /// hue as the key color, and all vary in chroma.
-#[derive(Debug)]
+#[derive(Debug, Hash, PartialEq, Eq)]
 pub struct CorePalette {
     pub primary: TonalPalette,
     pub secondary: TonalPalette,
@@ -86,16 +84,6 @@ impl fmt::Display for CorePalette {
     }
 }
 
-impl PartialEq for CorePalette {
-    fn eq(&self, other: &Self) -> bool {
-        self.primary == other.primary
-            && self.secondary == other.secondary
-            && self.tertiary == other.tertiary
-            && self.neutral == other.neutral
-            && self.neutral_variant == other.neutral_variant
-    }
-}
-
 // Returns a partition from a list.
 //
 // For example, given a list with 2 partitions of size 3.
@@ -109,20 +97,17 @@ fn _get_partition(list: &[i32], partition_number: usize, partition_size: usize) 
 
 #[cfg(test)]
 mod tests {
-    // use std::hash::{DefaultHasher, Hash, Hasher};
+    use crate::{color::Argb, palette::CorePalette};
+    use ahash::AHasher;
+    use core::hash::{Hash, Hasher};
 
-    use crate::color::Argb;
-    use crate::palette::CorePalette;
+    fn hash_value<T: Hash>(value: &T) -> u64 {
+        let mut hasher = AHasher::default();
 
-    /*
-        fn hash_value<T: Hash>(value: T) -> u64 {
-           let mut hasher = DefaultHasher::new();
+        value.hash(&mut hasher);
 
-           value.hash(&mut hasher);
-
-           hasher.finish()
-        }
-    */
+        hasher.finish()
+    }
 
     #[test]
     fn test_equals_and_hash() {
@@ -133,9 +118,8 @@ mod tests {
         assert_eq!(core_palette_a, core_palette_b);
         assert!(core_palette_b != core_palette_c);
 
-        // We can't implement Hash trait for CorePalette because of f64
-        // assert_eq!(hash_value(core_palette_a), hash_value(core_palette_b));
-        // assert!(hash_value(core_palette_b) != hash_value(core_palette_c));
+        assert_eq!(hash_value(&core_palette_a), hash_value(&core_palette_b));
+        assert!(hash_value(&core_palette_b) != hash_value(&core_palette_c));
     }
 
     #[test]

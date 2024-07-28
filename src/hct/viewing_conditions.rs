@@ -1,9 +1,8 @@
-use std::f64::consts::PI;
-
 use crate::{
     color::{y_from_lstar, WHITE_POINT_D65},
     utils::math::lerp,
 };
+use core::f64::consts::PI;
 
 /// In traditional color spaces, a color can be identified solely by the
 /// observer's measurement of the color. Color appearance models such as CAM16
@@ -53,6 +52,10 @@ impl ViewingConditions {
     /// * `backgroundLstar` - average luminance of 10 degrees around color.
     /// * `surround` - brightness of the entire environment.
     /// * `discountingIlluminant` - whether eyes have adjusted to lighting.
+    ///
+    /// # Panics
+    ///
+    /// Will panic if the surround is equal or between 0.0 and 2.0
     pub fn make(
         white_point: Option<[f64; 3]>,
         adapting_luminance: Option<f64>,
@@ -177,9 +180,8 @@ impl ViewingConditions {
 
 #[cfg(test)]
 mod tests {
-    use float_cmp::assert_approx_eq;
-
     use super::ViewingConditions;
+    use float_cmp::assert_approx_eq;
 
     #[test]
     fn test_viewing_conditions() {

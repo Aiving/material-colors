@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use material_colors::{
     color::{Argb, Rgb},
     scheme::Scheme,
@@ -9,7 +7,7 @@ use material_colors::{
 
 #[test]
 fn test_theme() -> Result<(), Error> {
-    let theme = ThemeBuilder::with_source(Argb::from_str("ff0000")?).build();
+    let theme = ThemeBuilder::with_source(Argb::from_u32(0xffff0000)).build();
 
     assert_eq!(
         theme.schemes.dark,

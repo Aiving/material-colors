@@ -1,11 +1,13 @@
 #![allow(clippy::too_many_arguments)]
 
-use indexmap::IndexMap;
-use std::fmt;
-
-use crate::color::{Argb, Rgb};
-
 use super::{Quantizer, QuantizerMap, QuantizerResult};
+use crate::color::{Argb, Rgb};
+#[cfg(not(feature = "std"))]
+use alloc::{boxed::Box, vec, vec::Vec};
+use core::fmt;
+use indexmap::IndexMap;
+#[cfg(feature = "std")]
+use std::{boxed::Box, vec, vec::Vec};
 
 // A histogram of all the input colors is constructed. It has the shape of a
 //  The cube would be too large if it contained all 16 million colors:
@@ -39,13 +41,8 @@ impl Default for QuantizerWu {
 }
 
 impl Quantizer for QuantizerWu {
-    fn quantize(
-        &mut self,
-        pixels: &[Argb],
-        max_colors: usize,
-        _return_input_pixel_to_cluster_pixel: Option<bool>,
-    ) -> QuantizerResult {
-        let mut result = QuantizerMap.quantize(pixels, max_colors, None);
+    fn quantize(&mut self, pixels: &[Argb], max_colors: usize) -> QuantizerResult {
+        let mut result = QuantizerMap.quantize(pixels, max_colors);
 
         result.color_to_count.sort_by(|_, a, _, b| a.cmp(b));
 
@@ -533,9 +530,12 @@ impl fmt::Display for Cube {
 
 #[cfg(test)]
 mod tests {
-    use crate::color::Argb;
-
     use super::{Quantizer, QuantizerWu};
+    use crate::color::Argb;
+    #[cfg(not(feature = "std"))]
+    use alloc::vec::Vec;
+    #[cfg(feature = "std")]
+    use std::vec::Vec;
 
     const RED: Argb = Argb::from_u32(0xffff0000);
     const GREEN: Argb = Argb::from_u32(0xff00ff00);
@@ -546,8 +546,7 @@ mod tests {
 
     #[test]
     fn test_1rando() {
-        let mut wu = QuantizerWu::default();
-        let result = wu.quantize(&[Argb::from_u32(0xff14_1216)], MAX_COLORS, None);
+        let result = QuantizerWu::default().quantize(&[Argb::from_u32(0xff14_1216)], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
@@ -556,8 +555,7 @@ mod tests {
 
     #[test]
     fn test_1r() {
-        let mut wu = QuantizerWu::default();
-        let result = wu.quantize(&[RED], MAX_COLORS, None);
+        let result = QuantizerWu::default().quantize(&[RED], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
@@ -566,8 +564,7 @@ mod tests {
 
     #[test]
     fn test_1g() {
-        let mut wu = QuantizerWu::default();
-        let result = wu.quantize(&[GREEN], MAX_COLORS, None);
+        let result = QuantizerWu::default().quantize(&[GREEN], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
@@ -576,8 +573,7 @@ mod tests {
 
     #[test]
     fn test_1b() {
-        let mut wu = QuantizerWu::default();
-        let result = wu.quantize(&[BLUE], MAX_COLORS, None);
+        let result = QuantizerWu::default().quantize(&[BLUE], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
@@ -586,8 +582,7 @@ mod tests {
 
     #[test]
     fn test_5b() {
-        let mut wu = QuantizerWu::default();
-        let result = wu.quantize(&[BLUE, BLUE, BLUE, BLUE, BLUE], MAX_COLORS, None);
+        let result = QuantizerWu::default().quantize(&[BLUE, BLUE, BLUE, BLUE, BLUE], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
@@ -596,8 +591,7 @@ mod tests {
 
     #[test]
     fn test_2r_3g() {
-        let mut wu = QuantizerWu::default();
-        let result = wu.quantize(&[RED, RED, GREEN, GREEN, GREEN], MAX_COLORS, None);
+        let result = QuantizerWu::default().quantize(&[RED, RED, GREEN, GREEN, GREEN], MAX_COLORS);
 
         assert_eq!(result.color_to_count.keys().len(), 2);
 
@@ -607,8 +601,7 @@ mod tests {
 
     #[test]
     fn test_1r_1g_1b() {
-        let mut wu = QuantizerWu::default();
-        let result = wu.quantize(&[RED, GREEN, BLUE], MAX_COLORS, None);
+        let result = QuantizerWu::default().quantize(&[RED, GREEN, BLUE], MAX_COLORS);
 
         assert_eq!(result.color_to_count.keys().len(), 3);
 

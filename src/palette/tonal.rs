@@ -1,8 +1,4 @@
-use std::fmt;
-
-#[cfg(feature = "serde")]
-use serde::Serialize;
-
+use super::Palette;
 use crate::{
     color::Argb,
     dynamic_color::Variant,
@@ -12,8 +8,13 @@ use crate::{
         SchemeNeutral, SchemeRainbow, SchemeTonalSpot, SchemeVibrant,
     },
 };
-
-use super::Palette;
+use core::{
+    cmp::Ordering,
+    fmt,
+    hash::{Hash, Hasher},
+};
+#[cfg(feature = "serde")]
+use serde::Serialize;
 
 /// A convenience class for retrieving colors that are constant in hue and
 /// chroma, but vary in tone.
@@ -147,9 +148,25 @@ impl TonalPalette {
     }
 }
 
+impl Ord for TonalPalette {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
 impl PartialEq for TonalPalette {
     fn eq(&self, other: &Self) -> bool {
         self._hue == other._hue && self._chroma == other._chroma
+    }
+}
+
+impl Eq for TonalPalette {}
+
+impl Hash for TonalPalette {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self._hue.to_bits().hash(state);
+        self._chroma.to_bits().hash(state);
+        self._key_color.hash(state);
     }
 }
 
@@ -161,9 +178,7 @@ impl fmt::Display for TonalPalette {
 
 #[cfg(test)]
 mod tests {
-    use crate::color::Argb;
-    use crate::hct::Hct;
-    use crate::palette::TonalPalette;
+    use crate::{color::Argb, hct::Hct, palette::TonalPalette};
 
     #[test]
     fn test_of_tones_of_blue() {

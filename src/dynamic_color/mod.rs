@@ -1,13 +1,16 @@
 #![allow(clippy::too_many_arguments)]
 
-use ahash::HashMap;
-
 use crate::{
     color::Argb,
     contrast::{darker, darker_unsafe, lighter, lighter_unsafe, ratio_of_tones},
     hct::Hct,
     palette::TonalPalette,
+    Map,
 };
+#[cfg(not(feature = "std"))]
+use alloc::{boxed::Box, string::String, vec, vec::Vec};
+#[cfg(feature = "std")]
+use std::{boxed::Box, string::String, vec, vec::Vec};
 
 pub use {
     contrast_curve::ContrastCurve, dynamic_scheme::DynamicScheme,
@@ -52,7 +55,7 @@ pub struct DynamicColor {
     second_background: Option<Box<DynamicSchemeFn<DynamicColor>>>,
     contrast_curve: Option<ContrastCurve>,
     tone_delta_pair: Option<Box<DynamicSchemeFn<ToneDeltaPair>>>,
-    _hct_cache: HashMap<DynamicScheme, Hct>,
+    _hct_cache: Map<DynamicScheme, Hct>,
 }
 
 impl DynamicColor {
@@ -110,7 +113,7 @@ impl DynamicColor {
             second_background: second_background.map(Box::new),
             contrast_curve,
             tone_delta_pair: tone_delta_pair.map(Box::new),
-            _hct_cache: HashMap::default(),
+            _hct_cache: Map::default(),
         }
     }
 
@@ -149,7 +152,6 @@ impl DynamicColor {
     ///   contrast level is.
     /// - Returns: a tone, T in the HCT color space, that this `DynamicColor` is under
     ///   the conditions in `scheme`.
-    #[allow(clippy::useless_let_if_seq)]
     pub fn get_tone(&self, scheme: &DynamicScheme) -> f64 {
         let decreasing_contrast = scheme.contrast_level < 0.0;
 
@@ -188,25 +190,22 @@ impl DynamicColor {
             // If a color is good enough, it is not adjusted.
             // Initial and adjusted tones for `nearer`
             let n_initial_tone = (nearer.tone)(scheme);
-            let mut n_tone = if ratio_of_tones(bg_tone, n_initial_tone) >= n_contrast {
+            let mut n_tone = if decreasing_contrast {
+                Self::foreground_tone(bg_tone, n_contrast)
+            } else if ratio_of_tones(bg_tone, n_initial_tone) >= n_contrast {
                 n_initial_tone
             } else {
                 Self::foreground_tone(bg_tone, n_contrast)
             };
             // Initial and adjusted tones for `farther`
             let f_initial_tone = (farther.tone)(scheme);
-            let mut f_tone = if ratio_of_tones(bg_tone, f_initial_tone) >= f_contrast {
+            let mut f_tone = if decreasing_contrast {
+                Self::foreground_tone(bg_tone, f_contrast)
+            } else if ratio_of_tones(bg_tone, f_initial_tone) >= f_contrast {
                 f_initial_tone
             } else {
                 Self::foreground_tone(bg_tone, f_contrast)
             };
-
-            if decreasing_contrast {
-                // If decreasing contrast, adjust color to the "bare minimum"
-                // that satisfies contrast.
-                n_tone = Self::foreground_tone(bg_tone, n_contrast);
-                f_tone = Self::foreground_tone(bg_tone, f_contrast);
-            }
 
             if (f_tone - n_tone) * expansion_dir >= delta {
                 // Good! Tones satisfy the constraint; no change needed.
@@ -431,17 +430,15 @@ impl DynamicColor {
 
 #[cfg(test)]
 mod tests {
-    use ahash::HashMap;
-    use float_cmp::assert_approx_eq;
-
-    use crate::color::Argb;
-    use crate::contrast::ratio_of_tones;
-    use crate::hct::Hct;
-    use crate::scheme::variant::{
-        SchemeContent, SchemeFidelity, SchemeMonochrome, SchemeTonalSpot,
-    };
-
     use super::{DynamicColor, MaterialDynamicColors};
+    use crate::{
+        color::Argb,
+        contrast::ratio_of_tones,
+        hct::Hct,
+        scheme::variant::{SchemeContent, SchemeFidelity, SchemeMonochrome, SchemeTonalSpot},
+        Map,
+    };
+    use float_cmp::assert_approx_eq;
 
     #[test]
     fn test_contrast_pairs() {
@@ -454,7 +451,7 @@ mod tests {
 
         let contrast_levels = [-1.0, -0.5, 0.0, 0.5, 1.0];
 
-        let mut _colors: HashMap<&str, DynamicColor> = HashMap::from_iter([
+        let mut _colors: Map<&str, DynamicColor> = Map::from_iter([
             ("background", MaterialDynamicColors::background()),
             ("onBackground", MaterialDynamicColors::on_background()),
             ("surface", MaterialDynamicColors::surface()),
@@ -539,6 +536,7 @@ mod tests {
         for color in seed_colors {
             for contrast_level in contrast_levels {
                 for is_dark in [false, true] {
+                    #[allow(unused_variables)]
                     for (scheme_name, scheme) in [
                         (
                             "SchemeContent",
@@ -557,7 +555,8 @@ mod tests {
                             SchemeFidelity::new(color, is_dark, Some(contrast_level)).scheme,
                         ),
                     ] {
-                        println!("Scheme: {scheme_name}; Seed color: {color}; Contrast level: {contrast_level}; Dark: {is_dark}");
+                        #[cfg(feature = "std")]
+                        std::println!("Scheme: {scheme_name}; Seed color: {color}; Contrast level: {contrast_level}; Dark: {is_dark}");
 
                         for (fg_name, bg_name) in [
                             ("onPrimary", "primary"),

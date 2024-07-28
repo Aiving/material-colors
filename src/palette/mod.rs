@@ -1,4 +1,4 @@
-pub use core::CorePalette;
+pub use self::core::CorePalette;
 pub use tonal::TonalPalette;
 
 mod core;

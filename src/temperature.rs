@@ -1,7 +1,14 @@
-use ahash::HashMap;
-use std::cmp::Ordering;
-
-use crate::{color::Argb, color::Lab, hct::Hct, utils::math::sanitize_degrees_double};
+use crate::{
+    color::{Argb, Lab},
+    hct::Hct,
+    utils::math::sanitize_degrees_double,
+    Map,
+};
+#[cfg(not(feature = "std"))]
+use alloc::{vec, vec::Vec};
+use core::cmp::Ordering;
+#[cfg(feature = "std")]
+use std::{vec, vec::Vec};
 
 /// Design utilities using color temperature theory.
 ///
@@ -12,18 +19,24 @@ pub struct TemperatureCache {
 
     _hcts_by_temp: Vec<Hct>,
     _hcts_by_hue: Vec<Hct>,
-    _temps_by_hct: HashMap<Hct, f64>,
+    _temps_by_hct: Map<Hct, f64>,
     _input_relative_temperature: f64,
     _complement: Option<Hct>,
 }
 
 impl TemperatureCache {
+    /// # Panics
+    ///
+    /// Will panic if there is no warmest HCT
     pub fn warmest(&mut self) -> Hct {
         let hcts = self.hcts_by_temp();
 
         return *hcts.last().unwrap();
     }
 
+    /// # Panics
+    ///
+    /// Will panic if there is no coldest HCT
     pub fn coldest(&mut self) -> Hct {
         let hcts = self.hcts_by_temp();
 
@@ -35,7 +48,7 @@ impl TemperatureCache {
             input,
             _hcts_by_temp: vec![],
             _hcts_by_hue: vec![],
-            _temps_by_hct: HashMap::default(),
+            _temps_by_hct: Map::default(),
             _input_relative_temperature: -1.0,
             _complement: None,
         }
@@ -166,16 +179,25 @@ impl TemperatureCache {
     /// In art, this is usually described as being across the color wheel.
     /// History of this shows intent as a color that is just as cool-warm as the
     /// input color is warm-cool.
+    ///
+    /// # Panics
+    ///
+    /// Will panic if there is no coldest or warmest HCT
     pub fn complement(&mut self) -> Hct {
         if let Some(_complement) = &self._complement {
             return *_complement;
         }
 
-        let coldest_hue = self.coldest().get_hue();
-        let coldest_temp = self.temps_by_hct()[&self.coldest()];
+        let coldest_hct = self.coldest();
+        let warmest_hct = self.warmest();
 
-        let warmest_hue = self.warmest().get_hue();
-        let warmest_temp = self.temps_by_hct()[&self.warmest()];
+        let temps_by_hct = self.temps_by_hct();
+
+        let coldest_hue = coldest_hct.get_hue();
+        let coldest_temp = temps_by_hct[&coldest_hct];
+
+        let warmest_hue = warmest_hct.get_hue();
+        let warmest_temp = temps_by_hct[&warmest_hct];
 
         let range = warmest_temp - coldest_temp;
         let start_hue_is_coldest_to_warmest =
@@ -225,9 +247,13 @@ impl TemperatureCache {
     /// Temperature relative to all colors with the same chroma and tone.
     /// Value on a scale from 0 to 1.
     pub fn relative_temperature(&mut self, hct: &Hct) -> f64 {
-        let range = self.temps_by_hct()[&self.warmest()] - self.temps_by_hct()[&self.coldest()];
-        let difference_from_coldest =
-            self.temps_by_hct()[hct] - self.temps_by_hct()[&self.coldest()];
+        let coldest = self.coldest();
+        let warmest = self.warmest();
+
+        let temps_by_hct = self.temps_by_hct();
+
+        let range = temps_by_hct[&warmest] - temps_by_hct[&coldest];
+        let difference_from_coldest = temps_by_hct[hct] - temps_by_hct[&coldest];
 
         // Handle when there's no difference in temperature between warmest and
         // coldest: for example, at T100, only one color is available, white.
@@ -244,10 +270,16 @@ impl TemperatureCache {
             return self._input_relative_temperature;
         }
 
-        let coldest_temp = self.temps_by_hct()[&self.coldest()];
+        let coldest = self.coldest();
+        let warmest = self.warmest();
+        let input = self.input;
 
-        let range = self.temps_by_hct()[&self.warmest()] - coldest_temp;
-        let difference_from_coldest = self.temps_by_hct()[&self.input] - coldest_temp;
+        let temps_by_hct = self.temps_by_hct();
+
+        let coldest_temp = temps_by_hct[&coldest];
+
+        let range = temps_by_hct[&warmest] - coldest_temp;
+        let difference_from_coldest = temps_by_hct[&input] - coldest_temp;
         let input_relative_temp = if range == 0.0 {
             0.5
         } else {
@@ -261,9 +293,9 @@ impl TemperatureCache {
 
     /// HCTs for all hues, with the same chroma/tone as the input.
     /// Sorted from coldest first to warmest last.
-    pub fn hcts_by_temp(&mut self) -> Vec<Hct> {
+    pub fn hcts_by_temp(&mut self) -> &[Hct] {
         if !self._hcts_by_temp.is_empty() {
-            return self._hcts_by_temp.clone();
+            return &self._hcts_by_temp;
         }
 
         let mut hcts = self.hcts_by_hue();
@@ -273,7 +305,7 @@ impl TemperatureCache {
 
         self._hcts_by_temp = hcts;
 
-        self._hcts_by_temp.clone()
+        &self._hcts_by_temp
     }
 
     fn sort_by_temp(&mut self, this: &Hct, that: &Hct) -> Ordering {
@@ -284,16 +316,16 @@ impl TemperatureCache {
     }
 
     /// A Map with keys of HCTs in [`hctsByTemp`], values of raw temperature.
-    pub fn temps_by_hct(&mut self) -> HashMap<Hct, f64> {
+    pub fn temps_by_hct(&mut self) -> &Map<Hct, f64> {
         if !self._temps_by_hct.is_empty() {
-            return self._temps_by_hct.clone();
+            return &self._temps_by_hct;
         }
 
         let mut all_hcts = self.hcts_by_hue();
 
         all_hcts.push(self.input);
 
-        let mut temperatures_by_hct = HashMap::<Hct, f64>::default();
+        let mut temperatures_by_hct = Map::default();
 
         for e in all_hcts {
             temperatures_by_hct.insert(e, Self::raw_temperature(e));
@@ -301,7 +333,7 @@ impl TemperatureCache {
 
         self._temps_by_hct = temperatures_by_hct;
 
-        self._temps_by_hct.clone()
+        &self._temps_by_hct
     }
 
     /// HCTs for all hues, with the same chroma/tone as the input.
@@ -368,23 +400,17 @@ impl TemperatureCache {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
+    use super::TemperatureCache;
+    use crate::{color::Argb, hct::Hct};
     use float_cmp::assert_approx_eq;
 
-    use crate::color::Argb;
-    use crate::hct::Hct;
-    use crate::Error;
-
-    use super::TemperatureCache;
-
     #[test]
-    fn test_raw_temperature() -> Result<(), Error> {
-        let blue_hct = Hct::new(Argb::from_str("0000ff")?);
-        let red_hct = Hct::new(Argb::from_str("ff0000")?);
-        let green_hct = Hct::new(Argb::from_str("00ff00")?);
-        let white_hct = Hct::new(Argb::from_str("ffffff")?);
-        let black_hct = Hct::new(Argb::from_str("000000")?);
+    fn test_raw_temperature() {
+        let blue_hct = Hct::new(Argb::from_u32(0xff0000ff));
+        let red_hct = Hct::new(Argb::from_u32(0xffff0000));
+        let green_hct = Hct::new(Argb::from_u32(0xff00ff00));
+        let white_hct = Hct::new(Argb::from_u32(0xffffffff));
+        let black_hct = Hct::new(Argb::from_u32(0xff000000));
 
         let blue_temp = TemperatureCache::raw_temperature(blue_hct);
         let red_temp = TemperatureCache::raw_temperature(red_hct);
@@ -397,80 +423,90 @@ mod tests {
         assert_approx_eq!(f64, -0.267, green_temp, epsilon = 0.001);
         assert_approx_eq!(f64, -0.5, white_temp, epsilon = 0.001);
         assert_approx_eq!(f64, -0.5, black_temp, epsilon = 0.001);
-
-        Ok(())
     }
 
     #[test]
-    fn test_complement() -> Result<(), Error> {
-        let blue_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_str("0000ff")?))
+    fn test_complement() {
+        let blue_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_u32(0xff0000ff)))
             .complement()
             .into();
-        let red_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_str("ff0000")?))
+        let red_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_u32(0xffff0000)))
             .complement()
             .into();
-        let green_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_str("00ff00")?))
+        let green_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_u32(0xff00ff00)))
             .complement()
             .into();
-        let white_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_str("ffffff")?))
+        let white_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_u32(0xffffffff)))
             .complement()
             .into();
-        let black_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_str("000000")?))
+        let black_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_u32(0xff000000)))
             .complement()
             .into();
 
-        assert_eq!(Argb::from_str("9d0002")?, blue_complement);
-        assert_eq!(Argb::from_str("007bfc")?, red_complement);
-        assert_eq!(Argb::from_str("ffd2c9")?, green_complement);
-        assert_eq!(Argb::from_str("ffffff")?, white_complement);
-        assert_eq!(Argb::from_str("000000")?, black_complement);
-
-        Ok(())
+        assert_eq!(Argb::from_u32(0xff9d0002), blue_complement);
+        assert_eq!(Argb::from_u32(0xff007bfc), red_complement);
+        assert_eq!(Argb::from_u32(0xffffd2c9), green_complement);
+        assert_eq!(Argb::from_u32(0xffffffff), white_complement);
+        assert_eq!(Argb::from_u32(0xff000000), black_complement);
     }
 
     #[test]
-    fn test_analogous() -> Result<(), Error> {
-        let blue_analogous =
-            TemperatureCache::new(Hct::new(Argb::from_str("0000ff")?)).analogous(None, None);
-        let red_analogous =
-            TemperatureCache::new(Hct::new(Argb::from_str("ff0000")?)).analogous(None, None);
+    fn test_blue_analogous() {
+        let analogous =
+            TemperatureCache::new(Hct::new(Argb::from_u32(0xff0000ff))).analogous(None, None);
+
+        assert_eq!(Argb::from_u32(0xff00590c), analogous[0].into());
+        assert_eq!(Argb::from_u32(0xff00564e), analogous[1].into());
+        assert_eq!(Argb::from_u32(0xff0000ff), analogous[2].into());
+        assert_eq!(Argb::from_u32(0xff6700cc), analogous[3].into());
+        assert_eq!(Argb::from_u32(0xff81009f), analogous[4].into());
+    }
+
+    #[test]
+    fn test_red_analogous() {
+        let analogous =
+            TemperatureCache::new(Hct::new(Argb::from_u32(0xffff0000))).analogous(None, None);
+
+        assert_eq!(Argb::from_u32(0xfff60082), analogous[0].into());
+        assert_eq!(Argb::from_u32(0xfffc004c), analogous[1].into());
+        assert_eq!(Argb::from_u32(0xffff0000), analogous[2].into());
+        assert_eq!(Argb::from_u32(0xffd95500), analogous[3].into());
+        assert_eq!(Argb::from_u32(0xffaf7200), analogous[4].into());
+    }
+
+    #[test]
+    fn test_green_analogous() {
         let green_analogous =
-            TemperatureCache::new(Hct::new(Argb::from_str("00ff00")?)).analogous(None, None);
-        let white_analogous =
-            TemperatureCache::new(Hct::new(Argb::from_str("ffffff")?)).analogous(None, None);
-        let black_analogous =
-            TemperatureCache::new(Hct::new(Argb::from_str("000000")?)).analogous(None, None);
+            TemperatureCache::new(Hct::new(Argb::from_u32(0xff00ff00))).analogous(None, None);
 
-        assert_eq!(Argb::from_str("00590c")?, blue_analogous[0].into());
-        assert_eq!(Argb::from_str("00564e")?, blue_analogous[1].into());
-        assert_eq!(Argb::from_str("0000ff")?, blue_analogous[2].into());
-        assert_eq!(Argb::from_str("6700cc")?, blue_analogous[3].into());
-        assert_eq!(Argb::from_str("81009f")?, blue_analogous[4].into());
+        assert_eq!(Argb::from_u32(0xffcee900), green_analogous[0].into());
+        assert_eq!(Argb::from_u32(0xff92f500), green_analogous[1].into());
+        assert_eq!(Argb::from_u32(0xff00ff00), green_analogous[2].into());
+        assert_eq!(Argb::from_u32(0xff00fd6f), green_analogous[3].into());
+        assert_eq!(Argb::from_u32(0xff00fab3), green_analogous[4].into());
+    }
 
-        assert_eq!(Argb::from_str("f60082")?, red_analogous[0].into());
-        assert_eq!(Argb::from_str("fc004c")?, red_analogous[1].into());
-        assert_eq!(Argb::from_str("ff0000")?, red_analogous[2].into());
-        assert_eq!(Argb::from_str("d95500")?, red_analogous[3].into());
-        assert_eq!(Argb::from_str("af7200")?, red_analogous[4].into());
+    #[test]
+    fn test_white_analogous() {
+        let analogous =
+            TemperatureCache::new(Hct::new(Argb::from_u32(0xffffffff))).analogous(None, None);
 
-        assert_eq!(Argb::from_str("cee900")?, green_analogous[0].into());
-        assert_eq!(Argb::from_str("92f500")?, green_analogous[1].into());
-        assert_eq!(Argb::from_str("00ff00")?, green_analogous[2].into());
-        assert_eq!(Argb::from_str("00fd6f")?, green_analogous[3].into());
-        assert_eq!(Argb::from_str("00fab3")?, green_analogous[4].into());
+        assert_eq!(Argb::from_u32(0xffffffff), analogous[0].into());
+        assert_eq!(Argb::from_u32(0xffffffff), analogous[1].into());
+        assert_eq!(Argb::from_u32(0xffffffff), analogous[2].into());
+        assert_eq!(Argb::from_u32(0xffffffff), analogous[3].into());
+        assert_eq!(Argb::from_u32(0xffffffff), analogous[4].into());
+    }
 
-        assert_eq!(Argb::from_str("ffffff")?, white_analogous[0].into());
-        assert_eq!(Argb::from_str("ffffff")?, white_analogous[1].into());
-        assert_eq!(Argb::from_str("ffffff")?, white_analogous[2].into());
-        assert_eq!(Argb::from_str("ffffff")?, white_analogous[3].into());
-        assert_eq!(Argb::from_str("ffffff")?, white_analogous[4].into());
+    #[test]
+    fn test_black_analogous() {
+        let analogous =
+            TemperatureCache::new(Hct::new(Argb::from_u32(0xff000000))).analogous(None, None);
 
-        assert_eq!(Argb::from_str("000000")?, black_analogous[0].into());
-        assert_eq!(Argb::from_str("000000")?, black_analogous[1].into());
-        assert_eq!(Argb::from_str("000000")?, black_analogous[2].into());
-        assert_eq!(Argb::from_str("000000")?, black_analogous[3].into());
-        assert_eq!(Argb::from_str("000000")?, black_analogous[4].into());
-
-        Ok(())
+        assert_eq!(Argb::from_u32(0xff000000), analogous[0].into());
+        assert_eq!(Argb::from_u32(0xff000000), analogous[1].into());
+        assert_eq!(Argb::from_u32(0xff000000), analogous[2].into());
+        assert_eq!(Argb::from_u32(0xff000000), analogous[3].into());
+        assert_eq!(Argb::from_u32(0xff000000), analogous[4].into());
     }
 }

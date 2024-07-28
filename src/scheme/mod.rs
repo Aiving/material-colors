@@ -1,13 +1,12 @@
 #![allow(clippy::too_many_arguments)]
+use crate::{color::Argb, dynamic_color::DynamicScheme, palette::CorePalette, Map};
+#[cfg(not(feature = "std"))]
+use alloc::string::String;
+use core::{array::IntoIter, fmt};
 #[cfg(feature = "serde")]
 use serde::Serialize;
-
-use std::{array::IntoIter, fmt};
-
-use ahash::HashMap;
-
-use crate::palette::CorePalette;
-use crate::{color::Argb, dynamic_color::DynamicScheme};
+#[cfg(feature = "std")]
+use std::string::String;
 
 pub mod variant;
 
@@ -362,9 +361,9 @@ impl IntoIterator for Scheme {
     }
 }
 
-impl From<Scheme> for HashMap<String, String> {
+impl From<Scheme> for Map<String, String> {
     fn from(value: Scheme) -> Self {
-        let map: HashMap<String, Argb> = HashMap::from_iter(value);
+        let map: Map<String, Argb> = Map::from_iter(value);
 
         map.into_iter()
             .map(|(key, value)| (key, value.to_hex_with_pound()))

@@ -1,8 +1,4 @@
-use std::{
-    fmt,
-    hash::{Hash, Hasher},
-};
-
+use super::{MaterialDynamicColors, Variant};
 use crate::{
     color::Argb,
     hct::Hct,
@@ -13,8 +9,11 @@ use crate::{
     },
     utils::math::sanitize_degrees_double,
 };
-
-use super::{MaterialDynamicColors, Variant};
+use core::{
+    cmp::Ordering,
+    fmt,
+    hash::{Hash, Hasher},
+};
 
 /// Constructed by a set of values representing the current UI state (such as
 /// whether or not its dark theme, what the theme style is, etc.), and
@@ -123,6 +122,9 @@ impl DynamicScheme {
         }
     }
 
+    /// # Panics
+    ///
+    /// Will panic if the count of hues does not equal the count of rotations
     pub fn get_rotated_hue(source_hue: f64, hues: &[f64], rotations: &[f64]) -> f64 {
         assert!(hues.len() == rotations.len());
 
@@ -317,6 +319,12 @@ impl DynamicScheme {
     }
 }
 
+impl Ord for DynamicScheme {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
 impl PartialEq for DynamicScheme {
     fn eq(&self, other: &Self) -> bool {
         self.source_color_argb == other.source_color_argb
@@ -330,6 +338,24 @@ impl PartialEq for DynamicScheme {
             && self.neutral_palette == other.neutral_palette
             && self.neutral_variant_palette == other.neutral_variant_palette
             && self.error_palette == other.error_palette
+    }
+}
+
+impl Eq for DynamicScheme {}
+
+impl Hash for DynamicScheme {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.source_color_argb.hash(state);
+        self.source_color_hct.hash(state);
+        self.variant.hash(state);
+        self.is_dark.hash(state);
+        self.contrast_level.to_bits().hash(state);
+        self.primary_palette.hash(state);
+        self.secondary_palette.hash(state);
+        self.tertiary_palette.hash(state);
+        self.neutral_palette.hash(state);
+        self.neutral_variant_palette.hash(state);
+        self.error_palette.hash(state);
     }
 }
 
@@ -381,22 +407,10 @@ impl fmt::Display for DynamicScheme {
     }
 }
 
-impl Eq for DynamicScheme {}
-
-impl Hash for DynamicScheme {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.source_color_argb.hash(state);
-        self.source_color_hct.hash(state);
-        self.is_dark.hash(state);
-    }
-}
-
 #[cfg(test)]
 mod tests {
+    use crate::{dynamic_color::DynamicScheme, hct::Hct};
     use float_cmp::assert_approx_eq;
-
-    use crate::dynamic_color::DynamicScheme;
-    use crate::hct::Hct;
 
     #[test]
     fn test_0_length_input() {

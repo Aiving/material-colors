@@ -8,12 +8,7 @@ use super::{Quantizer, QuantizerResult};
 pub struct QuantizerMap;
 
 impl Quantizer for QuantizerMap {
-    fn quantize(
-        &mut self,
-        pixels: &[Argb],
-        _max_colors: usize,
-        _return_input_pixel_to_cluster_pixel: Option<bool>,
-    ) -> QuantizerResult {
+    fn quantize(&mut self, pixels: &[Argb], _max_colors: usize) -> QuantizerResult {
         let mut color_to_count = IndexMap::<Argb, u32>::default();
 
         for pixel in pixels {

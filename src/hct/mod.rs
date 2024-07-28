@@ -1,13 +1,11 @@
-use std::{
+use crate::color::{lstar_from_y, Argb};
+use core::{
+    cmp::Ordering,
     fmt,
     hash::{Hash, Hasher},
 };
-
 #[cfg(feature = "serde")]
 use serde::Serialize;
-
-use crate::color::{lstar_from_y, Argb};
-
 pub use {cam16::Cam16, solver::HctSolver, viewing_conditions::ViewingConditions};
 
 pub mod cam16;
@@ -177,6 +175,12 @@ impl fmt::Display for Hct {
     }
 }
 
+impl Ord for Hct {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
 impl PartialEq for Hct {
     fn eq(&self, other: &Self) -> bool {
         self._argb == other._argb
@@ -187,6 +191,9 @@ impl Eq for Hct {}
 
 impl Hash for Hct {
     fn hash<H: Hasher>(&self, state: &mut H) {
+        self._hue.to_bits().hash(state);
+        self._chroma.to_bits().hash(state);
+        self._tone.to_bits().hash(state);
         self._argb.hash(state);
     }
 }
@@ -205,13 +212,15 @@ impl From<Hct> for Argb {
 
 #[cfg(test)]
 mod tests {
-    use std::hash::{DefaultHasher, Hash, Hasher};
-
-    use float_cmp::{approx_eq, assert_approx_eq};
-
-    use crate::color::{y_from_lstar, Argb};
-
     use super::{Cam16, Hct, ViewingConditions};
+    use crate::color::{y_from_lstar, Argb};
+    use ahash::AHasher;
+    #[cfg(not(feature = "std"))]
+    use alloc::format;
+    use core::hash::{Hash, Hasher};
+    use float_cmp::{approx_eq, assert_approx_eq};
+    #[cfg(feature = "std")]
+    use std::format;
 
     const BLACK: Argb = Argb::from_u32(0xFF000000);
     const WHITE: Argb = Argb::from_u32(0xFFFFFFFF);
@@ -221,7 +230,7 @@ mod tests {
     const MIDGRAY: Argb = Argb::from_u32(0xFF777777);
 
     fn hash_value<T: Hash>(value: T) -> u64 {
-        let mut hasher = DefaultHasher::new();
+        let mut hasher = AHasher::default();
 
         value.hash(&mut hasher);
 

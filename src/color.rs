@@ -1,8 +1,17 @@
+use crate::{utils::math::matrix_multiply, Error};
+#[cfg(not(feature = "std"))]
+use alloc::{
+    format,
+    string::{String, ToString},
+};
+use core::{fmt, str::FromStr};
 #[cfg(feature = "serde")]
 use serde::Serialize;
-use std::{fmt, str::FromStr};
-
-use crate::{utils::math::matrix_multiply, Error};
+#[cfg(feature = "std")]
+use std::{
+    format,
+    string::{String, ToString},
+};
 
 pub const SRGB_TO_XYZ: [[f64; 3]; 3] = [
     [0.41233895, 0.35762064, 0.18051042],
@@ -33,7 +42,7 @@ pub struct Rgb {
 }
 
 /// ARGB representation of color. Can be created using [`Argb::new`], [`Argb::from_u32`] or
-/// [`from_str`].
+/// [`Argb::from_str`].
 ///
 /// ## Examples:
 /// ```rust
@@ -48,8 +57,6 @@ pub struct Rgb {
 /// let color = Argb::from_str("#aabbcc").unwrap();
 /// let color = Argb::from_str("#aabbccdd").unwrap();
 /// ```
-///
-/// [`from_str`]: std::str::FromStr::from_str
 #[derive(Debug, Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Argb {
@@ -422,11 +429,13 @@ fn lab_invf(ft: f64) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use float_cmp::assert_approx_eq;
-
-    use crate::color::{delinearized, linearized, lstar_from_y, y_from_lstar, Argb, Xyz};
-
     use super::Lab;
+    use crate::color::{delinearized, linearized, lstar_from_y, y_from_lstar, Argb, Xyz};
+    #[cfg(not(feature = "std"))]
+    use alloc::vec::Vec;
+    use float_cmp::assert_approx_eq;
+    #[cfg(feature = "std")]
+    use std::vec::Vec;
 
     fn _range(start: f64, stop: f64, case_count: i64) -> Vec<f64> {
         let step_size = (stop - start) / (case_count as f64 - 1.0);
@@ -586,8 +595,6 @@ mod tests {
                     let argb = Argb::new(255, r, g, b);
                     let lab = Lab::from(argb);
                     let converted = Argb::from(lab);
-
-                    println!("{r}-{g}-{b}");
 
                     assert_approx_eq!(f64, f64::from(converted.red), f64::from(r), epsilon = 1.5);
                     assert_approx_eq!(f64, f64::from(converted.green), f64::from(g), epsilon = 1.5);

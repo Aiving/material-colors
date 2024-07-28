@@ -1,11 +1,9 @@
-use std::f64::consts::PI;
-
+use super::{Cam16, ViewingConditions};
 use crate::{
     color::{y_from_lstar, Argb, LinearRgb},
     utils::math::{matrix_multiply, sanitize_degrees_double, signum},
 };
-
-use super::{Cam16, ViewingConditions};
+use core::f64::consts::PI;
 
 /// A struct that solves the HCT equation.
 const SCALED_DISCOUNT_FROM_LINRGB: [[f64; 3]; 3] = [

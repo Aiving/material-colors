@@ -1,3 +1,4 @@
+#![no_std]
 #![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
 #![allow(
     // pedantic lints
@@ -19,8 +20,22 @@
     // nursery lints for later
     clippy::while_float,
     clippy::large_stack_frames,
-    clippy::cognitive_complexity
+    clippy::cognitive_complexity,
+    clippy::derive_ord_xor_partial_ord
 )]
+
+#[cfg(all(feature = "image", not(feature = "std")))]
+compile_error!("'image' feature requires 'std' feature");
+
+#[cfg(not(feature = "std"))]
+extern crate alloc;
+#[cfg(feature = "std")]
+extern crate std;
+
+#[cfg(feature = "std")]
+pub(crate) use ahash::HashMap as Map;
+#[cfg(not(feature = "std"))]
+pub(crate) use alloc::collections::BTreeMap as Map;
 
 pub mod blend;
 pub mod color;
