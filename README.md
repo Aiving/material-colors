@@ -7,11 +7,10 @@ An unofficial port of the `material-color-utilities` library for creating Materi
 From HEX color:
 
 ```rust
-use std::str::FromStr;
 use material_colors::{color::Argb, theme::ThemeBuilder};
 
 fn main() {
-    let theme = ThemeBuilder::with_source(Argb::from_32(0xffaae5a4)).build();
+    let theme = ThemeBuilder::with_source(Argb::from_u32(0xffaae5a4)).build();
 
     // Do whatever you want...
 }
