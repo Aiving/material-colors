@@ -2,11 +2,11 @@ use super::{PointProvider, PointProviderLab, QuantizerResult};
 use crate::{
     color::{Argb, Lab},
     utils::random::Random,
+    IndexMap,
 };
 #[cfg(not(feature = "std"))]
 use alloc::{vec, vec::Vec};
 use core::cmp::Ordering;
-use indexmap::IndexMap;
 #[cfg(feature = "std")]
 use std::{
     format, println,
@@ -74,7 +74,7 @@ impl QuantizerWsmeans {
         max_colors: usize,
         starting_clusters: &[Argb],
     ) -> QuantizerResult {
-        let mut pixel_to_count: IndexMap<Argb, u32> = IndexMap::new();
+        let mut pixel_to_count: IndexMap<Argb, u32> = IndexMap::default();
         let mut points: Vec<Lab> = vec![];
         let mut pixels: Vec<Argb> = vec![];
 
@@ -299,7 +299,7 @@ impl QuantizerWsmeans {
             cluster_argbs.len()
         ));
 
-        let mut input_pixel_to_cluster_pixel: IndexMap<Argb, Argb> = IndexMap::new();
+        let mut input_pixel_to_cluster_pixel: IndexMap<Argb, Argb> = IndexMap::default();
 
         #[cfg(feature = "std")]
         let start_time = Instant::now();
@@ -321,7 +321,7 @@ impl QuantizerWsmeans {
             "took {time_elapsed} ms to create input to cluster map"
         ));
 
-        let mut color_to_count: IndexMap<Argb, u32> = IndexMap::new();
+        let mut color_to_count: IndexMap<Argb, u32> = IndexMap::default();
 
         for i in 0..cluster_argbs.len() {
             let key = cluster_argbs[i];

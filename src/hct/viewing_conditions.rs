@@ -79,9 +79,21 @@ impl ViewingConditions {
         let background_lstar = (0.1_f64).max(background_lstar);
         // Transform test illuminant white in Xyz to 'cone'/'rgb' responses
         let xyz = white_point;
-        let r_w = xyz[2].mul_add(-0.051461, xyz[0].mul_add(0.401288, xyz[1] * 0.650173));
-        let g_w = xyz[2].mul_add(0.045854, xyz[0].mul_add(-0.250268, xyz[1] * 1.204414));
-        let b_w = xyz[2].mul_add(0.953127, xyz[0].mul_add(-0.002079, xyz[1] * 0.048952));
+        let r_w = libm::fma(
+            xyz[2],
+            -0.051461,
+            libm::fma(xyz[0], 0.401288, xyz[1] * 0.650173),
+        );
+        let g_w = libm::fma(
+            xyz[2],
+            0.045854,
+            libm::fma(xyz[0], -0.250268, xyz[1] * 1.204414),
+        );
+        let b_w = libm::fma(
+            xyz[2],
+            0.953127,
+            libm::fma(xyz[0], -0.002079, xyz[1] * 0.048952),
+        );
 
         // Scale input surround, domain (0, 2), to CAM16 surround, domain (0.8, 1.0)
         assert!((0.0..=2.0).contains(&surround));
@@ -97,7 +109,11 @@ impl ViewingConditions {
         let d = if discounting_illuminant {
             1.0
         } else {
-            f * (1.0f64 / 3.6f64).mul_add(-((-adapting_luminance - 42.0) / 92.0).exp(), 1.0)
+            f * libm::fma(
+                1.0 / 3.6,
+                libm::exp(-((-adapting_luminance - 42.0) / 92.0)),
+                1.0,
+            )
         };
         // Per Li et al, if D is greater than 1 or less than 0, set it to 1 or 0.
         let d = d.clamp(0.0, 1.0);
@@ -115,38 +131,39 @@ impl ViewingConditions {
         // account for scaling of appearance relative to the white point relative
         // luminance. This part should simply use 100 as luminance.
         let rgb_d = [
-            d.mul_add(100.0 / r_w, 1.0) - d,
-            d.mul_add(100.0 / g_w, 1.0) - d,
-            d.mul_add(100.0 / b_w, 1.0) - d,
+            libm::fma(d, 100.0 / r_w, 1.0) - d,
+            libm::fma(d, 100.0 / g_w, 1.0) - d,
+            libm::fma(d, 100.0 / b_w, 1.0) - d,
         ];
 
         // Factor used in calculating meaningful factors
-        let k = 1.0 / 5.0_f64.mul_add(adapting_luminance, 1.0);
+        let k = 1.0 / libm::fma(5.0, adapting_luminance, 1.0);
         let k4 = k * k * k * k; // pow(k, 4)
         let k4_f = 1.0 - k4;
 
         // Luminance-level adaptation factor
-        let fl = k4.mul_add(
+        let fl = libm::fma(
+            k4,
             adapting_luminance,
-            0.1 * k4_f * k4_f * (5.0 * adapting_luminance).cbrt(),
+            0.1 * k4_f * k4_f * libm::cbrt(5.0 * adapting_luminance),
         );
         // Intermediate factor, ratio of background relative luminance to white relative luminance
         let n = y_from_lstar(background_lstar) / white_point[1];
 
         // Base exponential nonlinearity
         // note Schlomer 2018 has a typo and uses 1.58, the correct factor is 1.48
-        let z = 1.48 + n.sqrt();
+        let z = 1.48 + libm::sqrt(n);
 
         // Luminance-level induction factors
-        let nbb = 0.725 / n.powf(0.2);
+        let nbb = 0.725 / libm::pow(n, 0.2);
         let ncb = nbb;
 
         // Discounted cone responses to the white point, adjusted for post-saturationtic
         // adaptation perceptual nonlinearities.
         let rgb_afactors = [
-            (fl * rgb_d[0] * r_w / 100.0).powf(0.42),
-            (fl * rgb_d[1] * g_w / 100.0).powf(0.42),
-            (fl * rgb_d[2] * b_w / 100.0).powf(0.42),
+            libm::pow(fl * rgb_d[0] * r_w / 100.0, 0.42),
+            libm::pow(fl * rgb_d[1] * g_w / 100.0, 0.42),
+            libm::pow(fl * rgb_d[2] * b_w / 100.0, 0.42),
         ];
 
         let rgb_a = [
@@ -155,7 +172,7 @@ impl ViewingConditions {
             (400.0 * rgb_afactors[2]) / (rgb_afactors[2] + 27.13),
         ];
 
-        let aw = (40.0f64.mul_add(rgb_a[0], 20.0 * rgb_a[1]) + rgb_a[2]) / 20.0 * nbb;
+        let aw = (libm::fma(40.0, rgb_a[0], 20.0 * rgb_a[1]) + rgb_a[2]) / 20.0 * nbb;
 
         Self {
             white_point,
@@ -172,7 +189,7 @@ impl ViewingConditions {
             drgb_inverse: [0.0, 0.0, 0.0],
             rgb_d,
             fl,
-            f_lroot: fl.powf(0.25),
+            f_lroot: libm::pow(fl, 0.25),
             z,
         }
     }

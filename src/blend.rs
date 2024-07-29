@@ -11,7 +11,8 @@ pub fn harmonize(design_color: Argb, source_color: Argb) -> Argb {
     let difference_degrees = difference_degrees(from_hct.get_hue(), to_hct.get_hue());
     let rotation_degrees = (difference_degrees * 0.5).min(15.0);
 
-    let output_hue = sanitize_degrees_double(rotation_degrees.mul_add(
+    let output_hue = sanitize_degrees_double(libm::fma(
+        rotation_degrees,
         rotate_direction(from_hct.get_hue(), to_hct.get_hue()),
         from_hct.get_hue(),
     ));
@@ -42,9 +43,9 @@ pub fn cam16_ucs(from: Argb, to: Argb, amount: f64) -> Argb {
     let to_a = to_cam.astar;
     let to_b = to_cam.bstar;
 
-    let jstar = (to_j - from_j).mul_add(amount, from_j);
-    let astar = (to_a - from_a).mul_add(amount, from_a);
-    let bstar = (to_b - from_b).mul_add(amount, from_b);
+    let jstar = libm::fma(to_j - from_j, amount, from_j);
+    let astar = libm::fma(to_a - from_a, amount, from_a);
+    let bstar = libm::fma(to_b - from_b, amount, from_b);
 
     Cam16::from_ucs(jstar, astar, bstar).into()
 }

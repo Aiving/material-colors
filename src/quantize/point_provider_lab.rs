@@ -20,9 +20,10 @@ impl PointProvider for PointProviderLab {
 
         // This relatively minor optimization is helpful because this method is
         // called at least once for each pixel in an image.
-        (one.b - two.b).mul_add(
+        libm::fma(
             one.b - two.b,
-            (one.l - two.l).mul_add(one.l - two.l, (one.a - two.a).powi(2)),
+            one.b - two.b,
+            libm::fma(one.l - two.l, one.l - two.l, libm::pow(one.a - two.a, 2.0)),
         )
     }
 }

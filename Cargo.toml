@@ -7,7 +7,7 @@ documentation = "https://docs.rs/material-colors"
 homepage = "https://github.com/Aiving/material-colors"
 repository = "https://github.com/Aiving/material-colors.git"
 readme = "README.md"
-license = "Apache-2.0"
+license = "MIT OR Apache-2.0"
 keywords = ["no_std", "palette", "color-scheme", "material-you"]
 categories = ["graphics", "no-std"]
 rust-version = "1.63.0"
@@ -17,9 +17,9 @@ ahash = { version = "0.8.11", default-features = false }
 indexmap = { version = "2.2.6", default-features = false }
 images = { package = "image", version = "0.25.2", optional = true }
 serde = { version = "1.0.204", features = ["derive"], optional = true }
+libm = "0.2.8"
 
 [features]
-default = ["std"]
 std = ["serde/std", "indexmap/std", "ahash/std", "ahash/runtime-rng"]
 image = ["dep:images"]
 serde = ["dep:serde"]

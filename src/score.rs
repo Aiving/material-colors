@@ -2,10 +2,10 @@ use crate::{
     color::Argb,
     hct::Hct,
     utils::math::{difference_degrees, sanitize_degrees_int},
+    IndexMap,
 };
 #[cfg(not(feature = "std"))]
 use alloc::{vec, vec::Vec};
-use indexmap::IndexMap;
 #[cfg(feature = "std")]
 use std::{vec, vec::Vec};
 
@@ -65,7 +65,7 @@ impl Score {
         for (argb, population) in colors_to_population {
             let hct: Hct = (*argb).into();
 
-            let hue = hct.get_hue().floor() as i32;
+            let hue = libm::floor(hct.get_hue()) as i32;
 
             colors_hct.push(hct);
 
@@ -91,7 +91,7 @@ impl Score {
         let mut scored_hcts = vec![];
 
         for hct in colors_hct {
-            let hue = sanitize_degrees_int(hct.get_hue().round() as i32);
+            let hue = sanitize_degrees_int(libm::round(hct.get_hue()) as i32);
             let proportion = hue_excited_proportions[hue as usize];
 
             if filter
@@ -163,8 +163,7 @@ impl Score {
 #[cfg(test)]
 mod tests {
     use super::Score;
-    use crate::color::Argb;
-    use indexmap::IndexMap;
+    use crate::{color::Argb, IndexMap};
 
     #[test]
     fn test_prioritizes_chroma() {

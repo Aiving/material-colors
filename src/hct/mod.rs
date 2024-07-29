@@ -168,9 +168,9 @@ impl fmt::Display for Hct {
         write!(
             f,
             "H{} C{} T{}",
-            self.get_hue().round(),
-            self.get_chroma().round(),
-            self.get_tone().round()
+            libm::round(self.get_hue()),
+            libm::round(self.get_chroma()),
+            libm::round(self.get_tone())
         )
     }
 }

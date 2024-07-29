@@ -96,7 +96,7 @@ impl TonalPalette {
     pub fn create_key_color(hue: f64, chroma: f64) -> Hct {
         let start_tone = 50.0;
         let mut smallest_delta_hct = Hct::from(hue, chroma, start_tone);
-        let mut smallest_delta = (smallest_delta_hct.get_chroma() - chroma).abs();
+        let mut smallest_delta = libm::fabs(smallest_delta_hct.get_chroma() - chroma);
 
         // Starting from T50, check T+/-delta to see if they match the requested
         // chroma.
@@ -109,12 +109,14 @@ impl TonalPalette {
             // case where requested chroma is 16.51, and the closest chroma is 16.49.
             // Error is minimized, but when rounded and displayed, requested chroma
             // is 17, key color's chroma is 16.
-            if (chroma.round() - smallest_delta_hct.get_chroma().round()).abs() < f64::EPSILON {
+            if libm::fabs(libm::round(chroma) - libm::round(smallest_delta_hct.get_chroma()))
+                < f64::EPSILON
+            {
                 return smallest_delta_hct;
             }
 
             let hct_add = Hct::from(hue, chroma, start_tone + f64::from(delta));
-            let hct_add_delta = (hct_add.get_chroma() - chroma).abs();
+            let hct_add_delta = libm::fabs(hct_add.get_chroma() - chroma);
 
             if hct_add_delta < smallest_delta {
                 smallest_delta = hct_add_delta;
@@ -122,7 +124,7 @@ impl TonalPalette {
             }
 
             let hct_subtract = Hct::from(hue, chroma, start_tone - f64::from(delta));
-            let hct_subtract_delta = (hct_subtract.get_chroma() - chroma).abs();
+            let hct_subtract_delta = libm::fabs(hct_subtract.get_chroma() - chroma);
 
             if hct_subtract_delta < smallest_delta {
                 smallest_delta = hct_subtract_delta;

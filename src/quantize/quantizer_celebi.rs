@@ -9,8 +9,8 @@ use std::vec::Vec;
 pub struct QuantizerCelebi;
 
 impl Quantizer for QuantizerCelebi {
-    fn quantize(&mut self, pixels: &[Argb], max_colors: usize) -> QuantizerResult {
-        let wu_result = QuantizerWu::default().quantize(pixels, max_colors);
+    fn quantize(pixels: &[Argb], max_colors: usize) -> QuantizerResult {
+        let wu_result = QuantizerWu::quantize(pixels, max_colors);
 
         QuantizerWsmeans::quantize(
             pixels,
@@ -125,7 +125,7 @@ mod tests {
 
     #[test]
     fn test_1rando() {
-        let result = QuantizerCelebi.quantize(&[Argb::from_u32(0xff141216)], MAX_COLORS);
+        let result = QuantizerCelebi::quantize(&[Argb::from_u32(0xff141216)], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
@@ -134,7 +134,7 @@ mod tests {
 
     #[test]
     fn test_1r() {
-        let result = QuantizerCelebi.quantize(&[RED], MAX_COLORS);
+        let result = QuantizerCelebi::quantize(&[RED], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
@@ -143,7 +143,7 @@ mod tests {
 
     #[test]
     fn test_1g() {
-        let result = QuantizerCelebi.quantize(&[GREEN], MAX_COLORS);
+        let result = QuantizerCelebi::quantize(&[GREEN], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
@@ -152,7 +152,7 @@ mod tests {
 
     #[test]
     fn test_1b() {
-        let result = QuantizerCelebi.quantize(&[BLUE], MAX_COLORS);
+        let result = QuantizerCelebi::quantize(&[BLUE], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
@@ -161,7 +161,7 @@ mod tests {
 
     #[test]
     fn test_5b() {
-        let result = QuantizerCelebi.quantize(&[BLUE, BLUE, BLUE, BLUE, BLUE], MAX_COLORS);
+        let result = QuantizerCelebi::quantize(&[BLUE, BLUE, BLUE, BLUE, BLUE], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
@@ -170,7 +170,7 @@ mod tests {
 
     #[test]
     fn test_2r_3g() {
-        let result = QuantizerCelebi.quantize(&[RED, RED, GREEN, GREEN, GREEN], MAX_COLORS);
+        let result = QuantizerCelebi::quantize(&[RED, RED, GREEN, GREEN, GREEN], MAX_COLORS);
 
         assert_eq!(result.color_to_count.keys().len(), 2);
         assert_eq!(result.color_to_count.get(&GREEN).unwrap(), &3);
@@ -179,7 +179,7 @@ mod tests {
 
     #[test]
     fn test_1r_1g_1b() {
-        let result = QuantizerCelebi.quantize(&[RED, GREEN, BLUE], MAX_COLORS);
+        let result = QuantizerCelebi::quantize(&[RED, GREEN, BLUE], MAX_COLORS);
 
         assert_eq!(result.color_to_count.keys().len(), 3);
         assert_eq!(result.color_to_count.get(&GREEN).unwrap(), &1);
@@ -190,8 +190,8 @@ mod tests {
     /// Verifies QuantizerCelebi.quantize returns identical result given same input.
     #[test]
     fn test_stability() {
-        let result1 = QuantizerCelebi.quantize(&IMAGE_PIXELS, 16).color_to_count;
-        let result2 = QuantizerCelebi.quantize(&IMAGE_PIXELS, 16).color_to_count;
+        let result1 = QuantizerCelebi::quantize(&IMAGE_PIXELS, 16).color_to_count;
+        let result2 = QuantizerCelebi::quantize(&IMAGE_PIXELS, 16).color_to_count;
 
         assert_eq!(result1, result2);
     }

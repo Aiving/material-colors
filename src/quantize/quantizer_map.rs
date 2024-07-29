@@ -1,14 +1,11 @@
-use indexmap::IndexMap;
-
-use crate::color::Argb;
-
 use super::{Quantizer, QuantizerResult};
+use crate::{color::Argb, IndexMap};
 
 #[derive(Default)]
 pub struct QuantizerMap;
 
 impl Quantizer for QuantizerMap {
-    fn quantize(&mut self, pixels: &[Argb], _max_colors: usize) -> QuantizerResult {
+    fn quantize(pixels: &[Argb], _max_colors: usize) -> QuantizerResult {
         let mut color_to_count = IndexMap::<Argb, u32>::default();
 
         for pixel in pixels {

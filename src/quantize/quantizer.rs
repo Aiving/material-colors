@@ -1,9 +1,7 @@
-use indexmap::IndexMap;
-
-use crate::color::Argb;
+use crate::{color::Argb, IndexMap};
 
 pub trait Quantizer {
-    fn quantize(&mut self, pixels: &[Argb], max_colors: usize) -> QuantizerResult;
+    fn quantize(pixels: &[Argb], max_colors: usize) -> QuantizerResult;
 }
 
 pub struct QuantizerResult {

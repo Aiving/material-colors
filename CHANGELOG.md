@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- **added**: Add badges to the `README`
+- **added**: Add the Features & License headings to the `README`
 - **fixed**: Fix HEX color example in `README`
+- **changed**: Move to dual-license to be compatible with the Rust project
+- **changed**: Replace all math operations with their equivalent in `libm` crate for compatibility with `no_std`
 
 ## 0.4.0 (July 29th, 2024)
 

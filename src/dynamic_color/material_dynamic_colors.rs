@@ -525,12 +525,12 @@ impl MaterialDynamicColors {
                     break;
                 }
 
-                if (potential_solution.get_chroma() - chroma).abs() < 0.4 {
+                if libm::fabs(potential_solution.get_chroma() - chroma) < 0.4 {
                     break;
                 }
 
-                let potential_delta = (potential_solution.get_chroma() - chroma).abs();
-                let current_delta = (closest_to_chroma.get_chroma() - chroma).abs();
+                let potential_delta = libm::fabs(potential_solution.get_chroma() - chroma);
+                let current_delta = libm::fabs(closest_to_chroma.get_chroma() - chroma);
 
                 if potential_delta < current_delta {
                     closest_to_chroma = potential_solution;

@@ -118,9 +118,21 @@ impl From<Xyz> for Argb {
     fn from(Xyz { x, y, z }: Xyz) -> Self {
         let matrix = XYZ_TO_SRGB;
 
-        let linear_r = matrix[0][2].mul_add(z, matrix[0][0].mul_add(x, matrix[0][1] * y));
-        let linear_g = matrix[1][2].mul_add(z, matrix[1][0].mul_add(x, matrix[1][1] * y));
-        let linear_b = matrix[2][2].mul_add(z, matrix[2][0].mul_add(x, matrix[2][1] * y));
+        let linear_r = libm::fma(
+            matrix[0][2],
+            z,
+            libm::fma(matrix[0][0], x, matrix[0][1] * y),
+        );
+        let linear_g = libm::fma(
+            matrix[1][2],
+            z,
+            libm::fma(matrix[1][0], x, matrix[1][1] * y),
+        );
+        let linear_b = libm::fma(
+            matrix[2][2],
+            z,
+            libm::fma(matrix[2][0], x, matrix[2][1] * y),
+        );
 
         let r = delinearized(linear_r);
         let g = delinearized(linear_g);
@@ -186,17 +198,20 @@ impl From<Argb> for Lab {
 
         let matrix = SRGB_TO_XYZ;
 
-        let x = matrix[0][2].mul_add(
+        let x = libm::fma(
+            matrix[0][2],
             linear_b,
-            matrix[0][0].mul_add(linear_r, matrix[0][1] * linear_g),
+            libm::fma(matrix[0][0], linear_r, matrix[0][1] * linear_g),
         );
-        let y = matrix[1][2].mul_add(
+        let y = libm::fma(
+            matrix[1][2],
             linear_b,
-            matrix[1][0].mul_add(linear_r, matrix[1][1] * linear_g),
+            libm::fma(matrix[1][0], linear_r, matrix[1][1] * linear_g),
         );
-        let z = matrix[2][2].mul_add(
+        let z = libm::fma(
+            matrix[2][2],
             linear_b,
-            matrix[2][0].mul_add(linear_r, matrix[2][1] * linear_g),
+            libm::fma(matrix[2][0], linear_r, matrix[2][1] * linear_g),
         );
 
         let white_point = WHITE_POINT_D65;
@@ -209,7 +224,7 @@ impl From<Argb> for Lab {
         let fy = lab_f(y_normalized);
         let fz = lab_f(z_normalized);
 
-        let l = 116.0f64.mul_add(fy, -16.0);
+        let l = libm::fma(116.0, fy, -16.0);
         let a = 500.0 * (fx - fy);
         let b = 200.0 * (fy - fz);
 
@@ -303,7 +318,7 @@ impl Argb {
     ///
     /// returns L*, from L*a*b*, coordinate of the color
     pub fn as_lstar(&self) -> f64 {
-        116.0f64.mul_add(lab_f(Xyz::from(*self).y / 100.0), -16.0)
+        libm::fma(116.0, lab_f(Xyz::from(*self).y / 100.0), -16.0)
     }
 
     fn hex(number: u8) -> String {
@@ -368,7 +383,7 @@ pub fn y_from_lstar(lstar: f64) -> f64 {
  * @return L* in L*a*b*
  */
 pub fn lstar_from_y(y: f64) -> f64 {
-    lab_f(y / 100.0).mul_add(116.0, -16.0)
+    libm::fma(lab_f(y / 100.0), 116.0, -16.0)
 }
 
 /**
@@ -383,7 +398,7 @@ pub fn linearized(rgb_component: u8) -> f64 {
     if normalized <= 0.040449936 {
         normalized / 12.92 * 100.0
     } else {
-        ((normalized + 0.055) / 1.055).powf(2.4) * 100.0
+        libm::pow((normalized + 0.055) / 1.055, 2.4) * 100.0
     }
 }
 
@@ -398,10 +413,10 @@ pub fn delinearized(rgb_component: f64) -> u8 {
     let delinearized = if normalized <= 0.0031308 {
         normalized * 12.92
     } else {
-        1.055f64.mul_add(normalized.powf(1.0 / 2.4), -0.055)
+        libm::fma(1.055, libm::pow(normalized, 1.0 / 2.4), -0.055)
     };
 
-    ((delinearized * 255.0).round() as u8).clamp(0, 255)
+    (libm::round(delinearized * 255.0) as u8).clamp(0, 255)
 }
 
 fn lab_f(t: f64) -> f64 {
@@ -409,9 +424,9 @@ fn lab_f(t: f64) -> f64 {
     let kappa: f64 = 24389.0 / 27.0;
 
     if t > e {
-        t.cbrt()
+        libm::cbrt(t)
     } else {
-        kappa.mul_add(t, 16.0) / 116.0
+        libm::fma(kappa, t, 16.0) / 116.0
     }
 }
 
@@ -423,7 +438,7 @@ fn lab_invf(ft: f64) -> f64 {
     if ft3 > e {
         ft3
     } else {
-        116.0f64.mul_add(ft, -16.0) / kappa
+        libm::fma(116.0, ft, -16.0) / kappa
     }
 }
 
@@ -441,14 +456,14 @@ mod tests {
         let step_size = (stop - start) / (case_count as f64 - 1.0);
 
         (0..case_count)
-            .map(|index| step_size.mul_add(index as f64, start))
+            .map(|index| libm::fma(step_size, index as f64, start))
             .collect()
     }
 
     fn rgb_range() -> Vec<u8> {
         _range(0.0, 255.0, 8)
             .into_iter()
-            .map(|element| element.round() as u8)
+            .map(|element| libm::round(element) as u8)
             .collect()
     }
 
@@ -464,7 +479,7 @@ mod tests {
             assert_approx_eq!(
                 f64,
                 value,
-                8.1070559611f64.mul_add(i as f64, 3.0),
+                libm::fma(8.1070559611, i as f64, 3.0),
                 epsilon = 1e-5
             );
         }

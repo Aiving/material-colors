@@ -1,13 +1,15 @@
 #![allow(clippy::too_many_arguments)]
 
 use super::{Quantizer, QuantizerMap, QuantizerResult};
-use crate::color::{Argb, Rgb};
+use crate::{
+    color::{Argb, Rgb},
+    IndexMap,
+};
 #[cfg(not(feature = "std"))]
-use alloc::{boxed::Box, vec, vec::Vec};
+use alloc::{vec, vec::Vec};
 use core::fmt;
-use indexmap::IndexMap;
 #[cfg(feature = "std")]
-use std::{boxed::Box, vec, vec::Vec};
+use std::{vec, vec::Vec};
 
 // A histogram of all the input colors is constructed. It has the shape of a
 //  The cube would be too large if it contained all 16 million colors:
@@ -19,38 +21,40 @@ const SIDE_LENGTH: usize = (1 << INDEX_BITS) + 1;
 const TOTAL_SIZE: usize = SIDE_LENGTH.pow(3);
 
 pub struct QuantizerWu {
-    weights: Box<[i64; TOTAL_SIZE]>,
-    moments_r: Box<[i64; TOTAL_SIZE]>,
-    moments_g: Box<[i64; TOTAL_SIZE]>,
-    moments_b: Box<[i64; TOTAL_SIZE]>,
-    moments: Box<[f64; TOTAL_SIZE]>,
+    weights: Vec<i64>,
+    moments_r: Vec<i64>,
+    moments_g: Vec<i64>,
+    moments_b: Vec<i64>,
+    moments: Vec<f64>,
     cubes: Vec<Cube>,
 }
 
 impl Default for QuantizerWu {
     fn default() -> Self {
         Self {
-            weights: Box::new([0; TOTAL_SIZE]),
-            moments_r: Box::new([0; TOTAL_SIZE]),
-            moments_g: Box::new([0; TOTAL_SIZE]),
-            moments_b: Box::new([0; TOTAL_SIZE]),
-            moments: Box::new([0.0; TOTAL_SIZE]),
+            weights: vec![0; TOTAL_SIZE],
+            moments_r: vec![0; TOTAL_SIZE],
+            moments_g: vec![0; TOTAL_SIZE],
+            moments_b: vec![0; TOTAL_SIZE],
+            moments: vec![0.0; TOTAL_SIZE],
             cubes: vec![],
         }
     }
 }
 
 impl Quantizer for QuantizerWu {
-    fn quantize(&mut self, pixels: &[Argb], max_colors: usize) -> QuantizerResult {
-        let mut result = QuantizerMap.quantize(pixels, max_colors);
+    fn quantize(pixels: &[Argb], max_colors: usize) -> QuantizerResult {
+        let mut result = QuantizerMap::quantize(pixels, max_colors);
 
         result.color_to_count.sort_by(|_, a, _, b| a.cmp(b));
 
-        self.construct_histogram(result.color_to_count);
-        self.compute_moments();
+        let mut quantizer = Self::default();
 
-        let create_boxes_result = self.create_boxes(max_colors);
-        let color_to_count = self.create_result(create_boxes_result.result_count);
+        quantizer.construct_histogram(result.color_to_count);
+        quantizer.compute_moments();
+
+        let create_boxes_result = quantizer.create_boxes(max_colors);
+        let color_to_count = quantizer.create_result(create_boxes_result.result_count);
 
         QuantizerResult {
             color_to_count,
@@ -69,12 +73,6 @@ impl QuantizerWu {
     }
 
     pub fn construct_histogram(&mut self, pixels: IndexMap<Argb, u32>) {
-        self.weights = Box::new([0; TOTAL_SIZE]);
-        self.moments_r = Box::new([0; TOTAL_SIZE]);
-        self.moments_g = Box::new([0; TOTAL_SIZE]);
-        self.moments_b = Box::new([0; TOTAL_SIZE]);
-        self.moments = Box::new([0.0; TOTAL_SIZE]);
-
         for (pixel, count) in pixels {
             let red = pixel.red;
             let green = pixel.green;
@@ -93,9 +91,14 @@ impl QuantizerWu {
             self.moments_b[index] += i64::from(blue) * i64::from(count);
 
             self.moments[index] += f64::from(count)
-                * f64::from(blue).mul_add(
+                * libm::fma(
                     f64::from(blue),
-                    f64::from(red).mul_add(f64::from(red), f64::from(green) * f64::from(green)),
+                    f64::from(blue),
+                    libm::fma(
+                        f64::from(red),
+                        f64::from(red),
+                        f64::from(green) * f64::from(green),
+                    ),
                 );
         }
     }
@@ -143,14 +146,6 @@ impl QuantizerWu {
     }
 
     pub fn create_boxes(&mut self, max_color_count: usize) -> CreateBoxesResult {
-        self.cubes = vec![
-            Cube {
-                pixels: [Rgb::default(), Rgb::default()],
-                vol: 0
-            };
-            max_color_count
-        ];
-
         self.cubes[0] = Cube {
             pixels: [
                 Rgb::default(),
@@ -218,7 +213,7 @@ impl QuantizerWu {
     }
 
     pub fn create_result(&self, color_count: usize) -> IndexMap<Argb, u32> {
-        let mut result = IndexMap::new();
+        let mut result = IndexMap::default();
 
         for i in 0..color_count {
             let cube = &self.cubes[i];
@@ -252,7 +247,7 @@ impl QuantizerWu {
             + self.moments[Self::get_index::<u8>(cube.r(0), cube.g(0), cube.b(1))]
             - self.moments[Self::get_index::<u8>(cube.r(0), cube.g(0), cube.b(0))];
 
-        let hypotenuse = db.mul_add(db, dr.mul_add(dr, dg * dg));
+        let hypotenuse = libm::fma(db, db, libm::fma(dr, dr, dg * dg));
         let volume = Self::volume(cube, &self.weights) as f64;
 
         xx - (hypotenuse / volume)
@@ -382,7 +377,11 @@ impl QuantizerWu {
                 continue;
             }
 
-            let mut temp_numerator = half_b.mul_add(half_b, half_r.mul_add(half_r, half_g.powi(2)));
+            let mut temp_numerator = libm::fma(
+                half_b,
+                half_b,
+                libm::fma(half_r, half_r, libm::pow(half_g, 2.0)),
+            );
             let mut temp_denominator = half_w;
             let mut temp = temp_numerator / temp_denominator;
 
@@ -395,7 +394,11 @@ impl QuantizerWu {
                 continue;
             }
 
-            temp_numerator = half_b.mul_add(half_b, half_r.mul_add(half_r, half_g.powi(2)));
+            temp_numerator = libm::fma(
+                half_b,
+                half_b,
+                libm::fma(half_r, half_r, libm::pow(half_g, 2.0)),
+            );
             temp_denominator = half_w;
             temp += temp_numerator / temp_denominator;
 
@@ -411,7 +414,7 @@ impl QuantizerWu {
         }
     }
 
-    pub fn volume(cube: &Cube, moment: &[i64; TOTAL_SIZE]) -> i64 {
+    pub fn volume(cube: &Cube, moment: &[i64]) -> i64 {
         moment[Self::get_index::<u8>(cube.r(1), cube.g(1), cube.b(1))]
             - moment[Self::get_index::<u8>(cube.r(1), cube.g(1), cube.b(0))]
             - moment[Self::get_index::<u8>(cube.r(1), cube.g(0), cube.b(1))]
@@ -422,7 +425,7 @@ impl QuantizerWu {
             - moment[Self::get_index::<u8>(cube.r(0), cube.g(0), cube.b(0))]
     }
 
-    pub fn bottom(cube: &Cube, direction: &Direction, moment: &[i64; TOTAL_SIZE]) -> i64 {
+    pub fn bottom(cube: &Cube, direction: &Direction, moment: &[i64]) -> i64 {
         match direction {
             Direction::Red => {
                 -moment[Self::get_index::<u8>(cube.r(0), cube.g(1), cube.b(1))]
@@ -445,12 +448,7 @@ impl QuantizerWu {
         }
     }
 
-    pub fn top(
-        cube: &Cube,
-        direction: &Direction,
-        position: i32,
-        moment: &[i64; TOTAL_SIZE],
-    ) -> i64 {
+    pub fn top(cube: &Cube, direction: &Direction, position: i32, moment: &[i64]) -> i64 {
         match direction {
             Direction::Red => {
                 moment[Self::get_index(position as usize, cube.g(1), cube.b(1))]
@@ -546,7 +544,7 @@ mod tests {
 
     #[test]
     fn test_1rando() {
-        let result = QuantizerWu::default().quantize(&[Argb::from_u32(0xff14_1216)], MAX_COLORS);
+        let result = QuantizerWu::quantize(&[Argb::from_u32(0xff14_1216)], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
@@ -555,7 +553,7 @@ mod tests {
 
     #[test]
     fn test_1r() {
-        let result = QuantizerWu::default().quantize(&[RED], MAX_COLORS);
+        let result = QuantizerWu::quantize(&[RED], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
@@ -564,7 +562,7 @@ mod tests {
 
     #[test]
     fn test_1g() {
-        let result = QuantizerWu::default().quantize(&[GREEN], MAX_COLORS);
+        let result = QuantizerWu::quantize(&[GREEN], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
@@ -573,7 +571,7 @@ mod tests {
 
     #[test]
     fn test_1b() {
-        let result = QuantizerWu::default().quantize(&[BLUE], MAX_COLORS);
+        let result = QuantizerWu::quantize(&[BLUE], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
@@ -582,7 +580,7 @@ mod tests {
 
     #[test]
     fn test_5b() {
-        let result = QuantizerWu::default().quantize(&[BLUE, BLUE, BLUE, BLUE, BLUE], MAX_COLORS);
+        let result = QuantizerWu::quantize(&[BLUE, BLUE, BLUE, BLUE, BLUE], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
@@ -591,7 +589,7 @@ mod tests {
 
     #[test]
     fn test_2r_3g() {
-        let result = QuantizerWu::default().quantize(&[RED, RED, GREEN, GREEN, GREEN], MAX_COLORS);
+        let result = QuantizerWu::quantize(&[RED, RED, GREEN, GREEN, GREEN], MAX_COLORS);
 
         assert_eq!(result.color_to_count.keys().len(), 2);
 
@@ -601,7 +599,7 @@ mod tests {
 
     #[test]
     fn test_1r_1g_1b() {
-        let result = QuantizerWu::default().quantize(&[RED, GREEN, BLUE], MAX_COLORS);
+        let result = QuantizerWu::quantize(&[RED, GREEN, BLUE], MAX_COLORS);
 
         assert_eq!(result.color_to_count.keys().len(), 3);
 

@@ -1,3 +1,4 @@
+// #![doc = include_str!("README.md")]
 #![no_std]
 #![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
 #![allow(
@@ -19,7 +20,7 @@
     clippy::implicit_hasher,  // we use ahash on Scheme
     // nursery lints for later
     clippy::while_float,
-    clippy::large_stack_frames,
+    // clippy::large_stack_frames,
     clippy::cognitive_complexity,
     clippy::derive_ord_xor_partial_ord
 )]
@@ -36,6 +37,9 @@ extern crate std;
 pub(crate) use ahash::HashMap as Map;
 #[cfg(not(feature = "std"))]
 pub(crate) use alloc::collections::BTreeMap as Map;
+
+pub(crate) type IndexMap<K, V> =
+    indexmap::IndexMap<K, V, core::hash::BuildHasherDefault<ahash::AHasher>>;
 
 pub mod blend;
 pub mod color;
