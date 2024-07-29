@@ -1,3 +1,6 @@
+#[cfg(not(feature = "std"))]
+#[allow(unused_imports)]
+use crate::utils::no_std::FloatExt;
 use crate::{
     color::{Argb, Lab},
     hct::Hct,
@@ -68,11 +71,7 @@ impl TemperatureCache {
     pub fn analogous(&mut self, count: Option<i32>, divisions: Option<i32>) -> Vec<Hct> {
         let count = count.unwrap_or(5);
         let divisions = divisions.unwrap_or(12);
-        let start_hue = if cfg!(feature = "std") {
-            self.input.get_hue().round() as i32
-        } else {
-            libm::round(self.input.get_hue()) as i32
-        };
+        let start_hue = self.input.get_hue().round() as i32;
         let start_hct = &self.hcts_by_hue()[start_hue as usize];
         let mut last_temp = self.relative_temperature(start_hct);
         let mut all_colors = vec![*start_hct];
@@ -83,11 +82,7 @@ impl TemperatureCache {
             let hue = sanitize_degrees_double((start_hue + i).into());
             let hct = &self.hcts_by_hue()[hue as usize];
             let temp = self.relative_temperature(hct);
-            let temp_delta = if cfg!(feature = "std") {
-                (temp - last_temp).abs()
-            } else {
-                libm::fabs(temp - last_temp)
-            };
+            let temp_delta = (temp - last_temp).abs();
 
             last_temp = temp;
             absolute_total_temp_delta += temp_delta;
@@ -104,11 +99,7 @@ impl TemperatureCache {
             let hue = sanitize_degrees_double((start_hue + hue_addend).into());
             let hct = &self.hcts_by_hue()[hue as usize];
             let temp = self.relative_temperature(hct);
-            let temp_delta = if cfg!(feature = "std") {
-                (temp - last_temp).abs()
-            } else {
-                libm::fabs(temp - last_temp)
-            };
+            let temp_delta = (temp - last_temp).abs();
 
             total_temp_delta += temp_delta;
 
@@ -150,11 +141,7 @@ impl TemperatureCache {
         let mut answers = vec![self.input];
 
         // First, generate analogues from rotating counter-clockwise.
-        let increase_hue_count = if cfg!(feature = "std") {
-            ((f64::from(count) - 1.0) / 2.0).floor() as isize
-        } else {
-            libm::floor((f64::from(count) - 1.0) / 2.0) as isize
-        };
+        let increase_hue_count = ((f64::from(count) - 1.0) / 2.0).floor() as isize;
 
         for i in 1..=increase_hue_count {
             let mut index = 0_isize - i;
@@ -230,38 +217,24 @@ impl TemperatureCache {
         };
         let direction_of_rotation = 1.0_f64;
         let mut smallest_error = 1000.0;
-        let mut answer = self.hcts_by_hue()[if cfg!(feature = "std") {
-            self.input.get_hue().round() as usize
-        } else {
-            libm::round(self.input.get_hue()) as usize
-        }];
+        let mut answer = self.hcts_by_hue()[self.input.get_hue().round() as usize];
 
         let complement_relative_temp = 1.0 - self.input_relative_temperature();
 
         // Find the color in the other section, closest to the inverse percentile
         // of the input color. This is the complement.
         for hue_addend in 0..=360 {
-            let hue = sanitize_degrees_double(if cfg!(feature = "std") {
-                direction_of_rotation.mul_add(f64::from(hue_addend), start_hue)
-            } else {
-                libm::fma(direction_of_rotation, f64::from(hue_addend), start_hue)
-            });
+            let hue = sanitize_degrees_double(
+                direction_of_rotation.mul_add(f64::from(hue_addend), start_hue),
+            );
 
             if !Self::is_between(hue, start_hue, end_hue) {
                 continue;
             }
 
-            let possible_answer = &self.hcts_by_hue()[if cfg!(feature = "std") {
-                hue.round() as usize
-            } else {
-                libm::round(hue) as usize
-            }];
+            let possible_answer = &self.hcts_by_hue()[hue.round() as usize];
             let relative_temp = (self._temps_by_hct[possible_answer] - coldest_temp) / range;
-            let error = if cfg!(feature = "std") {
-                (complement_relative_temp - relative_temp).abs()
-            } else {
-                libm::fabs(complement_relative_temp - relative_temp)
-            };
+            let error = (complement_relative_temp - relative_temp).abs();
 
             if error < smallest_error {
                 smallest_error = error;
@@ -418,33 +391,14 @@ impl TemperatureCache {
     ///   Assuming max of 130 chroma, 8.61.
     pub fn raw_temperature(color: Hct) -> f64 {
         let lab = Lab::from(Argb::from(color));
-        let hue = sanitize_degrees_double(
-            if cfg!(feature = "std") {
-                lab.b.atan2(lab.a)
-            } else {
-                libm::atan2(lab.b, lab.a)
-            }
-            .to_degrees(),
-        );
+        let hue = sanitize_degrees_double(lab.b.atan2(lab.a).to_degrees());
 
-        let chroma = if cfg!(feature = "std") {
-            lab.a.hypot(lab.b)
-        } else {
-            libm::hypot(lab.a, lab.b)
-        };
+        let chroma = lab.a.hypot(lab.b);
 
-        if cfg!(feature = "std") {
-            (0.02 * chroma.powf(1.07)).mul_add(
-                (sanitize_degrees_double(hue - 50.0).to_radians()).cos(),
-                -0.5,
-            )
-        } else {
-            libm::fma(
-                0.02 * libm::pow(chroma, 1.07),
-                libm::cos(sanitize_degrees_double(hue - 50.0).to_radians()),
-                -0.5,
-            )
-        }
+        (0.02 * chroma.powf(1.07)).mul_add(
+            (sanitize_degrees_double(hue - 50.0).to_radians()).cos(),
+            -0.5,
+        )
     }
 }
 

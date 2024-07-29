@@ -1,3 +1,6 @@
+#[cfg(not(feature = "std"))]
+#[allow(unused_imports)]
+use crate::utils::no_std::FloatExt;
 use crate::{
     color::Argb,
     hct::{Cam16, Hct},
@@ -11,18 +14,10 @@ pub fn harmonize(design_color: Argb, source_color: Argb) -> Argb {
     let difference_degrees = difference_degrees(from_hct.get_hue(), to_hct.get_hue());
     let rotation_degrees = (difference_degrees * 0.5).min(15.0);
 
-    let output_hue = sanitize_degrees_double(if cfg!(feature = "std") {
-        rotation_degrees.mul_add(
-            rotate_direction(from_hct.get_hue(), to_hct.get_hue()),
-            from_hct.get_hue(),
-        )
-    } else {
-        libm::fma(
-            rotation_degrees,
-            rotate_direction(from_hct.get_hue(), to_hct.get_hue()),
-            from_hct.get_hue(),
-        )
-    });
+    let output_hue = sanitize_degrees_double(rotation_degrees.mul_add(
+        rotate_direction(from_hct.get_hue(), to_hct.get_hue()),
+        from_hct.get_hue(),
+    ));
 
     Hct::from(output_hue, from_hct.get_chroma(), from_hct.get_tone()).into()
 }
@@ -50,19 +45,11 @@ pub fn cam16_ucs(from: Argb, to: Argb, amount: f64) -> Argb {
     let to_a = to_cam.astar;
     let to_b = to_cam.bstar;
 
-    let (jstar, astar, bstar) = if cfg!(feature = "std") {
-        (
-            (to_j - from_j).mul_add(amount, from_j),
-            (to_a - from_a).mul_add(amount, from_a),
-            (to_b - from_b).mul_add(amount, from_b),
-        )
-    } else {
-        (
-            libm::fma(to_j - from_j, amount, from_j),
-            libm::fma(to_a - from_a, amount, from_a),
-            libm::fma(to_b - from_b, amount, from_b),
-        )
-    };
+    let (jstar, astar, bstar) = (
+        (to_j - from_j).mul_add(amount, from_j),
+        (to_a - from_a).mul_add(amount, from_a),
+        (to_b - from_b).mul_add(amount, from_b),
+    );
 
     Cam16::from_ucs(jstar, astar, bstar).into()
 }

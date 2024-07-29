@@ -1,3 +1,7 @@
+#[cfg(not(feature = "std"))]
+#[allow(unused_imports)]
+use crate::utils::no_std::FloatExt;
+
 pub fn signum(value: f64) -> f64 {
     if value < 0.0 {
         -1.0
@@ -9,11 +13,7 @@ pub fn signum(value: f64) -> f64 {
 }
 
 pub fn lerp(start: f64, stop: f64, amount: f64) -> f64 {
-    if cfg!(feature = "std") {
-        (1.0 - amount).mul_add(start, amount * stop)
-    } else {
-        libm::fma(1.0 - amount, start, amount * stop)
-    }
+    (1.0 - amount).mul_add(start, amount * stop)
 }
 
 pub const fn sanitize_degrees_int(degrees: i32) -> u32 {
@@ -41,50 +41,24 @@ pub fn rotate_direction(from: f64, to: f64) -> f64 {
 }
 
 pub fn difference_degrees(a: f64, b: f64) -> f64 {
-    if cfg!(feature = "std") {
-        180.0 - ((a - b).abs() - 180.0).abs()
-    } else {
-        180.0 - libm::fabs(libm::fabs(a - b) - 180.0)
-    }
+    180.0 - ((a - b).abs() - 180.0).abs()
 }
 
 pub fn matrix_multiply(row: [f64; 3], matrix: [[f64; 3]; 3]) -> [f64; 3] {
-    let (a, b, c) = if cfg!(feature = "std") {
-        (
-            row[2].mul_add(
-                matrix[0][2],
-                row[0].mul_add(matrix[0][0], row[1] * matrix[0][1]),
-            ),
-            row[2].mul_add(
-                matrix[1][2],
-                row[0].mul_add(matrix[1][0], row[1] * matrix[1][1]),
-            ),
-            row[2].mul_add(
-                matrix[2][2],
-                row[0].mul_add(matrix[2][0], row[1] * matrix[2][1]),
-            ),
-        )
-    } else {
-        (
-            libm::fma(
-                row[2],
-                matrix[0][2],
-                libm::fma(row[0], matrix[0][0], row[1] * matrix[0][1]),
-            ),
-            libm::fma(
-                row[2],
-                matrix[1][2],
-                libm::fma(row[0], matrix[1][0], row[1] * matrix[1][1]),
-            ),
-            libm::fma(
-                row[2],
-                matrix[2][2],
-                libm::fma(row[0], matrix[2][0], row[1] * matrix[2][1]),
-            ),
-        )
-    };
-
-    [a, b, c]
+    [
+        row[2].mul_add(
+            matrix[0][2],
+            row[0].mul_add(matrix[0][0], row[1] * matrix[0][1]),
+        ),
+        row[2].mul_add(
+            matrix[1][2],
+            row[0].mul_add(matrix[1][0], row[1] * matrix[1][1]),
+        ),
+        row[2].mul_add(
+            matrix[2][2],
+            row[0].mul_add(matrix[2][0], row[1] * matrix[2][1]),
+        ),
+    ]
 }
 
 #[cfg(test)]
@@ -155,15 +129,7 @@ mod tests {
                 let actual_answer = rotate_direction(from, to);
 
                 assert_approx_eq!(f64, actual_answer, expected_answer);
-                assert_approx_eq!(
-                    f64,
-                    if cfg!(feature = "std") {
-                        actual_answer.abs()
-                    } else {
-                        libm::fabs(actual_answer)
-                    },
-                    1.0
-                );
+                assert_approx_eq!(f64, actual_answer.abs(), 1.0);
 
                 to += 15.0;
             }
@@ -221,11 +187,7 @@ mod tests {
         let b = to - from + 360.0;
         let c = to - from - 360.0;
 
-        let (a_abs, b_abs, c_abs) = if cfg!(feature = "std") {
-            (a.abs(), b.abs(), c.abs())
-        } else {
-            (libm::fabs(a), libm::fabs(b), libm::fabs(c))
-        };
+        let (a_abs, b_abs, c_abs) = (a.abs(), b.abs(), c.abs());
 
         if a_abs <= b_abs && a_abs <= c_abs {
             if a >= 0.0 {

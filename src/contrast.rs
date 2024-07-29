@@ -1,3 +1,6 @@
+#[cfg(not(feature = "std"))]
+#[allow(unused_imports)]
+use crate::utils::no_std::FloatExt;
 use crate::color::{lstar_from_y, y_from_lstar};
 
 /// Returns a contrast ratio, which ranges from 1 to 21.
@@ -14,9 +17,7 @@ pub fn ratio_of_tones(tone_a: f64, tone_b: f64) -> f64 {
 
 fn ratio_of_ys(y1: f64, y2: f64) -> f64 {
     let lighter = if y1 > y2 { y1 } else { y2 };
-    let darker = if cfg!(feature = "std") && (lighter - y2).abs() < f64::EPSILON
-        || libm::fabs(lighter - y2) < f64::EPSILON
-    {
+    let darker = if (lighter - y2).abs() < f64::EPSILON {
         y1
     } else {
         y2
@@ -40,17 +41,9 @@ pub fn lighter(tone: f64, ratio: f64) -> f64 {
     }
 
     let dark_y = y_from_lstar(tone);
-    let light_y = if cfg!(feature = "std") {
-        ratio.mul_add(dark_y + 5.0, -5.0)
-    } else {
-        libm::fma(ratio, dark_y + 5.0, -5.0)
-    };
+    let light_y = ratio.mul_add(dark_y + 5.0, -5.0);
     let real_contrast = ratio_of_ys(light_y, dark_y);
-    let delta = if cfg!(feature = "std") {
-        (real_contrast - ratio).abs()
-    } else {
-        libm::fabs(real_contrast - ratio)
-    };
+    let delta = (real_contrast - ratio).abs();
 
     if real_contrast < ratio && delta > 0.04 {
         return -1.0;
@@ -85,11 +78,7 @@ pub fn darker(tone: f64, ratio: f64) -> f64 {
     let dark_y = ((light_y + 5.0) / ratio) - 5.0;
     let real_contrast = ratio_of_ys(light_y, dark_y);
 
-    let delta = if cfg!(feature = "std") {
-        (real_contrast - ratio).abs()
-    } else {
-        libm::fabs(real_contrast - ratio)
-    };
+    let delta = (real_contrast - ratio).abs();
 
     if real_contrast < ratio && delta > 0.04 {
         return -1.0;

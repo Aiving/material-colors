@@ -1,6 +1,8 @@
-use crate::{dislike::fix_if_disliked, hct::Hct};
-
 use super::{ContrastCurve, DynamicColor, DynamicScheme, ToneDeltaPair, TonePolarity, Variant};
+#[cfg(not(feature = "std"))]
+#[allow(unused_imports)]
+use crate::utils::no_std::FloatExt;
+use crate::{dislike::fix_if_disliked, hct::Hct};
 
 const fn _is_fidelity(scheme: &DynamicScheme) -> bool {
     matches!(scheme.variant, Variant::Fidelity) || matches!(scheme.variant, Variant::Content)
@@ -525,23 +527,14 @@ impl MaterialDynamicColors {
                     break;
                 }
 
-                if cfg!(feature = "std") && (potential_solution.get_chroma() - chroma).abs() < 0.4
-                    || libm::fabs(potential_solution.get_chroma() - chroma) < 0.4
-                {
+                if (potential_solution.get_chroma() - chroma).abs() < 0.4 {
                     break;
                 }
 
-                let (potential_delta, current_delta) = if cfg!(feature = "std") {
-                    (
-                        (potential_solution.get_chroma() - chroma).abs(),
-                        (closest_to_chroma.get_chroma() - chroma).abs(),
-                    )
-                } else {
-                    (
-                        libm::fabs(potential_solution.get_chroma() - chroma),
-                        libm::fabs(closest_to_chroma.get_chroma() - chroma),
-                    )
-                };
+                let (potential_delta, current_delta) = (
+                    (potential_solution.get_chroma() - chroma).abs(),
+                    (closest_to_chroma.get_chroma() - chroma).abs(),
+                );
 
                 if potential_delta < current_delta {
                     closest_to_chroma = potential_solution;

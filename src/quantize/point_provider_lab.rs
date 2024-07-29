@@ -1,6 +1,8 @@
-use crate::color::{Argb, Lab};
-
 use super::PointProvider;
+use crate::color::{Argb, Lab};
+#[cfg(not(feature = "std"))]
+#[allow(unused_imports)]
+use crate::utils::no_std::FloatExt;
 
 pub struct PointProviderLab;
 
@@ -20,17 +22,9 @@ impl PointProvider for PointProviderLab {
 
         // This relatively minor optimization is helpful because this method is
         // called at least once for each pixel in an image.
-        if cfg!(feature = "std") {
-            (one.b - two.b).mul_add(
-                one.b - two.b,
-                (one.l - two.l).mul_add(one.l - two.l, (one.a - two.a).powi(2)),
-            )
-        } else {
-            libm::fma(
-                one.b - two.b,
-                one.b - two.b,
-                libm::fma(one.l - two.l, one.l - two.l, libm::pow(one.a - two.a, 2.0)),
-            )
-        }
+        (one.b - two.b).mul_add(
+            one.b - two.b,
+            (one.l - two.l).mul_add(one.l - two.l, (one.a - two.a).powi(2)),
+        )
     }
 }

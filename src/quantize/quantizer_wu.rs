@@ -1,6 +1,9 @@
 #![allow(clippy::too_many_arguments)]
 
 use super::{Quantizer, QuantizerMap, QuantizerResult};
+#[cfg(not(feature = "std"))]
+#[allow(unused_imports)]
+use crate::utils::no_std::FloatExt;
 use crate::{
     color::{Argb, Rgb},
     IndexMap,
@@ -97,22 +100,10 @@ impl QuantizerWu {
             self.moments_b[index] += i64::from(blue) * i64::from(count);
 
             self.moments[index] += f64::from(count)
-                * if cfg!(feature = "std") {
-                    f64::from(blue).mul_add(
-                        f64::from(blue),
-                        f64::from(red).mul_add(f64::from(red), f64::from(green) * f64::from(green)),
-                    )
-                } else {
-                    libm::fma(
-                        f64::from(blue),
-                        f64::from(blue),
-                        libm::fma(
-                            f64::from(red),
-                            f64::from(red),
-                            f64::from(green) * f64::from(green),
-                        ),
-                    )
-                };
+                * f64::from(blue).mul_add(
+                    f64::from(blue),
+                    f64::from(red).mul_add(f64::from(red), f64::from(green) * f64::from(green)),
+                );
         }
     }
 
@@ -260,11 +251,7 @@ impl QuantizerWu {
             + self.moments[Self::get_index::<u8>(cube.r(0), cube.g(0), cube.b(1))]
             - self.moments[Self::get_index::<u8>(cube.r(0), cube.g(0), cube.b(0))];
 
-        let hypotenuse = if cfg!(feature = "std") {
-            db.mul_add(db, dr.mul_add(dr, dg * dg))
-        } else {
-            libm::fma(db, db, libm::fma(dr, dr, dg * dg))
-        };
+        let hypotenuse = db.mul_add(db, dr.mul_add(dr, dg * dg));
         let volume = Self::volume(cube, &self.weights) as f64;
 
         xx - (hypotenuse / volume)
@@ -394,15 +381,7 @@ impl QuantizerWu {
                 continue;
             }
 
-            let mut temp_numerator = if cfg!(feature = "std") {
-                half_b.mul_add(half_b, half_r.mul_add(half_r, half_g.powi(2)))
-            } else {
-                libm::fma(
-                    half_b,
-                    half_b,
-                    libm::fma(half_r, half_r, libm::pow(half_g, 2.0)),
-                )
-            };
+            let mut temp_numerator = half_b.mul_add(half_b, half_r.mul_add(half_r, half_g.powi(2)));
             let mut temp_denominator = half_w;
             let mut temp = temp_numerator / temp_denominator;
 
@@ -415,15 +394,7 @@ impl QuantizerWu {
                 continue;
             }
 
-            temp_numerator = if cfg!(feature = "std") {
-                half_b.mul_add(half_b, half_r.mul_add(half_r, half_g.powi(2)))
-            } else {
-                libm::fma(
-                    half_b,
-                    half_b,
-                    libm::fma(half_r, half_r, libm::pow(half_g, 2.0)),
-                )
-            };
+            temp_numerator = half_b.mul_add(half_b, half_r.mul_add(half_r, half_g.powi(2)));
             temp_denominator = half_w;
             temp += temp_numerator / temp_denominator;
 

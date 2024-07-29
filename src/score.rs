@@ -1,3 +1,6 @@
+#[cfg(not(feature = "std"))]
+#[allow(unused_imports)]
+use crate::utils::no_std::FloatExt;
 use crate::{
     color::Argb,
     hct::Hct,
@@ -65,11 +68,7 @@ impl Score {
         for (argb, population) in colors_to_population {
             let hct: Hct = (*argb).into();
 
-            let hue = if cfg!(feature = "std") {
-                hct.get_hue().floor() as i32
-            } else {
-                libm::floor(hct.get_hue()) as i32
-            };
+            let hue = hct.get_hue().floor() as i32;
 
             colors_hct.push(hct);
 
@@ -95,11 +94,7 @@ impl Score {
         let mut scored_hcts = vec![];
 
         for hct in colors_hct {
-            let hue = if cfg!(feature = "std") {
-                hct.get_hue().round() as i32
-            } else {
-                libm::round(hct.get_hue()) as i32
-            };
+            let hue = hct.get_hue().round() as i32;
 
             let hue = sanitize_degrees_int(hue);
             let proportion = hue_excited_proportions[hue as usize];
