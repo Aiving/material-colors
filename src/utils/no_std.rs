@@ -19,6 +19,7 @@ pub trait FloatExt {
     fn atan2(self, n: Self) -> Self;
 }
 
+#[cfg(not(feature = "no-libm"))]
 impl FloatExt for f64 {
     fn abs(self) -> Self {
         libm::fabs(self)

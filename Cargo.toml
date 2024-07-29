@@ -24,6 +24,7 @@ default = ["std"]
 std = ["serde/std", "indexmap/std", "ahash/std", "ahash/runtime-rng"]
 image = ["dep:images"]
 serde = ["dep:serde"]
+no-libm = []
 
 [profile.dev]
 opt-level = 1

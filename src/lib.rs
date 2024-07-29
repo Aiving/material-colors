@@ -1,4 +1,4 @@
-// #![doc = include_str!("README.md")]
+#![doc = include_str!("../README.md")]
 #![no_std]
 #![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
 #![allow(
@@ -20,9 +20,10 @@
     clippy::implicit_hasher,  // we use ahash on Scheme
     // nursery lints for later
     clippy::while_float,
-    // clippy::large_stack_frames,
     clippy::cognitive_complexity,
-    clippy::derive_ord_xor_partial_ord
+    clippy::derive_ord_xor_partial_ord,
+    // cargo lints
+    clippy::negative_feature_names
 )]
 
 #[cfg(all(feature = "image", not(feature = "std")))]

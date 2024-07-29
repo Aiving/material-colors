@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **added**: Add the Features & License headings to the `README`
 - **fixed**: Fix HEX color example in `README`
 - **changed**: Move to dual-license to be compatible with the Rust project
-- **changed**: Make all math operations use their equivalent in the `libm` crate for compatibility with the `no_std` environments
+- **changed**: Make all math operations on floating point numbers use their equivalent in `trait:FloatExt` for compatibility with `no_std` environments
 
 ## 0.4.0 (July 29th, 2024)
 
