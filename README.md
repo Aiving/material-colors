@@ -10,8 +10,9 @@ An unofficial port of the `material-color-utilities` library for creating Materi
 ## Features
 
 - `std`: enabled by default, disabling makes it possible to use the crate in `no_std` environments, provided there is an allocator available
+  - **NOTE**: Currently, the crate uses [`libm`](https://github.com/rust-lang/libm) in `no_std` environments for all math operations for floating point numbers. This is likely to significantly reduce its speed, but there are no other alternatives at the moment.
 - `image`: adds support for extracting colors from images, requires `std` feature enabled
-- `serde`: adds support for JSON serialization of themes
+- `serde`: adds support for JSON serialization of themes and color schemes
 
 ## Examples
 

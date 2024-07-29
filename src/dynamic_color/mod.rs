@@ -211,13 +211,21 @@ impl DynamicColor {
                 // Good! Tones satisfy the constraint; no change needed.
             } else {
                 // 2nd round: expand farther to match delta.
-                f_tone = libm::fma(delta, expansion_dir, n_tone).clamp(0.0, 100.0);
+                f_tone = if cfg!(feature = "std") {
+                    delta.mul_add(expansion_dir, n_tone).clamp(0.0, 100.0)
+                } else {
+                    libm::fma(delta, expansion_dir, n_tone).clamp(0.0, 100.0)
+                };
 
                 if (f_tone - n_tone) * expansion_dir >= delta {
                     // Good! Tones now satisfy the constraint; no change needed.
                 } else {
                     // 3rd round: contract nearer to match delta.
-                    n_tone = libm::fma(delta, -expansion_dir, f_tone).clamp(0.0, 100.0);
+                    n_tone = if cfg!(feature = "std") {
+                        delta.mul_add(-expansion_dir, f_tone).clamp(0.0, 100.0)
+                    } else {
+                        libm::fma(delta, -expansion_dir, f_tone).clamp(0.0, 100.0)
+                    };
                 }
             }
 
@@ -227,10 +235,20 @@ impl DynamicColor {
                 // `farther`.
                 if expansion_dir > 0.0 {
                     n_tone = 60.0;
-                    f_tone = f_tone.max(libm::fma(delta, expansion_dir, n_tone));
+
+                    f_tone = if cfg!(feature = "std") {
+                        f_tone.max(delta.mul_add(expansion_dir, n_tone))
+                    } else {
+                        f_tone.max(libm::fma(delta, expansion_dir, n_tone))
+                    };
                 } else {
                     n_tone = 49.0;
-                    f_tone = f_tone.min(libm::fma(delta, expansion_dir, n_tone));
+
+                    f_tone = if cfg!(feature = "std") {
+                        f_tone.min(delta.mul_add(expansion_dir, n_tone))
+                    } else {
+                        f_tone.min(libm::fma(delta, expansion_dir, n_tone))
+                    };
                 }
             } else if (50.0..60.0).contains(&f_tone) {
                 if stay_together {
@@ -238,10 +256,20 @@ impl DynamicColor {
                     // zone".
                     if expansion_dir > 0.0 {
                         n_tone = 60.0;
-                        f_tone = f_tone.max(libm::fma(delta, expansion_dir, n_tone));
+
+                        f_tone = if cfg!(feature = "std") {
+                            f_tone.max(delta.mul_add(expansion_dir, n_tone))
+                        } else {
+                            f_tone.max(libm::fma(delta, expansion_dir, n_tone))
+                        };
                     } else {
                         n_tone = 49.0;
-                        f_tone = f_tone.min(libm::fma(delta, expansion_dir, n_tone));
+
+                        f_tone = if cfg!(feature = "std") {
+                            f_tone.min(delta.mul_add(expansion_dir, n_tone))
+                        } else {
+                            f_tone.min(libm::fma(delta, expansion_dir, n_tone))
+                        };
                     }
                 } else {
                     // Not required to stay together; fixes just one.
@@ -318,11 +346,22 @@ impl DynamicColor {
                     // Tones suitable for the foreground.
                     let mut availables: Vec<f64> = vec![];
 
-                    if libm::fabs(light_option - -1.0) > f64::EPSILON {
-                        availables.push(light_option);
-                    }
-                    if libm::fabs(dark_option - -1.0) > f64::EPSILON {
-                        availables.push(dark_option);
+                    if cfg!(feature = "std") {
+                        if (light_option - -1.0).abs() > f64::EPSILON {
+                            availables.push(light_option);
+                        }
+
+                        if (dark_option - -1.0).abs() > f64::EPSILON {
+                            availables.push(dark_option);
+                        }
+                    } else {
+                        if libm::fabs(light_option - -1.0) > f64::EPSILON {
+                            availables.push(light_option);
+                        }
+
+                        if libm::fabs(dark_option - -1.0) > f64::EPSILON {
+                            availables.push(dark_option);
+                        }
                     }
 
                     let prefers_light = Self::tone_prefers_light_foreground(bg_tone1)
@@ -373,7 +412,11 @@ impl DynamicColor {
             // momentarily between high and max contrast in light mode.
             // PC's standard tone was T90, OPC's was T10, it was light mode, and the
             // contrast value was 0.6568521221032331.
-            let negligible_difference = libm::fabs(lighter_ratio - darker_ratio) < 0.1
+            let negligible_difference = if cfg!(feature = "std") {
+                (lighter_ratio - darker_ratio).abs()
+            } else {
+                libm::fabs(lighter_ratio - darker_ratio)
+            } < 0.1
                 && lighter_ratio < ratio
                 && darker_ratio < ratio;
 
@@ -415,7 +458,11 @@ impl DynamicColor {
     /// - Parameter tone: The tone to be judged.
     /// - Returns: whether `tone` prefers a light foreground.
     pub fn tone_prefers_light_foreground(tone: f64) -> bool {
-        libm::round(tone) < 60.0
+        if cfg!(feature = "std") {
+            tone.round() < 60.0
+        } else {
+            libm::round(tone) < 60.0
+        }
     }
 
     /// Returns whether `tone` can reach a contrast ratio of 4.5 with a lighter
@@ -424,7 +471,11 @@ impl DynamicColor {
     /// - Parameter tone: The tone to be judged.
     /// - Returns: whether `tone` allows a light foreground.
     pub fn tone_allows_light_foreground(tone: f64) -> bool {
-        libm::round(tone) <= 49.0
+        if cfg!(feature = "std") {
+            tone.round() <= 49.0
+        } else {
+            libm::round(tone) <= 49.0
+        }
     }
 }
 

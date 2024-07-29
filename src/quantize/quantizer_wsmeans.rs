@@ -9,7 +9,7 @@ use alloc::{vec, vec::Vec};
 use core::cmp::Ordering;
 #[cfg(feature = "std")]
 use std::{
-    format, println,
+    format,
     string::String,
     time::Instant,
     {vec, vec::Vec},
@@ -65,7 +65,7 @@ impl QuantizerWsmeans {
         if Self::DEBUG {
             let log: String = log.into();
 
-            println!("{log}");
+            std::println!("{log}");
         }
     }
 

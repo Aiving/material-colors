@@ -63,9 +63,18 @@ impl Score {
         let mut population_sum = 0.0;
 
         for (argb, population) in colors_to_population {
+            {
+                extern crate std;
+
+                std::println!("{argb}");
+            }
             let hct: Hct = (*argb).into();
 
-            let hue = libm::floor(hct.get_hue()) as i32;
+            let hue = if cfg!(feature = "std") {
+                hct.get_hue().floor() as i32
+            } else {
+                libm::floor(hct.get_hue()) as i32
+            };
 
             colors_hct.push(hct);
 
@@ -91,7 +100,13 @@ impl Score {
         let mut scored_hcts = vec![];
 
         for hct in colors_hct {
-            let hue = sanitize_degrees_int(libm::round(hct.get_hue()) as i32);
+            let hue = if cfg!(feature = "std") {
+                hct.get_hue().round() as i32
+            } else {
+                libm::round(hct.get_hue()) as i32
+            };
+
+            let hue = sanitize_degrees_int(hue);
             let proportion = hue_excited_proportions[hue as usize];
 
             if filter
@@ -108,6 +123,11 @@ impl Score {
                 Self::WEIGHT_CHROMA_ABOVE
             };
             let chroma_score = (hct.get_chroma() - Self::TARGET_CHROMA) * chroma_weight;
+            {
+                extern crate std;
+
+                std::println!("{proportion_score} + ({} * {chroma_weight})", hct.get_chroma());
+            }
             let score = proportion_score + chroma_score;
 
             scored_hcts.push(ScoredHCT { hct, score });

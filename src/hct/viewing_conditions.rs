@@ -15,6 +15,7 @@ use core::f64::consts::PI;
 ///
 /// This class caches intermediate values of the CAM16 conversion process that
 /// depend only on viewing conditions, enabling speed ups.
+#[derive(Debug)]
 pub struct ViewingConditions {
     pub white_point: [f64; 3],
     pub adapting_luminance: f64,
@@ -79,21 +80,31 @@ impl ViewingConditions {
         let background_lstar = (0.1_f64).max(background_lstar);
         // Transform test illuminant white in Xyz to 'cone'/'rgb' responses
         let xyz = white_point;
-        let r_w = libm::fma(
-            xyz[2],
-            -0.051461,
-            libm::fma(xyz[0], 0.401288, xyz[1] * 0.650173),
-        );
-        let g_w = libm::fma(
-            xyz[2],
-            0.045854,
-            libm::fma(xyz[0], -0.250268, xyz[1] * 1.204414),
-        );
-        let b_w = libm::fma(
-            xyz[2],
-            0.953127,
-            libm::fma(xyz[0], -0.002079, xyz[1] * 0.048952),
-        );
+        let (r_w, g_w, b_w) = if cfg!(feature = "std") {
+            (
+                xyz[2].mul_add(-0.051461, xyz[0].mul_add(0.401288, xyz[1] * 0.650173)),
+                xyz[2].mul_add(0.045854, xyz[0].mul_add(-0.250268, xyz[1] * 1.204414)),
+                xyz[2].mul_add(0.953127, xyz[0].mul_add(-0.002079, xyz[1] * 0.048952)),
+            )
+        } else {
+            (
+                libm::fma(
+                    xyz[2],
+                    -0.051461,
+                    libm::fma(xyz[0], 0.401288, xyz[1] * 0.650173),
+                ),
+                libm::fma(
+                    xyz[2],
+                    0.045854,
+                    libm::fma(xyz[0], -0.250268, xyz[1] * 1.204414),
+                ),
+                libm::fma(
+                    xyz[2],
+                    0.953127,
+                    libm::fma(xyz[0], -0.002079, xyz[1] * 0.048952),
+                ),
+            )
+        };
 
         // Scale input surround, domain (0, 2), to CAM16 surround, domain (0.8, 1.0)
         assert!((0.0..=2.0).contains(&surround));
@@ -109,11 +120,15 @@ impl ViewingConditions {
         let d = if discounting_illuminant {
             1.0
         } else {
-            f * libm::fma(
-                1.0 / 3.6,
-                libm::exp(-((-adapting_luminance - 42.0) / 92.0)),
-                1.0,
-            )
+            f * if cfg!(feature = "std") {
+                (1.0f64 / 3.6f64).mul_add(-((-adapting_luminance - 42.0) / 92.0).exp(), 1.0)
+            } else {
+                libm::fma(
+                    1.0 / 3.6,
+                    libm::exp(-((-adapting_luminance - 42.0) / 92.0)),
+                    1.0,
+                )
+            }
         };
         // Per Li et al, if D is greater than 1 or less than 0, set it to 1 or 0.
         let d = d.clamp(0.0, 1.0);
@@ -130,41 +145,80 @@ impl ViewingConditions {
         // CIE 2004a report on CIECAM02, but, later parts of the conversion process
         // account for scaling of appearance relative to the white point relative
         // luminance. This part should simply use 100 as luminance.
-        let rgb_d = [
-            libm::fma(d, 100.0 / r_w, 1.0) - d,
-            libm::fma(d, 100.0 / g_w, 1.0) - d,
-            libm::fma(d, 100.0 / b_w, 1.0) - d,
-        ];
+        let rgb_d = if cfg!(feature = "std") {
+            [
+                d.mul_add(100.0 / r_w, 1.0) - d,
+                d.mul_add(100.0 / g_w, 1.0) - d,
+                d.mul_add(100.0 / b_w, 1.0) - d,
+            ]
+        } else {
+            [
+                libm::fma(d, 100.0 / r_w, 1.0) - d,
+                libm::fma(d, 100.0 / g_w, 1.0) - d,
+                libm::fma(d, 100.0 / b_w, 1.0) - d,
+            ]
+        };
 
         // Factor used in calculating meaningful factors
-        let k = 1.0 / libm::fma(5.0, adapting_luminance, 1.0);
+        let k = 1.0
+            / if cfg!(feature = "std") {
+                5.0f64.mul_add(adapting_luminance, 1.0)
+            } else {
+                libm::fma(5.0, adapting_luminance, 1.0)
+            };
         let k4 = k * k * k * k; // pow(k, 4)
         let k4_f = 1.0 - k4;
 
         // Luminance-level adaptation factor
-        let fl = libm::fma(
-            k4,
-            adapting_luminance,
-            0.1 * k4_f * k4_f * libm::cbrt(5.0 * adapting_luminance),
-        );
+        let fl = if cfg!(feature = "std") {
+            k4.mul_add(
+                adapting_luminance,
+                0.1 * k4_f * k4_f * (5.0 * adapting_luminance).cbrt(),
+            )
+        } else {
+            libm::fma(
+                k4,
+                adapting_luminance,
+                0.1 * k4_f * k4_f * libm::cbrt(5.0 * adapting_luminance),
+            )
+        };
         // Intermediate factor, ratio of background relative luminance to white relative luminance
         let n = y_from_lstar(background_lstar) / white_point[1];
 
         // Base exponential nonlinearity
         // note Schlomer 2018 has a typo and uses 1.58, the correct factor is 1.48
-        let z = 1.48 + libm::sqrt(n);
+        let z = 1.48
+            + if cfg!(feature = "std") {
+                n.sqrt()
+            } else {
+                libm::sqrt(n)
+            };
 
         // Luminance-level induction factors
-        let nbb = 0.725 / libm::pow(n, 0.2);
+        let nbb = 0.725
+            / if cfg!(feature = "std") {
+                n.powf(0.2)
+            } else {
+                libm::pow(n, 0.2)
+            };
+
         let ncb = nbb;
 
         // Discounted cone responses to the white point, adjusted for post-saturationtic
         // adaptation perceptual nonlinearities.
-        let rgb_afactors = [
-            libm::pow(fl * rgb_d[0] * r_w / 100.0, 0.42),
-            libm::pow(fl * rgb_d[1] * g_w / 100.0, 0.42),
-            libm::pow(fl * rgb_d[2] * b_w / 100.0, 0.42),
-        ];
+        let rgb_afactors = if cfg!(feature = "std") {
+            [
+                (fl * rgb_d[0] * r_w / 100.0).powf(0.42),
+                (fl * rgb_d[1] * g_w / 100.0).powf(0.42),
+                (fl * rgb_d[2] * b_w / 100.0).powf(0.42),
+            ]
+        } else {
+            [
+                libm::pow(fl * rgb_d[0] * r_w / 100.0, 0.42),
+                libm::pow(fl * rgb_d[1] * g_w / 100.0, 0.42),
+                libm::pow(fl * rgb_d[2] * b_w / 100.0, 0.42),
+            ]
+        };
 
         let rgb_a = [
             (400.0 * rgb_afactors[0]) / (rgb_afactors[0] + 27.13),
@@ -172,7 +226,13 @@ impl ViewingConditions {
             (400.0 * rgb_afactors[2]) / (rgb_afactors[2] + 27.13),
         ];
 
-        let aw = (libm::fma(40.0, rgb_a[0], 20.0 * rgb_a[1]) + rgb_a[2]) / 20.0 * nbb;
+        let aw = (if cfg!(feature = "std") {
+            40.0f64.mul_add(rgb_a[0], 20.0 * rgb_a[1])
+        } else {
+            libm::fma(40.0, rgb_a[0], 20.0 * rgb_a[1])
+        } + rgb_a[2])
+            / 20.0
+            * nbb;
 
         Self {
             white_point,
@@ -189,7 +249,11 @@ impl ViewingConditions {
             drgb_inverse: [0.0, 0.0, 0.0],
             rgb_d,
             fl,
-            f_lroot: libm::pow(fl, 0.25),
+            f_lroot: if cfg!(feature = "std") {
+                fl.powf(0.25)
+            } else {
+                libm::pow(fl, 0.25)
+            },
             z,
         }
     }

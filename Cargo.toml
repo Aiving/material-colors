@@ -20,6 +20,7 @@ serde = { version = "1.0.204", features = ["derive"], optional = true }
 libm = "0.2.8"
 
 [features]
+default = ["std"]
 std = ["serde/std", "indexmap/std", "ahash/std", "ahash/runtime-rng"]
 image = ["dep:images"]
 serde = ["dep:serde"]

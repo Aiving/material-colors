@@ -29,15 +29,21 @@ pub struct QuantizerWu {
     cubes: Vec<Cube>,
 }
 
-impl Default for QuantizerWu {
-    fn default() -> Self {
+impl QuantizerWu {
+    fn new(max_colors: usize) -> Self {
         Self {
             weights: vec![0; TOTAL_SIZE],
             moments_r: vec![0; TOTAL_SIZE],
             moments_g: vec![0; TOTAL_SIZE],
             moments_b: vec![0; TOTAL_SIZE],
             moments: vec![0.0; TOTAL_SIZE],
-            cubes: vec![],
+            cubes: vec![
+                Cube {
+                    pixels: [Rgb::default(), Rgb::default()],
+                    vol: 0
+                };
+                max_colors
+            ],
         }
     }
 }
@@ -48,7 +54,7 @@ impl Quantizer for QuantizerWu {
 
         result.color_to_count.sort_by(|_, a, _, b| a.cmp(b));
 
-        let mut quantizer = Self::default();
+        let mut quantizer = Self::new(max_colors);
 
         quantizer.construct_histogram(result.color_to_count);
         quantizer.compute_moments();
@@ -91,15 +97,22 @@ impl QuantizerWu {
             self.moments_b[index] += i64::from(blue) * i64::from(count);
 
             self.moments[index] += f64::from(count)
-                * libm::fma(
-                    f64::from(blue),
-                    f64::from(blue),
+                * if cfg!(feature = "std") {
+                    f64::from(blue).mul_add(
+                        f64::from(blue),
+                        f64::from(red).mul_add(f64::from(red), f64::from(green) * f64::from(green)),
+                    )
+                } else {
                     libm::fma(
-                        f64::from(red),
-                        f64::from(red),
-                        f64::from(green) * f64::from(green),
-                    ),
-                );
+                        f64::from(blue),
+                        f64::from(blue),
+                        libm::fma(
+                            f64::from(red),
+                            f64::from(red),
+                            f64::from(green) * f64::from(green),
+                        ),
+                    )
+                };
         }
     }
 
@@ -247,7 +260,11 @@ impl QuantizerWu {
             + self.moments[Self::get_index::<u8>(cube.r(0), cube.g(0), cube.b(1))]
             - self.moments[Self::get_index::<u8>(cube.r(0), cube.g(0), cube.b(0))];
 
-        let hypotenuse = libm::fma(db, db, libm::fma(dr, dr, dg * dg));
+        let hypotenuse = if cfg!(feature = "std") {
+            db.mul_add(db, dr.mul_add(dr, dg * dg))
+        } else {
+            libm::fma(db, db, libm::fma(dr, dr, dg * dg))
+        };
         let volume = Self::volume(cube, &self.weights) as f64;
 
         xx - (hypotenuse / volume)
@@ -377,11 +394,15 @@ impl QuantizerWu {
                 continue;
             }
 
-            let mut temp_numerator = libm::fma(
-                half_b,
-                half_b,
-                libm::fma(half_r, half_r, libm::pow(half_g, 2.0)),
-            );
+            let mut temp_numerator = if cfg!(feature = "std") {
+                half_b.mul_add(half_b, half_r.mul_add(half_r, half_g.powi(2)))
+            } else {
+                libm::fma(
+                    half_b,
+                    half_b,
+                    libm::fma(half_r, half_r, libm::pow(half_g, 2.0)),
+                )
+            };
             let mut temp_denominator = half_w;
             let mut temp = temp_numerator / temp_denominator;
 
@@ -394,11 +415,15 @@ impl QuantizerWu {
                 continue;
             }
 
-            temp_numerator = libm::fma(
-                half_b,
-                half_b,
-                libm::fma(half_r, half_r, libm::pow(half_g, 2.0)),
-            );
+            temp_numerator = if cfg!(feature = "std") {
+                half_b.mul_add(half_b, half_r.mul_add(half_r, half_g.powi(2)))
+            } else {
+                libm::fma(
+                    half_b,
+                    half_b,
+                    libm::fma(half_r, half_r, libm::pow(half_g, 2.0)),
+                )
+            };
             temp_denominator = half_w;
             temp += temp_numerator / temp_denominator;
 
