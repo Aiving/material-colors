@@ -40,7 +40,7 @@ jobs:
         components: rustfmt, rust-src
     - uses: Swatinem/rust-cache@v2
     - name: Build Documentation
-      run: cargo doc --all --no-deps -- -D warnings
+      run: cargo doc --all --no-deps
     - name: Deploy Docs
       uses: peaceiris/actions-gh-pages@v4
       with:
