@@ -226,12 +226,6 @@ impl Cam16 {
                     0.73,
                 )
         };
-        {
-            extern crate std;
-
-            std::println!("{t}^0.9 * (1.64 - 0.29^{})^0.73", viewing_conditions.background_ytowhite_point_y);
-            std::println!("{t}^0.9 = {}", libm::powf(t as f32, 0.9));
-        }
 
         // CAM16 chroma, colorfulness, chroma
         let c = alpha
@@ -240,11 +234,6 @@ impl Cam16 {
             } else {
                 libm::sqrt(j / 100.0)
             };
-            {
-                extern crate std;
-
-                std::println!("{alpha} * sqrt({j} / 100)");
-            }
         let m = c * viewing_conditions.f_lroot;
         let s = 50.0
             * if cfg!(feature = "std") {
