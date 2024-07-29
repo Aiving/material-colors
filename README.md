@@ -22,11 +22,9 @@ From HEX color:
 ```rust
 use material_colors::{color::Argb, theme::ThemeBuilder};
 
-fn main() {
-    let theme = ThemeBuilder::with_source(Argb::from_u32(0xffaae5a4)).build();
+let theme = ThemeBuilder::with_source(Argb::from_u32(0xffaae5a4)).build();
 
-    // Do whatever you want...
-}
+// Do whatever you want...
 ```
 
 From image:
