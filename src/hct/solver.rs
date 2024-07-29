@@ -298,7 +298,8 @@ pub struct HctSolver;
 impl HctSolver {
     /// Sanitizes a small enough angle in radians.
     ///
-    /// [angle] An angle in radians; must not deviate too much from 0.
+    /// - `angle`: An angle in radians; must not deviate too much from 0.
+    /// 
     /// Returns A coterminal angle between 0 and 2pi.
     fn sanitize_radians(angle: f64) -> f64 {
         PI.mul_add(8.0, angle) % (PI * 2.0)
@@ -326,7 +327,7 @@ impl HctSolver {
         signum(component) * 400.0 * af / (af + 27.13)
     }
 
-    /// Returns the hue of [linrgb], a linear Rgb color, in CAM16, in
+    /// Returns the hue of `linrgb`, a linear Rgb color, in CAM16, in
     /// radians.
     fn hue_of(linrgb: [f64; 3]) -> f64 {
         let scaled_discount = matrix_multiply(linrgb, SCALED_DISCOUNT_FROM_LINRGB);
@@ -353,8 +354,8 @@ impl HctSolver {
 
     /// Solves the lerp equation.
     ///
-    /// Returns a number t such that lerp([source], [target], t) =
-    /// [mid].
+    /// Returns a number t such that lerp(`source`, `target`, t) =
+    /// `mid`.
     fn intercept(source: f64, mid: f64, target: f64) -> f64 {
         (mid - source) / (target - source)
     }
@@ -370,11 +371,11 @@ impl HctSolver {
     /// i32ersects a segment with a plane.
     ///
     /// Returns the intersection point of:
-    /// - the segment with [source] and [target] as its endpoints, and
+    /// - the segment with `source` and `target` as its endpoints, and
     /// - the plane
-    ///   ... R = [coordinate] if [axis] == 0
-    ///   ... G = [coordinate] if [axis] == 1
-    ///   ... B = [coordinate] if [axis] == 2
+    ///   ... R = `coordinate` if `axis` == 0
+    ///   ... G = `coordinate` if `axis` == 1
+    ///   ... B = `coordinate` if `axis` == 2
     fn set_coordinate(
         source: [f64; 3],
         coordinate: f64,
@@ -392,12 +393,12 @@ impl HctSolver {
 
     /// Returns the nth possible vertex of the polygonal intersection.
     ///
-    /// Given a plane Y = [y] and an zero-based index [n] such that 0
-    /// <= [n] <= 11, returns the nth possible vertex of the polygonal
+    /// Given a plane Y = `y` and an zero-based index `n` such that 0
+    /// <= `n` <= 11, returns the nth possible vertex of the polygonal
     /// intersection of the plane and the Rgb cube, in linear Rgb
     /// coordinates, if it exists.
-    /// If this possible vertex lies outside of the cube, [-1.0, -1.0,
-    /// -1.0] is returned.
+    /// If this possible vertex lies outside of the cube, `[-1.0, -1.0,
+    /// -1.0]` is returned.
     fn nth_vertex(y: f64, n: i32) -> [f64; 3] {
         let k_r = Y_FROM_LINRGB[0];
         let k_g = Y_FROM_LINRGB[1];
