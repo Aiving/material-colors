@@ -13,7 +13,7 @@ pub fn is_disliked(hct: &Hct) -> bool {
     hue_passes && chroma_passes && tone_passes
 }
 
-/// If [hct] is disliked, lighten it to make it likable.
+/// If `hct` is disliked, lighten it to make it likable.
 pub fn fix_if_disliked(hct: Hct) -> Hct {
     if is_disliked(&hct) {
         return Hct::from(hct.get_hue(), hct.get_chroma(), 70.0);

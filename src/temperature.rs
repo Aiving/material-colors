@@ -63,11 +63,11 @@ impl TemperatureCache {
     /// divided into 12 sections. This method allows provision of either of those
     /// values.
     ///
-    /// Behavior is undefined when [count] or [divisions] is 0.
-    /// When divisions < count, colors repeat.
+    /// Behavior is undefined when `count` or `divisions` is 0.
+    /// When `divisions` < `count`, colors repeat.
     ///
-    /// [count] The number of colors to return, includes the input color.
-    /// [divisions] The number of divisions on the color wheel.
+    /// - `count`: The number of colors to return, includes the input color.
+    /// - `divisions`: The number of divisions on the color wheel.
     pub fn analogous(&mut self, count: Option<i32>, divisions: Option<i32>) -> Vec<Hct> {
         let count = count.unwrap_or(5);
         let divisions = divisions.unwrap_or(12);
@@ -267,7 +267,9 @@ impl TemperatureCache {
         difference_from_coldest / range
     }
 
-    /// Relative temperature of the input color. See [relativeTemperature].
+    /// Relative temperature of the input color. See [`relative_temperature`].
+    ///
+    /// [`relative_temperature`]: Self::relative_temperature
     pub fn input_relative_temperature(&mut self) -> f64 {
         if self._input_relative_temperature >= 0.0 {
             return self._input_relative_temperature;
@@ -318,7 +320,7 @@ impl TemperatureCache {
         a.partial_cmp(&b).unwrap()
     }
 
-    /// A Map with keys of HCTs in [`hctsByTemp`], values of raw temperature.
+    /// A Map with keys of HCTs in `hcts_by_temp`, values of raw temperature.
     pub fn temps_by_hct(&mut self) -> &Map<Hct, f64> {
         if !self._temps_by_hct.is_empty() {
             return &self._temps_by_hct;

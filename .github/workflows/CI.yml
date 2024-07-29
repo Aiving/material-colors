@@ -31,3 +31,21 @@ jobs:
     - uses: Swatinem/rust-cache@v2
     - name: Run tests
       run: cargo test --all-targets --all-features
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@nightly
+      with:
+        components: rustfmt, rust-src
+    - uses: Swatinem/rust-cache@v2
+    - name: Build Documentation
+      run: cargo doc --all --no-deps -- -D warnings
+    - name: Deploy Docs
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+        publish_branch: gh-pages
+        publish_dir: ./target/doc
+
+

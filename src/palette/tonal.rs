@@ -21,13 +21,6 @@ use serde::Serialize;
 
 /// A convenience class for retrieving colors that are constant in hue and
 /// chroma, but vary in tone.
-///
-/// This class can be instantiated in two ways:
-/// 1. [of] From hue and chroma. (preferred)
-/// 2. [fromList] From a fixed-size ([TonalPalette.commonSize]) list of ints
-///    representing ARBG colors. Correctness (constant hue and chroma) of the input
-///    is not enforced. [get] will only return the input colors, corresponding to
-///    [commonTones].
 #[derive(Clone, Copy, Debug, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct TonalPalette {
@@ -64,7 +57,7 @@ impl TonalPalette {
         }
     }
 
-    /// Create a Tonal Palette from hue and chroma of [hct].
+    /// Create a Tonal Palette from hue and chroma of `hct`.
     pub const fn from_hct(hct: Hct) -> Self {
         Self::new(hct.get_hue(), hct.get_chroma(), hct)
     }
@@ -83,19 +76,18 @@ impl TonalPalette {
         }
     }
 
-    /// Create a Tonal Palette from hue and chroma, which generates a key color.
+    /// Create a Tonal Palette from `hue` and `chroma`, which generates a key color.
     pub fn from_hue_and_chroma(hue: f64, chroma: f64) -> Self {
         Self::new(hue, chroma, Self::create_key_color(hue, chroma))
     }
 
-    /// Create colors using [hue] and [chroma].
+    /// Create colors using `hue` and `chroma`.
     pub fn of(hue: f64, chroma: f64) -> Self {
         Self::from_hue_and_chroma(hue, chroma)
     }
 
-    /// Creates a key color from a [hue] and a [chroma].
-    /// The key color is the first tone, starting from T50, matching the given hue and chroma.
-    /// Key color [Hct]
+    /// Creates a key color from a `hue` and a `chroma`.
+    /// The key color is the first tone, starting from T50, matching the given `hue` and `chroma`.
     pub fn create_key_color(hue: f64, chroma: f64) -> Hct {
         let start_tone = 50.0;
         let mut smallest_delta_hct = Hct::from(hue, chroma, start_tone);
@@ -138,10 +130,10 @@ impl TonalPalette {
 
     /// Returns the Argb representation of an HCT color.
     ///
-    /// If the class was instantiated from [_hue] and [_chroma], will return the
-    /// color with corresponding [tone].
-    /// If the class was instantiated from a fixed-size list of color ints, [tone]
-    /// must be in [commonTones].
+    /// If the class was instantiated from `_hue` and `_chroma`, will return the
+    /// color with corresponding `tone`.
+    /// If the class was instantiated from a fixed-size list of color ints, `tone`
+    /// must be in `common_mones`.
     pub fn tone(&self, tone: i32) -> Argb {
         Hct::from(self.hue(), self.chroma(), f64::from(tone)).into()
     }

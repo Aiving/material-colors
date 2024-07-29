@@ -348,42 +348,39 @@ impl fmt::Display for Argb {
     }
 }
 
-/**
- * Converts an L* value to a Y value.
- *
- * <p>L* in L*a*b* and Y in Xyz measure the same quantity, luminance.
- *
- * <p>L* measures perceptual luminance, a linear scale. Y in Xyz measures relative luminance, a
- * logarithmic scale.
- *
- * @param lstar L* in L*a*b*
- * @return Y in Xyz
- */
+/// Converts an L* value to a Y value.
+///
+/// L* in L*a*b* and Y in Xyz measure the same quantity, luminance.
+///
+/// L* measures perceptual luminance, a linear scale. Y in Xyz measures relative luminance, a
+/// logarithmic scale.
+///
+/// - `lstar`: L* in L*a*b*
+///
+/// Returns Y in Xyz
 pub fn y_from_lstar(lstar: f64) -> f64 {
     100.0 * lab_invf((lstar + 16.0) / 116.0)
 }
 
-/**
- * Converts a Y value to an L* value.
- *
- * <p>L* in L*a*b* and Y in Xyz measure the same quantity, luminance.
- *
- * <p>L* measures perceptual luminance, a linear scale. Y in Xyz measures relative luminance, a
- * logarithmic scale.
- *
- * @param y Y in Xyz
- * @return L* in L*a*b*
- */
+/// Converts a Y value to an L* value.
+///
+/// L* in L*a*b* and Y in Xyz measure the same quantity, luminance.
+///
+/// L* measures perceptual luminance, a linear scale. Y in Xyz measures relative luminance, a
+/// logarithmic scale.
+///
+/// - `y`: Y in Xyz
+///
+/// Returns L* in L*a*b*
 pub fn lstar_from_y(y: f64) -> f64 {
     lab_f(y / 100.0).mul_add(116.0, -16.0)
 }
 
-/**
- * Linearizes an Rgb component.
- *
- * @param rgbComponent 0 <= `rgb_component` <= 255, represents R/G/B channel
- * @return 0.0 <= output <= 100.0, color channel converted to linear Rgb space
- */
+/// Linearizes an Rgb component.
+///
+/// - `rgb_component`: 0 <= `rgb_component` <= 255, represents R/G/B channel
+///
+/// Returns 0.0 <= output <= 100.0, color channel converted to linear Rgb space
 pub fn linearized(rgb_component: u8) -> f64 {
     let normalized = f64::from(rgb_component) / 255.0;
 
@@ -394,12 +391,11 @@ pub fn linearized(rgb_component: u8) -> f64 {
     }
 }
 
-/**
- * Delinearizes an Rgb component.
- *
- * @param rgbComponent 0.0 <= `rgb_component` <= 100.0, represents linear R/G/B channel
- * @return 0 <= output <= 255, color channel converted to regular Rgb space
- */
+/// Delinearizes an Rgb component.
+///
+/// - `rgb_component`: 0.0 <= `rgb_component` <= 100.0, represents linear R/G/B channel
+///
+/// Returns 0 <= output <= 255, color channel converted to regular Rgb space
 pub fn delinearized(rgb_component: f64) -> u8 {
     let normalized = rgb_component / 100.0;
     let delinearized = if normalized <= 0.0031308 {

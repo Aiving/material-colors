@@ -23,9 +23,9 @@ pub struct Hct {
 
 impl Hct {
     /// A number, in degrees, representing ex. red, orange, yellow, etc.
-    /// Ranges from 0 <= [hue] < 360
+    /// Ranges from 0 <= `hue` < 360
     ///
-    /// 0 <= [newHue] < 360; invalid values are corrected.
+    /// 0 <= `new_hue` < 360; invalid values are corrected.
     /// After setting hue, the color is mapped from HCT to the more
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
@@ -35,9 +35,9 @@ impl Hct {
     }
 
     /// A number, in degrees, representing ex. red, orange, yellow, etc.
-    /// Ranges from 0 <= [hue] < 360
+    /// Ranges from 0 <= `hue` < 360
     ///
-    /// 0 <= [newHue] < 360; invalid values are corrected.
+    /// 0 <= `new_hue` < 360; invalid values are corrected.
     /// After setting hue, the color is mapped from HCT to the more
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
@@ -52,7 +52,7 @@ impl Hct {
         self._tone = self._argb.as_lstar();
     }
 
-    /// 0 <= [newChroma] <= ?
+    /// 0 <= `new_chroma` <= ?
     /// After setting chroma, the color is mapped from HCT to the more
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
@@ -61,7 +61,7 @@ impl Hct {
         self._chroma
     }
 
-    /// 0 <= [newChroma] <= ?
+    /// 0 <= `new_chroma` <= ?
     /// After setting chroma, the color is mapped from HCT to the more
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
@@ -78,7 +78,7 @@ impl Hct {
 
     /// Lightness. Ranges from 0 to 100.
     ///
-    /// 0 <= [newTone] <= 100; invalid values are corrected.
+    /// 0 <= `new_tone` <= 100; invalid values are corrected.
     /// After setting tone, the color is mapped from HCT to the more
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
@@ -89,7 +89,7 @@ impl Hct {
 
     /// Lightness. Ranges from 0 to 100.
     ///
-    /// 0 <= [newTone] <= 100; invalid values are corrected.
+    /// 0 <= `new_tone` <= 100; invalid values are corrected.
     /// After setting tone, the color is mapped from HCT to the more
     /// limited sRgb gamut for display. This will change its Argb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
@@ -115,11 +115,11 @@ impl Hct {
         }
     }
 
-    /// 0 <= [hue] < 360; invalid values are corrected.
-    /// 0 <= [chroma] <= ?; Informally, colorfulness. The color returned may be
+    /// 0 <= `hue` < 360; invalid values are corrected.
+    /// 0 <= `chroma` <= ?; Informally, colorfulness. The color returned may be
     ///    lower than the requested chroma. Chroma has a different maximum for any
     ///    given hue and tone.
-    /// 0 <= [tone] <= 100; informally, lightness. Invalid values are corrected.
+    /// 0 <= `tone` <= 100; informally, lightness. Invalid values are corrected.
     pub fn from(hue: f64, chroma: f64, tone: f64) -> Self {
         let argb = HctSolver::solve_to_argb(hue, chroma, tone);
 
