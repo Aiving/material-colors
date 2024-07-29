@@ -1,7 +1,7 @@
+use crate::hct::Hct;
 #[cfg(not(feature = "std"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
-use crate::hct::Hct;
 
 pub fn is_disliked(hct: &Hct) -> bool {
     let (hue_passes, chroma_passes, tone_passes) = (

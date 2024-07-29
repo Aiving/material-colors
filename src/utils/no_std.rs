@@ -76,15 +76,15 @@ impl FloatExt for f64 {
     fn floor(self) -> Self {
         libm::floor(self)
     }
-    
+
     fn sqrt(self) -> Self {
         libm::sqrt(self)
     }
-    
+
     fn hypot(self, n: Self) -> Self {
         libm::hypot(self, n)
     }
-    
+
     fn atan2(self, n: Self) -> Self {
         libm::atan2(self, n)
     }

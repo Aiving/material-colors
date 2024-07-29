@@ -1,7 +1,7 @@
+use crate::color::{lstar_from_y, y_from_lstar};
 #[cfg(not(feature = "std"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
-use crate::color::{lstar_from_y, y_from_lstar};
 
 /// Returns a contrast ratio, which ranges from 1 to 21.
 ///
