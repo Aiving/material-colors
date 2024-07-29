@@ -299,7 +299,7 @@ impl HctSolver {
     /// Sanitizes a small enough angle in radians.
     ///
     /// - `angle`: An angle in radians; must not deviate too much from 0.
-    /// 
+    ///
     /// Returns A coterminal angle between 0 and 2pi.
     fn sanitize_radians(angle: f64) -> f64 {
         PI.mul_add(8.0, angle) % (PI * 2.0)
