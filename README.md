@@ -58,10 +58,12 @@ async fn main() -> Result<(), reqwest::Error> {
 }
 ```
 
-## Current status of `no-std' support
+## Current status of `no-std` support
 
 This library **requires** `alloc` because `Quantizer` and `Score` make heavy use of `Vec`, and `DynamicColor` requires `Box` for function storage.
+
 It also makes heavy use of various floating point functions, which greatly reduces the number of supported platforms. Yes, we have `libm` as a fallback, but it gives extremely different and inaccurate results, with unexpected consequences, and is also obviously much slower.
+
 In case you have a platform where there are corresponding instructions for operations on floating point numbers, you will have to fork the repository yourself, as I unfortunately don't have any way to create an implementation for every platform that has corresponding instructions. If you have any suggestions, however, I'd be happy to hear them.
 
 ## MSRV
