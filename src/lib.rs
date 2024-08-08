@@ -14,6 +14,7 @@
     clippy::used_underscore_binding,
     clippy::similar_names,
     // pedantic lints for later
+    clippy::doc_markdown,
     clippy::too_many_lines,
     clippy::missing_panics_doc,
     clippy::missing_errors_doc,
