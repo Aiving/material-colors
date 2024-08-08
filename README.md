@@ -12,7 +12,7 @@ An unofficial port of the `material-color-utilities` library for creating Materi
 - `std`: enabled by default, disabling makes it possible to use the crate in `no_std` environments, provided there is an allocator available
 - `image`: adds support for extracting colors from images, requires `std` feature enabled
 - `serde`: adds support for JSON serialization of themes and color schemes
-- `no-libm`: removes the built-in implementation of `FloatExt` trait, which is based on [`libm`](https://github.com/rust-lang/libm)
+- `libm`: adds the built-in implementation of `FloatExt` trait, which is based on [`libm`](https://github.com/rust-lang/libm)
 
 ## Examples
 
