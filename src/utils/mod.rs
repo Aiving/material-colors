@@ -1,4 +1,4 @@
 pub mod math;
-#[cfg(not(feature = "std"))]
+#[cfg(all(not(feature = "std"), feature = "libm"))]
 pub mod no_std;
 pub mod random;

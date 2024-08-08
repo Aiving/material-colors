@@ -1,6 +1,6 @@
 [package]
 name = "material-colors"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 description = "Up-to-date material-color-utilities port"
 documentation = "https://docs.rs/material-colors"
@@ -14,17 +14,17 @@ rust-version = "1.63.0"
 
 [dependencies]
 ahash = { version = "0.8.11", default-features = false }
-indexmap = { version = "2.2.6", default-features = false }
+indexmap = { version = "2.3.0", default-features = false }
 images = { package = "image", version = "0.25.2", optional = true }
-serde = { version = "1.0.204", features = ["derive"], optional = true }
-libm = "0.2.8"
+serde = { version = "1.0.205", features = ["derive"], optional = true }
+libm = { version = "0.2.8", optional = true }
 
 [features]
 default = ["std"]
 std = ["serde/std", "indexmap/std", "ahash/std", "ahash/runtime-rng"]
 image = ["dep:images"]
 serde = ["dep:serde"]
-no-libm = []
+libm = ["dep:libm"]
 
 [profile.dev]
 opt-level = 1

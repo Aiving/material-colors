@@ -1,25 +1,57 @@
 #[allow(dead_code)]
 pub trait FloatExt {
+    #[must_use]
     fn abs(self) -> Self;
+
+    #[must_use]
     fn mul_add(self, x: Self, y: Self) -> Self;
+
+    #[must_use]
     fn powf(self, n: Self) -> Self;
+
+    #[must_use]
     fn powi(self, n: i64) -> Self;
+
+    #[must_use]
     fn cos(self) -> Self;
+
+    #[must_use]
     fn sin(self) -> Self;
+
+    #[must_use]
     fn cbrt(self) -> Self;
+
+    #[must_use]
     fn ln(self) -> Self;
+
+    #[must_use]
     fn ln_1p(self) -> Self;
+
+    #[must_use]
     fn exp(self) -> Self;
+
+    #[must_use]
     fn exp_m1(self) -> Self;
+
+    #[must_use]
     fn round(self) -> Self;
+
+    #[must_use]
     fn ceil(self) -> Self;
+
+    #[must_use]
     fn floor(self) -> Self;
+
+    #[must_use]
     fn sqrt(self) -> Self;
+
+    #[must_use]
     fn hypot(self, n: Self) -> Self;
+
+    #[must_use]
     fn atan2(self, n: Self) -> Self;
 }
 
-#[cfg(not(feature = "no-libm"))]
 impl FloatExt for f64 {
     fn abs(self) -> Self {
         libm::fabs(self)

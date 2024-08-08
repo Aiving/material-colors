@@ -1,4 +1,7 @@
 use crate::color::{lstar_from_y, Argb};
+#[cfg(all(not(feature = "std"), feature = "libm"))]
+#[allow(unused_imports)]
+use crate::utils::no_std::FloatExt;
 use core::{
     cmp::Ordering,
     fmt,
@@ -168,9 +171,9 @@ impl fmt::Display for Hct {
         write!(
             f,
             "H{} C{} T{}",
-            libm::round(self.get_hue()),
-            libm::round(self.get_chroma()),
-            libm::round(self.get_tone())
+            self.get_hue().round(),
+            self.get_chroma().round(),
+            self.get_tone().round()
         )
     }
 }

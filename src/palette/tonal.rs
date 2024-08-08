@@ -1,5 +1,5 @@
 use super::Palette;
-#[cfg(not(feature = "std"))]
+#[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 use crate::{

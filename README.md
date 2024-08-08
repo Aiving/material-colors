@@ -10,7 +10,6 @@ An unofficial port of the `material-color-utilities` library for creating Materi
 ## Features
 
 - `std`: enabled by default, disabling makes it possible to use the crate in `no_std` environments, provided there is an allocator available
-  - **NOTE**: Currently, the crate uses [`libm`](https://github.com/rust-lang/libm) in `no_std` environments for all math operations for floating point numbers. This is likely to significantly reduce its speed, but there are no other alternatives at the moment.
 - `image`: adds support for extracting colors from images, requires `std` feature enabled
 - `serde`: adds support for JSON serialization of themes and color schemes
 - `no-libm`: removes the built-in implementation of `FloatExt` trait, which is based on [`libm`](https://github.com/rust-lang/libm)
@@ -58,6 +57,12 @@ async fn main() -> Result<(), reqwest::Error> {
     Ok(())
 }
 ```
+
+## Current status of `no-std' support
+
+This library **requires** `alloc` because `Quantizer` and `Score` make heavy use of `Vec`, and `DynamicColor` requires `Box` for function storage.
+It also makes heavy use of various floating point functions, which greatly reduces the number of supported platforms. Yes, we have `libm` as a fallback, but it gives extremely different and inaccurate results, with unexpected consequences, and is also obviously much slower.
+In case you have a platform where there are corresponding instructions for operations on floating point numbers, you will have to fork the repository yourself, as I unfortunately don't have any way to create an implementation for every platform that has corresponding instructions. If you have any suggestions, however, I'd be happy to hear them.
 
 ## MSRV
 

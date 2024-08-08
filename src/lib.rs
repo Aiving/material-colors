@@ -27,7 +27,13 @@
 )]
 
 #[cfg(all(feature = "image", not(feature = "std")))]
-compile_error!("'image' feature requires 'std' feature");
+compile_error!("\"image\" feature requires \"std\" feature");
+
+#[cfg(all(feature = "std", feature = "libm"))]
+compile_error!("features \"std\" and \"libm\" cannot be enabled simultaneously");
+
+#[cfg(all(not(feature = "std"), not(feature = "libm")))]
+compile_error!("\"no-std\" requires \"libm\" feature");
 
 #[cfg(not(feature = "std"))]
 extern crate alloc;

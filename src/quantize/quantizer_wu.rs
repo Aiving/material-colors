@@ -1,7 +1,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use super::{Quantizer, QuantizerMap, QuantizerResult};
-#[cfg(not(feature = "std"))]
+#[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 use crate::{
