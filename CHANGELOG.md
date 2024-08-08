@@ -5,10 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.4.1 (Apr 8th, 2024)
 
 - **added**: Add badges to the `README`
-- **added**: Add the Features & License headings to the `README`
+- **added**: Add the Features, Status of no-std & License headings to the `README`
+- **added**: Add compile errors for `std` with `libm` & `no_std` without `libm`
 - **fixed**: Fix HEX color example in `README`
 - **changed**: Move to dual-license to be compatible with the Rust project
 - **changed**: Make all math operations on floating point numbers use their equivalent in `trait:FloatExt` for compatibility with `no_std` environments
