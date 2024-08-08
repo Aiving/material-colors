@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["_is_fidelity","_is_monochrome"],"macro":["define_key"],"struct":["MaterialDynamicColors"]};
