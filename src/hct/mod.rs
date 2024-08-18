@@ -1,7 +1,10 @@
-use crate::{color::{lstar_from_y, Argb}, utils::FromRef};
 #[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
+use crate::{
+    color::{lstar_from_y, Argb},
+    utils::FromRef,
+};
 use core::{
     cmp::Ordering,
     fmt,

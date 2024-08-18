@@ -58,8 +58,8 @@ impl SchemeContent {
 
 #[cfg(test)]
 mod tests {
-    use crate::color::Argb;
     use super::SchemeContent;
+    use crate::color::Argb;
 
     #[test]
     fn test_key_colors() {

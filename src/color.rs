@@ -481,14 +481,26 @@ mod tests {
 
     #[test]
     fn test_argb_from_rgb_returns_correct_value_for_white() {
-        assert_eq!(Argb::from(Rgb::new(255, 255, 255)), Argb::from_u32(0xffffffff));
-        assert_eq!(Argb::from(Rgb::new(255, 255, 255)), Argb::from_u32(4294967295));
+        assert_eq!(
+            Argb::from(Rgb::new(255, 255, 255)),
+            Argb::from_u32(0xffffffff)
+        );
+        assert_eq!(
+            Argb::from(Rgb::new(255, 255, 255)),
+            Argb::from_u32(4294967295)
+        );
     }
 
     #[test]
     fn test_argb_from_rgb_returns_correct_value_for_random_color() {
-        assert_eq!(Argb::from(Rgb::new(50, 150, 250)), Argb::from_u32(0xff3296fa));
-        assert_eq!(Argb::from(Rgb::new(50, 150, 250)), Argb::from_u32(4281505530));
+        assert_eq!(
+            Argb::from(Rgb::new(50, 150, 250)),
+            Argb::from_u32(0xff3296fa)
+        );
+        assert_eq!(
+            Argb::from(Rgb::new(50, 150, 250)),
+            Argb::from_u32(4281505530)
+        );
     }
 
     #[test]

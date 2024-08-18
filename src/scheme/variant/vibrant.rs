@@ -68,8 +68,8 @@ impl SchemeVibrant {
 
 #[cfg(test)]
 mod tests {
-    use crate::color::Argb;
     use super::SchemeVibrant;
+    use crate::color::Argb;
 
     #[test]
     fn test_key_colors() {
