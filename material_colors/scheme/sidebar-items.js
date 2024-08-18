@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["variant"],"struct":["Scheme","SchemeFromPalette"]};
