@@ -23,9 +23,6 @@ use core::{
 /// [`DynamicColor`]: super::DynamicColor
 #[derive(Clone, PartialOrd)]
 pub struct DynamicScheme {
-    /// The source color of the theme as an Argb integer.
-    pub source_color_argb: Argb,
-
     /// The source color of the theme in HCT.
     pub source_color_hct: Hct,
 
@@ -68,8 +65,7 @@ pub struct DynamicScheme {
 
 impl DynamicScheme {
     pub fn new(
-        source_color_argb: Argb,
-        source_color_hct: Option<Hct>,
+        source_color_hct: Hct,
         variant: Variant,
         is_dark: bool,
         contrast_level: Option<f64>,
@@ -81,8 +77,7 @@ impl DynamicScheme {
         error_palette: Option<TonalPalette>,
     ) -> Self {
         Self {
-            source_color_argb,
-            source_color_hct: source_color_hct.unwrap_or_else(|| source_color_argb.into()),
+            source_color_hct,
             variant,
             is_dark,
             contrast_level: contrast_level.unwrap_or(0.0),
@@ -158,162 +153,215 @@ impl DynamicScheme {
     pub fn primary_palette_key_color(&self) -> Argb {
         MaterialDynamicColors::primary_palette_key_color().get_argb(self)
     }
+
     pub fn secondary_palette_key_color(&self) -> Argb {
         MaterialDynamicColors::secondary_palette_key_color().get_argb(self)
     }
+
     pub fn tertiary_palette_key_color(&self) -> Argb {
         MaterialDynamicColors::tertiary_palette_key_color().get_argb(self)
     }
+
     pub fn neutral_palette_key_color(&self) -> Argb {
         MaterialDynamicColors::neutral_palette_key_color().get_argb(self)
     }
+
     pub fn neutral_variant_palette_key_color(&self) -> Argb {
         MaterialDynamicColors::neutral_palette_key_color().get_argb(self)
     }
+
     pub fn background(&self) -> Argb {
         MaterialDynamicColors::background().get_argb(self)
     }
+
     pub fn on_background(&self) -> Argb {
         MaterialDynamicColors::on_background().get_argb(self)
     }
+
     pub fn surface(&self) -> Argb {
         MaterialDynamicColors::surface().get_argb(self)
     }
+
     pub fn surface_dim(&self) -> Argb {
         MaterialDynamicColors::surface_dim().get_argb(self)
     }
+
     pub fn surface_bright(&self) -> Argb {
         MaterialDynamicColors::surface_bright().get_argb(self)
     }
+
     pub fn surface_container_lowest(&self) -> Argb {
         MaterialDynamicColors::surface_container_lowest().get_argb(self)
     }
+
     pub fn surface_container_low(&self) -> Argb {
         MaterialDynamicColors::surface_container_low().get_argb(self)
     }
+
     pub fn surface_container(&self) -> Argb {
         MaterialDynamicColors::surface_container().get_argb(self)
     }
+
     pub fn surface_container_high(&self) -> Argb {
         MaterialDynamicColors::surface_container_high().get_argb(self)
     }
+
     pub fn surface_container_highest(&self) -> Argb {
         MaterialDynamicColors::surface_container_highest().get_argb(self)
     }
+
     pub fn on_surface(&self) -> Argb {
         MaterialDynamicColors::on_surface().get_argb(self)
     }
+
     pub fn surface_variant(&self) -> Argb {
         MaterialDynamicColors::surface_variant().get_argb(self)
     }
+
     pub fn on_surface_variant(&self) -> Argb {
         MaterialDynamicColors::on_surface_variant().get_argb(self)
     }
+
     pub fn inverse_surface(&self) -> Argb {
         MaterialDynamicColors::inverse_surface().get_argb(self)
     }
+
     pub fn inverse_on_surface(&self) -> Argb {
         MaterialDynamicColors::inverse_on_surface().get_argb(self)
     }
+
     pub fn outline(&self) -> Argb {
         MaterialDynamicColors::outline().get_argb(self)
     }
+
     pub fn outline_variant(&self) -> Argb {
         MaterialDynamicColors::outline_variant().get_argb(self)
     }
+
     pub fn shadow(&self) -> Argb {
         MaterialDynamicColors::shadow().get_argb(self)
     }
+
     pub fn scrim(&self) -> Argb {
         MaterialDynamicColors::scrim().get_argb(self)
     }
+
     pub fn surface_tint(&self) -> Argb {
         MaterialDynamicColors::surface_tint().get_argb(self)
     }
+
     pub fn primary(&self) -> Argb {
         MaterialDynamicColors::primary().get_argb(self)
     }
+
     pub fn on_primary(&self) -> Argb {
         MaterialDynamicColors::on_primary().get_argb(self)
     }
+
     pub fn primary_container(&self) -> Argb {
         MaterialDynamicColors::primary_container().get_argb(self)
     }
+
     pub fn on_primary_container(&self) -> Argb {
         MaterialDynamicColors::on_primary_container().get_argb(self)
     }
+
     pub fn inverse_primary(&self) -> Argb {
         MaterialDynamicColors::inverse_primary().get_argb(self)
     }
+
     pub fn secondary(&self) -> Argb {
         MaterialDynamicColors::secondary().get_argb(self)
     }
+
     pub fn on_secondary(&self) -> Argb {
         MaterialDynamicColors::on_secondary().get_argb(self)
     }
+
     pub fn secondary_container(&self) -> Argb {
         MaterialDynamicColors::secondary_container().get_argb(self)
     }
+
     pub fn on_secondary_container(&self) -> Argb {
         MaterialDynamicColors::on_secondary_container().get_argb(self)
     }
+
     pub fn tertiary(&self) -> Argb {
         MaterialDynamicColors::tertiary().get_argb(self)
     }
+
     pub fn on_tertiary(&self) -> Argb {
         MaterialDynamicColors::on_tertiary().get_argb(self)
     }
+
     pub fn tertiary_container(&self) -> Argb {
         MaterialDynamicColors::tertiary_container().get_argb(self)
     }
+
     pub fn on_tertiary_container(&self) -> Argb {
         MaterialDynamicColors::on_tertiary_container().get_argb(self)
     }
+
     pub fn error(&self) -> Argb {
         MaterialDynamicColors::error().get_argb(self)
     }
+
     pub fn on_error(&self) -> Argb {
         MaterialDynamicColors::on_error().get_argb(self)
     }
+
     pub fn error_container(&self) -> Argb {
         MaterialDynamicColors::error_container().get_argb(self)
     }
+
     pub fn on_error_container(&self) -> Argb {
         MaterialDynamicColors::on_error_container().get_argb(self)
     }
+
     pub fn primary_fixed(&self) -> Argb {
         MaterialDynamicColors::primary_fixed().get_argb(self)
     }
+
     pub fn primary_fixed_dim(&self) -> Argb {
         MaterialDynamicColors::primary_fixed_dim().get_argb(self)
     }
+
     pub fn on_primary_fixed(&self) -> Argb {
         MaterialDynamicColors::on_primary_fixed().get_argb(self)
     }
+
     pub fn on_primary_fixed_variant(&self) -> Argb {
         MaterialDynamicColors::on_primary_fixed_variant().get_argb(self)
     }
+
     pub fn secondary_fixed(&self) -> Argb {
         MaterialDynamicColors::secondary_fixed().get_argb(self)
     }
+
     pub fn secondary_fixed_dim(&self) -> Argb {
         MaterialDynamicColors::secondary_fixed_dim().get_argb(self)
     }
+
     pub fn on_secondary_fixed(&self) -> Argb {
         MaterialDynamicColors::on_secondary_fixed().get_argb(self)
     }
+
     pub fn on_secondary_fixed_variant(&self) -> Argb {
         MaterialDynamicColors::on_secondary_fixed_variant().get_argb(self)
     }
+
     pub fn tertiary_fixed(&self) -> Argb {
         MaterialDynamicColors::tertiary_fixed().get_argb(self)
     }
+
     pub fn tertiary_fixed_dim(&self) -> Argb {
         MaterialDynamicColors::tertiary_fixed_dim().get_argb(self)
     }
+
     pub fn on_tertiary_fixed(&self) -> Argb {
         MaterialDynamicColors::on_tertiary_fixed().get_argb(self)
     }
+
     pub fn on_tertiary_fixed_variant(&self) -> Argb {
         MaterialDynamicColors::on_tertiary_fixed_variant().get_argb(self)
     }
@@ -327,8 +375,7 @@ impl Ord for DynamicScheme {
 
 impl PartialEq for DynamicScheme {
     fn eq(&self, other: &Self) -> bool {
-        self.source_color_argb == other.source_color_argb
-            && self.source_color_hct == other.source_color_hct
+        self.source_color_hct == other.source_color_hct
             && self.variant == other.variant
             && self.is_dark == other.is_dark
             && self.contrast_level == other.contrast_level
@@ -345,7 +392,6 @@ impl Eq for DynamicScheme {}
 
 impl Hash for DynamicScheme {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.source_color_argb.hash(state);
         self.source_color_hct.hash(state);
         self.variant.hash(state);
         self.is_dark.hash(state);

@@ -1,4 +1,5 @@
-pub use self::core::CorePalette;
+#[allow(deprecated)]
+pub use self::core::{CorePalette, CorePalettes};
 pub use tonal::TonalPalette;
 
 mod core;

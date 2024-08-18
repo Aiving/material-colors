@@ -1,4 +1,4 @@
-use crate::color::{lstar_from_y, Argb};
+use crate::{color::{lstar_from_y, Argb}, utils::FromRef};
 #[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
@@ -15,7 +15,7 @@ pub mod cam16;
 pub mod solver;
 pub mod viewing_conditions;
 
-#[derive(Clone, Copy, Debug, PartialOrd)]
+#[derive(Default, Clone, Copy, Debug, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Hct {
     _hue: f64,
@@ -209,6 +209,12 @@ impl From<Argb> for Hct {
 
 impl From<Hct> for Argb {
     fn from(value: Hct) -> Self {
+        value._argb
+    }
+}
+
+impl FromRef<Hct> for Argb {
+    fn from_ref(value: &Hct) -> Self {
         value._argb
     }
 }

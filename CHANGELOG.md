@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- **added**: Add `struct:CorePalettes`
+- **added**: Add unit tests for `struct:SchemeContent`
+- **added**: Add unit tests for `struct:SchemeExpressive`
+- **added**: Add unit tests for `struct:SchemeFidelity`
+- **added**: Add unit tests for `struct:SchemeFruitSalad`
+- **added**: Add unit tests for `struct:SchemeMonochrome`
+- **added**: Add unit tests for `struct:SchemeNeutral`
+- **added**: Add unit tests for `struct:SchemeRainbow`
+- **added**: Add unit tests for `struct:SchemeVibrant`
+- **changed**: Deprecate `struct:CorePalette`
+- **changed**: Update `struct:MaterialDynamicColors` to use the expressive on-colors spec
+- **changed**: Update `struct:TonalPalette` to use new key color algorithm
+
 ## 0.4.2 (Apr 8th, 2024)
 
 - **fixed**: Fix markdown in `README`

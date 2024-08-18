@@ -13,8 +13,7 @@ impl SchemeTonalSpot {
     pub fn new(source_color_hct: Hct, is_dark: bool, contrast_level: Option<f64>) -> Self {
         Self {
             scheme: DynamicScheme::new(
-                source_color_hct.into(),
-                None,
+                source_color_hct,
                 Variant::TonalSpot,
                 is_dark,
                 contrast_level,

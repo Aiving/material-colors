@@ -10,7 +10,10 @@ use crate::{
         SchemeContent, SchemeExpressive, SchemeFidelity, SchemeFruitSalad, SchemeMonochrome,
         SchemeNeutral, SchemeRainbow, SchemeTonalSpot, SchemeVibrant,
     },
+    Map,
 };
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
 use core::{
     cmp::Ordering,
     fmt,
@@ -78,54 +81,12 @@ impl TonalPalette {
 
     /// Create a Tonal Palette from `hue` and `chroma`, which generates a key color.
     pub fn from_hue_and_chroma(hue: f64, chroma: f64) -> Self {
-        Self::new(hue, chroma, Self::create_key_color(hue, chroma))
+        Self::new(hue, chroma, KeyColor::new(hue, chroma).create())
     }
 
     /// Create colors using `hue` and `chroma`.
     pub fn of(hue: f64, chroma: f64) -> Self {
         Self::from_hue_and_chroma(hue, chroma)
-    }
-
-    /// Creates a key color from a `hue` and a `chroma`.
-    /// The key color is the first tone, starting from T50, matching the given `hue` and `chroma`.
-    pub fn create_key_color(hue: f64, chroma: f64) -> Hct {
-        let start_tone = 50.0;
-        let mut smallest_delta_hct = Hct::from(hue, chroma, start_tone);
-        let mut smallest_delta = (smallest_delta_hct.get_chroma() - chroma).abs();
-
-        // Starting from T50, check T+/-delta to see if they match the requested
-        // chroma.
-        //
-        // Starts from T50 because T50 has the most chroma available, on
-        // average. Thus it is most likely to have a direct answer and minimize
-        // iteration.
-        for delta in 1..=49 {
-            // Termination condition rounding instead of minimizing delta to avoid
-            // case where requested chroma is 16.51, and the closest chroma is 16.49.
-            // Error is minimized, but when rounded and displayed, requested chroma
-            // is 17, key color's chroma is 16.
-            if (chroma.round() - smallest_delta_hct.get_chroma().round()).abs() < f64::EPSILON {
-                return smallest_delta_hct;
-            }
-
-            let hct_add = Hct::from(hue, chroma, start_tone + f64::from(delta));
-            let hct_add_delta = (hct_add.get_chroma() - chroma).abs();
-
-            if hct_add_delta < smallest_delta {
-                smallest_delta = hct_add_delta;
-                smallest_delta_hct = hct_add;
-            }
-
-            let hct_subtract = Hct::from(hue, chroma, start_tone - f64::from(delta));
-            let hct_subtract_delta = (hct_subtract.get_chroma() - chroma).abs();
-
-            if hct_subtract_delta < smallest_delta {
-                smallest_delta = hct_subtract_delta;
-                smallest_delta_hct = hct_subtract;
-            }
-        }
-
-        smallest_delta_hct
     }
 
     /// Returns the Argb representation of an HCT color.
@@ -171,9 +132,124 @@ impl fmt::Display for TonalPalette {
     }
 }
 
+/// Key color is a color that represents the hue and chroma of a tonal palette
+pub struct KeyColor {
+    hue: f64,
+    requested_chroma: f64,
+    /// Cache that maps tone to max chroma to avoid duplicated HCT calculation.
+    chroma_cache: Map<i32, f64>,
+}
+
+impl KeyColor {
+    const MAX_CHROMA_VALUE: f64 = 200.0;
+
+    pub fn new(hue: f64, requested_chroma: f64) -> Self {
+        Self {
+            hue,
+            requested_chroma,
+            chroma_cache: Map::default(),
+        }
+    }
+
+    /// Creates a key color from a [`hue`] and a [`chroma`].
+    /// The key color is the first tone, starting from T50, matching the given hue
+    /// and chroma.
+    ///
+    /// Returns key color in [`Hct`].
+    pub fn create(&mut self) -> Hct {
+        // Pivot around T50 because T50 has the most chroma available, on average. Thus it is most
+        // likely to have a direct answer.
+        let pivot_tone = 50;
+        let tone_step_size = 1;
+        // Epsilon to accept values slightly higher than the requested chroma.
+        let epsilon = 0.01;
+
+        // Binary search to find the tone that can provide a chroma that is closest
+        // to the requested chroma.
+        let mut lower_tone = 0;
+        let mut upper_tone = 100;
+
+        while lower_tone < upper_tone {
+            let mid_tone = (lower_tone + upper_tone) / 2;
+            let is_ascending =
+                self.max_chroma(mid_tone) < self.max_chroma(mid_tone + tone_step_size);
+            let sufficient_chroma = self.max_chroma(mid_tone) >= self.requested_chroma - epsilon;
+
+            if sufficient_chroma {
+                // Either range [lowerTone, midTone] or [midTone, upperTone] has answer, so search in the
+                // range that is closer the pivot tone.
+                if (lower_tone - pivot_tone).abs() < (upper_tone - pivot_tone).abs() {
+                    upper_tone = mid_tone;
+                } else if lower_tone == mid_tone {
+                    return Hct::from(self.hue, self.requested_chroma, f64::from(lower_tone));
+                } else {
+                    lower_tone = mid_tone;
+                }
+            } else if is_ascending {
+                // As there is no sufficient chroma in the midTone, follow the direction to the chroma
+                // peak.
+                lower_tone = mid_tone + tone_step_size;
+            } else {
+                // Keep midTone for potential chroma peak.
+                upper_tone = mid_tone;
+            }
+        }
+
+        Hct::from(self.hue, self.requested_chroma, f64::from(lower_tone))
+    }
+
+    fn max_chroma(&mut self, tone: i32) -> f64 {
+        if let Some(chroma) = self.chroma_cache.get(&tone) {
+            *chroma
+        } else {
+            let chroma = Hct::from(self.hue, Self::MAX_CHROMA_VALUE, f64::from(tone)).get_chroma();
+
+            self.chroma_cache.insert(tone, chroma);
+
+            chroma
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use float_cmp::assert_approx_eq;
+
     use crate::{color::Argb, hct::Hct, palette::TonalPalette};
+
+    #[test]
+    fn test_exact_chroma_available() {
+        let palette = TonalPalette::of(50.0, 60.0);
+        let result = palette.key_color();
+
+        assert_approx_eq!(f64, result.get_hue(), 50.0, epsilon = 10.0);
+        assert_approx_eq!(f64, result.get_chroma(), 60.0, epsilon = 0.5);
+
+        assert!(result.get_tone() > 0.0);
+        assert!(result.get_tone() < 100.0);
+    }
+
+    #[test]
+    fn test_unusually_high_chroma() {
+        let palette = TonalPalette::of(149.0, 200.0);
+        let result = palette.key_color();
+
+        assert_approx_eq!(f64, result.get_hue(), 149.0, epsilon = 10.0);
+
+        assert!(result.get_chroma() > 89.0);
+        assert!(result.get_tone() > 0.0);
+        assert!(result.get_tone() < 100.0);
+    }
+
+    #[test]
+    fn test_unusually_low_chroma() {
+        let palette = TonalPalette::of(50.0, 3.0);
+        let result = palette.key_color();
+
+        assert_approx_eq!(f64, result.get_hue(), 50.0, epsilon = 10.0);
+        assert_approx_eq!(f64, result.get_chroma(), 3.0, epsilon = 0.5);
+        assert_approx_eq!(f64, result.get_tone(), 50.0, epsilon = 0.5);
+    }
 
     #[test]
     fn test_of_tones_of_blue() {

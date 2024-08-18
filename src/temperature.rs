@@ -4,7 +4,7 @@ use crate::utils::no_std::FloatExt;
 use crate::{
     color::{Argb, Lab},
     hct::Hct,
-    utils::math::sanitize_degrees_double,
+    utils::{math::sanitize_degrees_double, FromRef},
     Map,
 };
 #[cfg(not(feature = "std"))]
@@ -20,10 +20,18 @@ use std::{vec, vec::Vec};
 pub struct TemperatureCache {
     input: Hct,
 
-    _hcts_by_temp: Vec<Hct>,
-    _hcts_by_hue: Vec<Hct>,
-    _temps_by_hct: Map<Hct, f64>,
-    _input_relative_temperature: f64,
+    /// HCTs for all hues, with the same chroma/tone as the input.
+    /// Sorted from coldest first to warmest last.
+    hcts_by_temp: [Hct; 362],
+    /// HCTs for all hues, with the same chroma/tone as the input.
+    /// Sorted ascending, hue 0 to 360.
+    hcts_by_hue: [Hct; 362],
+    /// A Map with keys of HCTs in `hcts_by_temp`, values of raw temperature.
+    temps_by_hct: Map<Hct, f64>,
+    /// Relative temperature of the input color. See [`relative_temperature`].
+    ///
+    /// [`relative_temperature`]: Self::relative_temperature
+    input_relative_temperature: f64,
     _complement: Option<Hct>,
 }
 
@@ -31,30 +39,65 @@ impl TemperatureCache {
     /// # Panics
     ///
     /// Will panic if there is no warmest HCT
-    pub fn warmest(&mut self) -> Hct {
-        let hcts = self.hcts_by_temp();
-
-        return *hcts.last().unwrap();
+    pub const fn warmest(&self) -> &Hct {
+        &self.hcts_by_temp[361]
     }
 
     /// # Panics
     ///
     /// Will panic if there is no coldest HCT
-    pub fn coldest(&mut self) -> Hct {
-        let hcts = self.hcts_by_temp();
-
-        return *hcts.first().unwrap();
+    pub const fn coldest(&self) -> &Hct {
+        &self.hcts_by_temp[0]
     }
 
     pub fn new(input: Hct) -> Self {
-        Self {
+        let chroma = input.get_chroma();
+        let tone = input.get_tone();
+
+        let hcts_by_hue = core::array::from_fn(|index| {
+            if index == 361 {
+                input
+            } else {
+                Hct::from(f64::from(index as i32), chroma, tone)
+            }
+        });
+
+        let temps_by_hct = hcts_by_hue
+            .iter()
+            .map(|e| (*e, Self::raw_temperature(e)))
+            .collect();
+
+        let mut hcts_by_temp = hcts_by_hue;
+
+        hcts_by_temp.sort_by(|a, b| Self::sort_by_temp(&temps_by_hct, a, b));
+
+        let mut cache = Self {
             input,
-            _hcts_by_temp: vec![],
-            _hcts_by_hue: vec![],
-            _temps_by_hct: Map::default(),
-            _input_relative_temperature: -1.0,
+            hcts_by_temp,
+            hcts_by_hue,
+            temps_by_hct,
+            input_relative_temperature: -1.0,
             _complement: None,
-        }
+        };
+
+        cache.input_relative_temperature = {
+            let coldest = cache.coldest();
+            let warmest = cache.warmest();
+            let input = &cache.input;
+
+            let coldest_temp = cache.temps_by_hct[coldest];
+
+            let range = cache.temps_by_hct[warmest] - coldest_temp;
+            let difference_from_coldest = cache.temps_by_hct[input] - coldest_temp;
+
+            if range == 0.0 {
+                0.5
+            } else {
+                difference_from_coldest / range
+            }
+        };
+
+        cache
     }
 
     /// A set of colors with differing hues, equidistant in temperature.
@@ -68,20 +111,21 @@ impl TemperatureCache {
     ///
     /// - `count`: The number of colors to return, includes the input color.
     /// - `divisions`: The number of divisions on the color wheel.
-    pub fn analogous(&mut self, count: Option<i32>, divisions: Option<i32>) -> Vec<Hct> {
+    pub fn analogous(&self, count: Option<i32>, divisions: Option<i32>) -> Vec<Hct> {
         let count = count.unwrap_or(5);
         let divisions = divisions.unwrap_or(12);
         let start_hue = self.input.get_hue().round() as i32;
-        let start_hct = &self.hcts_by_hue()[start_hue as usize];
-        let mut last_temp = self.relative_temperature(start_hct);
-        let mut all_colors = vec![*start_hct];
+
+        let start_hct = self.hcts_by_hue[start_hue as usize];
+        let mut last_temp = self.relative_temperature(&start_hct);
+        let mut all_colors = vec![start_hct];
 
         let mut absolute_total_temp_delta = 0.0;
 
         for i in 0..360 {
             let hue = sanitize_degrees_double((start_hue + i).into());
-            let hct = &self.hcts_by_hue()[hue as usize];
-            let temp = self.relative_temperature(hct);
+            let hct = self.hcts_by_hue[hue as usize];
+            let temp = self.relative_temperature(&hct);
             let temp_delta = (temp - last_temp).abs();
 
             last_temp = temp;
@@ -93,12 +137,12 @@ impl TemperatureCache {
 
         let mut total_temp_delta = 0.0;
 
-        last_temp = self.relative_temperature(start_hct);
+        last_temp = self.relative_temperature(&start_hct);
 
         while all_colors.len() < divisions as usize {
             let hue = sanitize_degrees_double((start_hue + hue_addend).into());
-            let hct = &self.hcts_by_hue()[hue as usize];
-            let temp = self.relative_temperature(hct);
+            let hct = self.hcts_by_hue[hue as usize];
+            let temp = self.relative_temperature(&hct);
             let temp_delta = (temp - last_temp).abs();
 
             total_temp_delta += temp_delta;
@@ -117,7 +161,7 @@ impl TemperatureCache {
             // colors at T100/T0. Therefore, they should just be added to the array
             // as answers.
             while index_satisfied && all_colors.len() < divisions as usize {
-                all_colors.push(*hct);
+                all_colors.push(hct);
 
                 let desired_total_temp_delta_for_index =
                     (all_colors.len() + index_addend) as f64 * temp_step;
@@ -131,7 +175,7 @@ impl TemperatureCache {
 
             if hue_addend > 360 {
                 while all_colors.len() < divisions as usize {
-                    all_colors.push(*hct);
+                    all_colors.push(hct);
                 }
 
                 break;
@@ -187,39 +231,41 @@ impl TemperatureCache {
     ///
     /// Will panic if there is no coldest or warmest HCT
     pub fn complement(&mut self) -> Hct {
-        if let Some(_complement) = &self._complement {
-            return *_complement;
+        if let Some(complement) = self._complement {
+            return complement;
         }
 
         let coldest_hct = self.coldest();
         let warmest_hct = self.warmest();
 
-        let temps_by_hct = self.temps_by_hct();
-
         let coldest_hue = coldest_hct.get_hue();
-        let coldest_temp = temps_by_hct[&coldest_hct];
+        let coldest_temp = self.temps_by_hct[coldest_hct];
 
         let warmest_hue = warmest_hct.get_hue();
-        let warmest_temp = temps_by_hct[&warmest_hct];
+        let warmest_temp = self.temps_by_hct[warmest_hct];
 
         let range = warmest_temp - coldest_temp;
         let start_hue_is_coldest_to_warmest =
             Self::is_between(self.input.get_hue(), coldest_hue, warmest_hue);
+
         let start_hue = if start_hue_is_coldest_to_warmest {
             warmest_hue
         } else {
             coldest_hue
         };
+
         let end_hue = if start_hue_is_coldest_to_warmest {
             coldest_hue
         } else {
             warmest_hue
         };
+
         let direction_of_rotation = 1.0_f64;
         let mut smallest_error = 1000.0;
-        let mut answer = self.hcts_by_hue()[self.input.get_hue().round() as usize];
+        let hue = self.input.get_hue().round();
+        let mut answer = self.hcts_by_hue[hue as usize];
 
-        let complement_relative_temp = 1.0 - self.input_relative_temperature();
+        let complement_relative_temp = 1.0 - self.input_relative_temperature;
 
         // Find the color in the other section, closest to the inverse percentile
         // of the input color. This is the complement.
@@ -232,8 +278,8 @@ impl TemperatureCache {
                 continue;
             }
 
-            let possible_answer = &self.hcts_by_hue()[hue.round() as usize];
-            let relative_temp = (self._temps_by_hct[possible_answer] - coldest_temp) / range;
+            let possible_answer = &self.hcts_by_hue[hue.round() as usize];
+            let relative_temp = (self.temps_by_hct[possible_answer] - coldest_temp) / range;
             let error = (complement_relative_temp - relative_temp).abs();
 
             if error < smallest_error {
@@ -244,125 +290,32 @@ impl TemperatureCache {
 
         self._complement = Some(answer);
 
-        self._complement.unwrap()
+        answer
     }
 
     /// Temperature relative to all colors with the same chroma and tone.
     /// Value on a scale from 0 to 1.
-    pub fn relative_temperature(&mut self, hct: &Hct) -> f64 {
+    pub fn relative_temperature(&self, hct: &Hct) -> f64 {
         let coldest = self.coldest();
         let warmest = self.warmest();
 
-        let temps_by_hct = self.temps_by_hct();
-
-        let range = temps_by_hct[&warmest] - temps_by_hct[&coldest];
-        let difference_from_coldest = temps_by_hct[hct] - temps_by_hct[&coldest];
+        let range = self.temps_by_hct[warmest] - self.temps_by_hct[coldest];
+        let difference_from_coldest = self.temps_by_hct[hct] - self.temps_by_hct[coldest];
 
         // Handle when there's no difference in temperature between warmest and
         // coldest: for example, at T100, only one color is available, white.
         if range == 0.0 {
-            return 0.5;
-        }
-
-        difference_from_coldest / range
-    }
-
-    /// Relative temperature of the input color. See [`relative_temperature`].
-    ///
-    /// [`relative_temperature`]: Self::relative_temperature
-    pub fn input_relative_temperature(&mut self) -> f64 {
-        if self._input_relative_temperature >= 0.0 {
-            return self._input_relative_temperature;
-        }
-
-        let coldest = self.coldest();
-        let warmest = self.warmest();
-        let input = self.input;
-
-        let temps_by_hct = self.temps_by_hct();
-
-        let coldest_temp = temps_by_hct[&coldest];
-
-        let range = temps_by_hct[&warmest] - coldest_temp;
-        let difference_from_coldest = temps_by_hct[&input] - coldest_temp;
-        let input_relative_temp = if range == 0.0 {
             0.5
         } else {
             difference_from_coldest / range
-        };
-
-        self._input_relative_temperature = input_relative_temp;
-
-        self._input_relative_temperature
+        }
     }
 
-    /// HCTs for all hues, with the same chroma/tone as the input.
-    /// Sorted from coldest first to warmest last.
-    pub fn hcts_by_temp(&mut self) -> &[Hct] {
-        if !self._hcts_by_temp.is_empty() {
-            return &self._hcts_by_temp;
-        }
+    fn sort_by_temp(temps_by_hct: &Map<Hct, f64>, this: &Hct, that: &Hct) -> Ordering {
+        let a = &temps_by_hct[this];
+        let b = &temps_by_hct[that];
 
-        let mut hcts = self.hcts_by_hue();
-
-        hcts.push(self.input);
-        hcts.sort_by(|a, b| self.sort_by_temp(a, b));
-
-        self._hcts_by_temp = hcts;
-
-        &self._hcts_by_temp
-    }
-
-    fn sort_by_temp(&mut self, this: &Hct, that: &Hct) -> Ordering {
-        let a = self.temps_by_hct()[this];
-        let b = self.temps_by_hct()[that];
-
-        a.partial_cmp(&b).unwrap()
-    }
-
-    /// A Map with keys of HCTs in `hcts_by_temp`, values of raw temperature.
-    pub fn temps_by_hct(&mut self) -> &Map<Hct, f64> {
-        if !self._temps_by_hct.is_empty() {
-            return &self._temps_by_hct;
-        }
-
-        let mut all_hcts = self.hcts_by_hue();
-
-        all_hcts.push(self.input);
-
-        let mut temperatures_by_hct = Map::default();
-
-        for e in all_hcts {
-            temperatures_by_hct.insert(e, Self::raw_temperature(e));
-        }
-
-        self._temps_by_hct = temperatures_by_hct;
-
-        &self._temps_by_hct
-    }
-
-    /// HCTs for all hues, with the same chroma/tone as the input.
-    /// Sorted ascending, hue 0 to 360.
-    pub fn hcts_by_hue(&mut self) -> Vec<Hct> {
-        if !self._hcts_by_hue.is_empty() {
-            return self._hcts_by_hue.clone();
-        }
-
-        let mut hcts = vec![];
-
-        for hue in 0..=360 {
-            let color_at_hue = Hct::from(
-                f64::from(hue),
-                self.input.get_chroma(),
-                self.input.get_tone(),
-            );
-
-            hcts.push(color_at_hue);
-        }
-
-        self._hcts_by_hue = hcts;
-
-        self._hcts_by_hue.clone()
+        a.partial_cmp(b).unwrap()
     }
 
     /// Determines if an angle is between two other angles, rotating clockwise.
@@ -391,8 +344,8 @@ impl TemperatureCache {
     ///   Assuming max of 130 chroma, -9.66.
     /// - Upper bound: -0.52 + (chroma ^ 1.07 / 20). L*a*b* chroma is infinite.
     ///   Assuming max of 130 chroma, 8.61.
-    pub fn raw_temperature(color: Hct) -> f64 {
-        let lab = Lab::from(Argb::from(color));
+    pub fn raw_temperature(color: &Hct) -> f64 {
+        let lab = Lab::from(Argb::from_ref(color));
         let hue = sanitize_degrees_double(lab.b.atan2(lab.a).to_degrees());
 
         let chroma = lab.a.hypot(lab.b);
@@ -418,11 +371,11 @@ mod tests {
         let white_hct = Hct::new(Argb::from_u32(0xffffffff));
         let black_hct = Hct::new(Argb::from_u32(0xff000000));
 
-        let blue_temp = TemperatureCache::raw_temperature(blue_hct);
-        let red_temp = TemperatureCache::raw_temperature(red_hct);
-        let green_temp = TemperatureCache::raw_temperature(green_hct);
-        let white_temp = TemperatureCache::raw_temperature(white_hct);
-        let black_temp = TemperatureCache::raw_temperature(black_hct);
+        let blue_temp = TemperatureCache::raw_temperature(&blue_hct);
+        let red_temp = TemperatureCache::raw_temperature(&red_hct);
+        let green_temp = TemperatureCache::raw_temperature(&green_hct);
+        let white_temp = TemperatureCache::raw_temperature(&white_hct);
+        let black_temp = TemperatureCache::raw_temperature(&black_hct);
 
         assert_approx_eq!(f64, -1.393, blue_temp, epsilon = 0.001);
         assert_approx_eq!(f64, 2.351, red_temp, epsilon = 0.001);

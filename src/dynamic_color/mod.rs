@@ -8,7 +8,6 @@ use crate::{
     contrast::{darker, darker_unsafe, lighter, lighter_unsafe, ratio_of_tones},
     hct::Hct,
     palette::TonalPalette,
-    Map,
 };
 #[cfg(not(feature = "std"))]
 use alloc::{boxed::Box, string::String, vec, vec::Vec};
@@ -58,7 +57,6 @@ pub struct DynamicColor {
     second_background: Option<Box<DynamicSchemeFn<DynamicColor>>>,
     contrast_curve: Option<ContrastCurve>,
     tone_delta_pair: Option<Box<DynamicSchemeFn<ToneDeltaPair>>>,
-    _hct_cache: Map<DynamicScheme, Hct>,
 }
 
 impl DynamicColor {
@@ -116,8 +114,15 @@ impl DynamicColor {
             second_background: second_background.map(Box::new),
             contrast_curve,
             tone_delta_pair: tone_delta_pair.map(Box::new),
-            _hct_cache: Map::default(),
         }
+    }
+
+    pub fn from_palette<T: Into<String>>(
+        name: T,
+        palette: fn(&DynamicScheme) -> &TonalPalette,
+        tone: fn(&DynamicScheme) -> f64,
+    ) -> Self {
+        Self::new(name, palette, tone, false, None, None, None, None)
     }
 
     /// Return a Argb integer (i.e. a hex code).
@@ -125,7 +130,7 @@ impl DynamicColor {
     /// - Parameter scheme: Defines the conditions of the user interface, for example,
     ///   whether or not it is dark mode or light mode, and what the desired contrast level is.
     /// - Returns: The color as an integer (Argb).
-    pub fn get_argb(&mut self, scheme: &DynamicScheme) -> Argb {
+    pub fn get_argb(&self, scheme: &DynamicScheme) -> Argb {
         self.get_hct(scheme).into()
     }
 
@@ -134,20 +139,8 @@ impl DynamicColor {
     ///   contrast level is.
     /// - Returns: a color, expressed in the HCT color space, that this
     ///   `DynamicColor` is under the conditions in `scheme`.
-    pub fn get_hct(&mut self, scheme: &DynamicScheme) -> Hct {
-        if let Some(cached_answer) = self._hct_cache.get(scheme) {
-            return *cached_answer;
-        }
-
-        let answer = (self.palette)(scheme).get_hct(self.get_tone(scheme));
-
-        if self._hct_cache.len() > 4 {
-            self._hct_cache.clear();
-        }
-
-        self._hct_cache.insert(scheme.clone(), answer);
-
-        answer
+    pub fn get_hct(&self, scheme: &DynamicScheme) -> Hct {
+        (self.palette)(scheme).get_hct(self.get_tone(scheme))
     }
 
     /// - Parameter scheme: Defines the conditions of the user interface, for example,

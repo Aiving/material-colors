@@ -433,7 +433,7 @@ fn lab_invf(ft: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::Lab;
-    use crate::color::{delinearized, linearized, lstar_from_y, y_from_lstar, Argb, Xyz};
+    use crate::color::{delinearized, linearized, lstar_from_y, y_from_lstar, Argb, Rgb, Xyz};
     #[cfg(not(feature = "std"))]
     use alloc::vec::Vec;
     use float_cmp::assert_approx_eq;
@@ -471,6 +471,24 @@ mod tests {
                 epsilon = 1e-5
             );
         }
+    }
+
+    #[test]
+    fn test_argb_from_rgb_returns_correct_value_for_black() {
+        assert_eq!(Argb::from(Rgb::new(0, 0, 0)), Argb::from_u32(0xff000000));
+        assert_eq!(Argb::from(Rgb::new(0, 0, 0)), Argb::from_u32(4278190080));
+    }
+
+    #[test]
+    fn test_argb_from_rgb_returns_correct_value_for_white() {
+        assert_eq!(Argb::from(Rgb::new(255, 255, 255)), Argb::from_u32(0xffffffff));
+        assert_eq!(Argb::from(Rgb::new(255, 255, 255)), Argb::from_u32(4294967295));
+    }
+
+    #[test]
+    fn test_argb_from_rgb_returns_correct_value_for_random_color() {
+        assert_eq!(Argb::from(Rgb::new(50, 150, 250)), Argb::from_u32(0xff3296fa));
+        assert_eq!(Argb::from(Rgb::new(50, 150, 250)), Argb::from_u32(4281505530));
     }
 
     #[test]

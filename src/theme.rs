@@ -1,3 +1,4 @@
+#[allow(deprecated)]
 use crate::{
     blend::harmonize,
     color::Argb,
@@ -52,7 +53,9 @@ impl CustomColorGroup {
             value = harmonize(value, source);
         }
 
+        #[allow(deprecated)]
         let palette = CorePalette::of(value);
+        #[allow(deprecated)]
         let tones = palette.primary;
 
         Self {
@@ -198,6 +201,7 @@ impl ThemeBuilder {
 
     #[must_use]
     pub fn build(mut self) -> Theme {
+        #[allow(deprecated)]
         let palette = CorePalette::of(self.source);
 
         if self.color_match {
@@ -258,6 +262,7 @@ impl ThemeBuilder {
                 light: light.into(),
                 dark: dark.into(),
             },
+            #[allow(deprecated)]
             palettes: Palettes {
                 primary: palette.primary,
                 secondary: palette.secondary,

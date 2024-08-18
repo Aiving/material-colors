@@ -1,4 +1,4 @@
-#![allow(clippy::too_many_arguments)]
+#![allow(clippy::too_many_arguments, deprecated)]
 use crate::{color::Argb, dynamic_color::DynamicScheme, palette::CorePalette, Map};
 #[cfg(not(feature = "std"))]
 use alloc::string::String;
@@ -66,60 +66,7 @@ pub struct Scheme {
 
 impl fmt::Display for Scheme {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Scheme")
-            .field("primary", &self.primary)
-            .field("on_primary", &self.on_primary)
-            .field("primary_container", &self.primary_container)
-            .field("on_primary_container", &self.on_primary_container)
-            .field("inverse_primary", &self.inverse_primary)
-            .field("primary_fixed", &self.primary_fixed)
-            .field("primary_fixed_dim", &self.primary_fixed_dim)
-            .field("on_primary_fixed", &self.on_primary_fixed)
-            .field("on_primary_fixed_variant", &self.on_primary_fixed_variant)
-            .field("secondary", &self.secondary)
-            .field("on_secondary", &self.on_secondary)
-            .field("secondary_container", &self.secondary_container)
-            .field("on_secondary_container", &self.on_secondary_container)
-            .field("secondary_fixed", &self.secondary_fixed)
-            .field("secondary_fixed_dim", &self.secondary_fixed_dim)
-            .field("on_secondary_fixed", &self.on_secondary_fixed)
-            .field(
-                "on_secondary_fixed_variant",
-                &self.on_secondary_fixed_variant,
-            )
-            .field("tertiary", &self.tertiary)
-            .field("on_tertiary", &self.on_tertiary)
-            .field("tertiary_container", &self.tertiary_container)
-            .field("on_tertiary_container", &self.on_tertiary_container)
-            .field("tertiary_fixed", &self.tertiary_fixed)
-            .field("tertiary_fixed_dim", &self.tertiary_fixed_dim)
-            .field("on_tertiary_fixed", &self.on_tertiary_fixed)
-            .field("on_tertiary_fixed_variant", &self.on_tertiary_fixed_variant)
-            .field("error", &self.error)
-            .field("on_error", &self.on_error)
-            .field("error_container", &self.error_container)
-            .field("on_error_container", &self.on_error_container)
-            .field("surface_dim", &self.surface_dim)
-            .field("surface", &self.surface)
-            .field("surface_tint", &self.surface_tint)
-            .field("surface_bright", &self.surface_bright)
-            .field("surface_container_lowest", &self.surface_container_lowest)
-            .field("surface_container_low", &self.surface_container_low)
-            .field("surface_container", &self.surface_container)
-            .field("surface_container_high", &self.surface_container_high)
-            .field("surface_container_highest", &self.surface_container_highest)
-            .field("on_surface", &self.on_surface)
-            .field("on_surface_variant", &self.on_surface_variant)
-            .field("outline", &self.outline)
-            .field("outline_variant", &self.outline_variant)
-            .field("inverse_surface", &self.inverse_surface)
-            .field("inverse_on_surface", &self.inverse_on_surface)
-            .field("surface_variant", &self.surface_variant)
-            .field("background", &self.background)
-            .field("on_background", &self.on_background)
-            .field("shadow", &self.shadow)
-            .field("scrim", &self.scrim)
-            .finish()
+        fmt::Debug::fmt(&self, f)
     }
 }
 
@@ -497,44 +444,9 @@ impl SchemeFromPalette {
     }
 }
 
-impl PartialEq<Scheme> for SchemeFromPalette {
-    fn eq(&self, other: &Scheme) -> bool {
-        self.primary == other.primary
-            && self.on_primary == other.on_primary
-            && self.primary_container == other.primary_container
-            && self.on_primary_container == other.on_primary_container
-            && self.secondary == other.secondary
-            && self.on_secondary == other.on_secondary
-            && self.secondary_container == other.secondary_container
-            && self.on_secondary_container == other.on_secondary_container
-            && self.tertiary == other.tertiary
-            && self.on_tertiary == other.on_tertiary
-            && self.tertiary_container == other.tertiary_container
-            && self.on_tertiary_container == other.on_tertiary_container
-            && self.error == other.error
-            && self.on_error == other.on_error
-            && self.error_container == other.error_container
-            && self.on_error_container == other.on_error_container
-            && self.surface == other.surface
-            && self.on_surface == other.on_surface
-            && self.surface_variant == other.surface_variant
-            && self.on_surface_variant == other.on_surface_variant
-            && self.outline == other.outline
-            && self.outline_variant == other.outline_variant
-            && self.background == other.background
-            && self.on_background == other.on_background
-            && self.shadow == other.shadow
-            && self.scrim == other.scrim
-            && self.inverse_surface == other.inverse_surface
-            && self.inverse_on_surface == other.inverse_on_surface
-            && self.inverse_primary == other.inverse_primary
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::color::Argb;
-    use crate::scheme::SchemeFromPalette;
+    use crate::{color::Argb, scheme::SchemeFromPalette};
     use float_cmp::assert_approx_eq;
 
     #[test]
