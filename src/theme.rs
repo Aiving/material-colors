@@ -15,7 +15,7 @@ use crate::{
 
 /// Custom color used to pair with a theme
 #[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct CustomColor {
     pub value: Argb,
     pub name: String,
@@ -24,7 +24,7 @@ pub struct CustomColor {
 
 /// Color group
 #[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ColorGroup {
     pub color: Argb,
     pub on_color: Argb,
@@ -34,7 +34,7 @@ pub struct ColorGroup {
 
 /// Custom Color Group
 #[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct CustomColorGroup {
     pub color: CustomColor,
     pub value: Argb,
@@ -78,14 +78,14 @@ impl CustomColorGroup {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Schemes {
     pub light: Scheme,
     pub dark: Scheme,
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Palettes {
     pub primary: TonalPalette,
     pub secondary: TonalPalette,
@@ -275,7 +275,7 @@ impl ThemeBuilder {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Theme {
     pub source: Argb,
     pub schemes: Schemes,

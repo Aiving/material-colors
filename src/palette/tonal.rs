@@ -24,7 +24,7 @@ use crate::{
 /// A convenience class for retrieving colors that are constant in hue and
 /// chroma, but vary in tone.
 #[derive(Clone, Copy, Debug, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TonalPalette {
     _hue: f64,
     _chroma: f64,
