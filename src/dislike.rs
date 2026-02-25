@@ -24,26 +24,23 @@ pub fn fix_if_disliked(hct: Hct) -> Hct {
 
 #[cfg(test)]
 mod tests {
-    use crate::color::Argb;
-    use crate::dislike::fix_if_disliked;
-    use crate::hct::Hct;
-
     use super::is_disliked;
+    use crate::{color::Argb, dislike::fix_if_disliked, hct::Hct};
 
     #[test]
     fn test_monk_skin_tone_scale_colors() {
         // From https://skintone.google#/get-started
         let monk_skin_tone_scale_colors = [
-            Argb::from_u32(0xfff6ede4),
-            Argb::from_u32(0xfff3e7db),
-            Argb::from_u32(0xfff7ead0),
-            Argb::from_u32(0xffeadaba),
-            Argb::from_u32(0xffd7bd96),
-            Argb::from_u32(0xffa07e56),
-            Argb::from_u32(0xff825c43),
-            Argb::from_u32(0xff604134),
-            Argb::from_u32(0xff3a312a),
-            Argb::from_u32(0xff292420),
+            Argb::from_u32(0xFFF6EDE4),
+            Argb::from_u32(0xFFF3E7DB),
+            Argb::from_u32(0xFFF7EAD0),
+            Argb::from_u32(0xFFEADABA),
+            Argb::from_u32(0xFFD7BD96),
+            Argb::from_u32(0xFFA07E56),
+            Argb::from_u32(0xFF825C43),
+            Argb::from_u32(0xFF604134),
+            Argb::from_u32(0xFF3A312A),
+            Argb::from_u32(0xFF292420),
         ];
 
         for color in monk_skin_tone_scale_colors {

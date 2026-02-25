@@ -1,18 +1,17 @@
 #![allow(clippy::too_many_arguments)]
 
+#[cfg(not(feature = "std"))] use alloc::{vec, vec::Vec};
+use core::fmt;
+#[cfg(feature = "std")] use std::{vec, vec::Vec};
+
 use super::{Quantizer, QuantizerMap, QuantizerResult};
 #[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 use crate::{
-    color::{Argb, Rgb},
     IndexMap,
+    color::{Argb, Rgb},
 };
-#[cfg(not(feature = "std"))]
-use alloc::{vec, vec::Vec};
-use core::fmt;
-#[cfg(feature = "std")]
-use std::{vec, vec::Vec};
 
 // A histogram of all the input colors is constructed. It has the shape of a
 //  The cube would be too large if it contained all 16 million colors:
@@ -99,11 +98,8 @@ impl QuantizerWu {
             self.moments_g[index] += i64::from(green) * i64::from(count);
             self.moments_b[index] += i64::from(blue) * i64::from(count);
 
-            self.moments[index] += f64::from(count)
-                * f64::from(blue).mul_add(
-                    f64::from(blue),
-                    f64::from(red).mul_add(f64::from(red), f64::from(green) * f64::from(green)),
-                );
+            self.moments[index] +=
+                f64::from(count) * f64::from(blue).mul_add(f64::from(blue), f64::from(red).mul_add(f64::from(red), f64::from(green) * f64::from(green)));
         }
     }
 
@@ -151,14 +147,7 @@ impl QuantizerWu {
 
     pub fn create_boxes(&mut self, max_color_count: usize) -> CreateBoxesResult {
         self.cubes[0] = Cube {
-            pixels: [
-                Rgb::default(),
-                Rgb::new(
-                    SIDE_LENGTH as u8 - 1,
-                    SIDE_LENGTH as u8 - 1,
-                    SIDE_LENGTH as u8 - 1,
-                ),
-            ],
+            pixels: [Rgb::default(), Rgb::new(SIDE_LENGTH as u8 - 1, SIDE_LENGTH as u8 - 1, SIDE_LENGTH as u8 - 1)],
             vol: 0,
         };
 
@@ -169,17 +158,9 @@ impl QuantizerWu {
 
         while i < max_color_count {
             if self.cut(next, i) {
-                volume_variance[next] = if self.cubes[next].vol > 1 {
-                    self.variance(&self.cubes[next])
-                } else {
-                    0.0
-                };
+                volume_variance[next] = if self.cubes[next].vol > 1 { self.variance(&self.cubes[next]) } else { 0.0 };
 
-                volume_variance[i] = if self.cubes[i].vol > 1 {
-                    self.variance(&self.cubes[i])
-                } else {
-                    0.0
-                };
+                volume_variance[i] = if self.cubes[i].vol > 1 { self.variance(&self.cubes[i]) } else { 0.0 };
             } else {
                 volume_variance[next] = 0.0;
 
@@ -265,16 +246,7 @@ impl QuantizerWu {
         let whole_b = Self::volume(&one, &self.moments_b);
         let whole_w = Self::volume(&one, &self.weights);
 
-        let max_rresult = self.maximize(
-            &one,
-            &Direction::Red,
-            one.r::<i32>(0) + 1,
-            one.r::<i32>(1),
-            whole_r,
-            whole_g,
-            whole_b,
-            whole_w,
-        );
+        let max_rresult = self.maximize(&one, &Direction::Red, one.r::<i32>(0) + 1, one.r::<i32>(1), whole_r, whole_g, whole_b, whole_w);
         let max_gresult = self.maximize(
             &one,
             &Direction::Green,
@@ -285,16 +257,7 @@ impl QuantizerWu {
             whole_b,
             whole_w,
         );
-        let max_bresult = self.maximize(
-            &one,
-            &Direction::Blue,
-            one.b::<i32>(0) + 1,
-            one.b::<i32>(1),
-            whole_r,
-            whole_g,
-            whole_b,
-            whole_w,
-        );
+        let max_bresult = self.maximize(&one, &Direction::Blue, one.b::<i32>(0) + 1, one.b::<i32>(1), whole_r, whole_g, whole_b, whole_w);
 
         let cut_direction: Direction;
 
@@ -339,12 +302,8 @@ impl QuantizerWu {
             }
         }
 
-        one.vol = (one.r::<i32>(1) - one.r::<i32>(0))
-            * (one.g::<i32>(1) - one.g::<i32>(0))
-            * (one.b::<i32>(1) - one.b::<i32>(0));
-        two.vol = (two.r::<i32>(1) - two.r::<i32>(0))
-            * (two.g::<i32>(1) - two.g::<i32>(0))
-            * (two.b::<i32>(1) - two.b::<i32>(0));
+        one.vol = (one.r::<i32>(1) - one.r::<i32>(0)) * (one.g::<i32>(1) - one.g::<i32>(0)) * (one.b::<i32>(1) - one.b::<i32>(0));
+        two.vol = (two.r::<i32>(1) - two.r::<i32>(0)) * (two.g::<i32>(1) - two.g::<i32>(0)) * (two.b::<i32>(1) - two.b::<i32>(0));
 
         self.cubes[next] = one;
         self.cubes[i] = two;
@@ -511,40 +470,33 @@ impl fmt::Display for Cube {
         write!(
             f,
             "Box: R {} -> {} G {} -> {} B {} -> {} VOL = {}",
-            self.pixels[0].red,
-            self.pixels[1].red,
-            self.pixels[0].green,
-            self.pixels[1].green,
-            self.pixels[0].blue,
-            self.pixels[1].blue,
-            self.vol
+            self.pixels[0].red, self.pixels[1].red, self.pixels[0].green, self.pixels[1].green, self.pixels[0].blue, self.pixels[1].blue, self.vol
         )
     }
 }
 
 #[cfg(test)]
 mod tests {
+    #[cfg(not(feature = "std"))] use alloc::vec::Vec;
+    #[cfg(feature = "std")] use std::vec::Vec;
+
     use super::{Quantizer, QuantizerWu};
     use crate::color::Argb;
-    #[cfg(not(feature = "std"))]
-    use alloc::vec::Vec;
-    #[cfg(feature = "std")]
-    use std::vec::Vec;
 
-    const RED: Argb = Argb::from_u32(0xffff0000);
-    const GREEN: Argb = Argb::from_u32(0xff00ff00);
-    const BLUE: Argb = Argb::from_u32(0xff0000ff);
+    const RED: Argb = Argb::from_u32(0xFFFF0000);
+    const GREEN: Argb = Argb::from_u32(0xFF00FF00);
+    const BLUE: Argb = Argb::from_u32(0xFF0000FF);
     // const WHITE: Argb = Argb::from_u32(0xffffffff);
     // const RANDOM: Argb = Argb::from_u32(0xff426088);
     const MAX_COLORS: usize = 256;
 
     #[test]
     fn test_1rando() {
-        let result = QuantizerWu::quantize(&[Argb::from_u32(0xff14_1216)], MAX_COLORS);
+        let result = QuantizerWu::quantize(&[Argb::from_u32(0xFF14_1216)], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
-        assert_eq!(colors[0], &Argb::from_u32(0xff14_1216));
+        assert_eq!(colors[0], &Argb::from_u32(0xFF14_1216));
     }
 
     #[test]

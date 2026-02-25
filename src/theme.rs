@@ -1,3 +1,9 @@
+#[cfg(not(feature = "std"))]
+use alloc::{string::String, vec::Vec};
+#[cfg(feature = "std")] use std::{string::String, vec::Vec};
+
+#[cfg(feature = "serde")] use serde::Serialize;
+
 #[allow(deprecated)]
 use crate::{
     blend::harmonize,
@@ -6,12 +12,6 @@ use crate::{
     palette::{CorePalette, Palette, TonalPalette},
     scheme::Scheme,
 };
-#[cfg(not(feature = "std"))]
-use alloc::{string::String, vec::Vec};
-#[cfg(feature = "serde")]
-use serde::Serialize;
-#[cfg(feature = "std")]
-use std::{string::String, vec::Vec};
 
 /// Custom color used to pair with a theme
 #[derive(Debug)]
@@ -174,7 +174,8 @@ impl ThemeBuilder {
         self
     }
 
-    /// Sets the neutral variant color, used for for medium emphasis and variants.
+    /// Sets the neutral variant color, used for for medium emphasis and
+    /// variants.
     #[must_use]
     pub const fn neutral_variant(mut self, color: Argb) -> Self {
         self.neutral_variant = Some(color);
@@ -219,16 +220,14 @@ impl ThemeBuilder {
         }
 
         if let Some(color) = self.secondary {
-            let palette =
-                TonalPalette::by_variant(&color.into(), &self.variant, &Palette::Secondary);
+            let palette = TonalPalette::by_variant(&color.into(), &self.variant, &Palette::Secondary);
 
             light.secondary_palette = palette;
             dark.secondary_palette = palette;
         }
 
         if let Some(color) = self.tertiary {
-            let palette =
-                TonalPalette::by_variant(&color.into(), &self.variant, &Palette::Tertiary);
+            let palette = TonalPalette::by_variant(&color.into(), &self.variant, &Palette::Tertiary);
 
             light.tertiary_palette = palette;
             dark.tertiary_palette = palette;
@@ -249,8 +248,7 @@ impl ThemeBuilder {
         }
 
         if let Some(color) = self.neutral_variant {
-            let palette =
-                TonalPalette::by_variant(&color.into(), &self.variant, &Palette::NeutralVariant);
+            let palette = TonalPalette::by_variant(&color.into(), &self.variant, &Palette::NeutralVariant);
 
             light.neutral_variant_palette = palette;
             dark.neutral_variant_palette = palette;
@@ -271,11 +269,7 @@ impl ThemeBuilder {
                 neutral_variant: palette.neutral_variant,
                 error: palette.error,
             },
-            custom_colors: self
-                .custom_colors
-                .into_iter()
-                .map(|color| CustomColorGroup::new(self.source, color))
-                .collect(),
+            custom_colors: self.custom_colors.into_iter().map(|color| CustomColorGroup::new(self.source, color)).collect(),
         }
     }
 }

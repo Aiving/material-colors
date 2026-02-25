@@ -23,41 +23,28 @@ pub const fn sanitize_degrees_int(degrees: i32) -> u32 {
     }
 }
 
-pub fn sanitize_degrees_double(degrees: f64) -> f64 {
+pub const fn sanitize_degrees_double(degrees: f64) -> f64 {
     match degrees {
         value if value < 0.0 => value + 360.0,
         value => value % 360.0,
     }
 }
 
-pub fn rotate_direction(from: f64, to: f64) -> f64 {
+pub const fn rotate_direction(from: f64, to: f64) -> f64 {
     let increasing_difference = sanitize_degrees_double(to - from);
 
-    if increasing_difference <= 180.0 {
-        1.0
-    } else {
-        -1.0
-    }
+    if increasing_difference <= 180.0 { 1.0 } else { -1.0 }
 }
 
-pub fn difference_degrees(a: f64, b: f64) -> f64 {
+pub const fn difference_degrees(a: f64, b: f64) -> f64 {
     180.0 - ((a - b).abs() - 180.0).abs()
 }
 
 pub fn matrix_multiply(row: [f64; 3], matrix: [[f64; 3]; 3]) -> [f64; 3] {
     [
-        row[2].mul_add(
-            matrix[0][2],
-            row[0].mul_add(matrix[0][0], row[1] * matrix[0][1]),
-        ),
-        row[2].mul_add(
-            matrix[1][2],
-            row[0].mul_add(matrix[1][0], row[1] * matrix[1][1]),
-        ),
-        row[2].mul_add(
-            matrix[2][2],
-            row[0].mul_add(matrix[2][0], row[1] * matrix[2][1]),
-        ),
+        row[2].mul_add(matrix[0][2], row[0].mul_add(matrix[0][0], row[1] * matrix[0][1])),
+        row[2].mul_add(matrix[1][2], row[0].mul_add(matrix[1][0], row[1] * matrix[1][1])),
+        row[2].mul_add(matrix[2][2], row[0].mul_add(matrix[2][0], row[1] * matrix[2][1])),
     ]
 }
 
@@ -65,11 +52,8 @@ pub fn matrix_multiply(row: [f64; 3], matrix: [[f64; 3]; 3]) -> [f64; 3] {
 mod tests {
     use float_cmp::assert_approx_eq;
 
+    use super::{difference_degrees, rotate_direction, sanitize_degrees_double, sanitize_degrees_int};
     use crate::utils::math::{lerp, matrix_multiply, signum};
-
-    use super::{
-        difference_degrees, rotate_direction, sanitize_degrees_double, sanitize_degrees_int,
-    };
 
     #[test]
     fn test_signum() {
@@ -125,7 +109,7 @@ mod tests {
             let mut to = 7.5;
 
             while to < 360.0 {
-                let expected_answer = _rotate_direction(from, to);
+                let expected_answer = old_rotate_direction(from, to);
                 let actual_answer = rotate_direction(from, to);
 
                 assert_approx_eq!(f64, actual_answer, expected_answer);
@@ -167,14 +151,8 @@ mod tests {
 
     #[test]
     fn test_matrix_multiply() {
-        let result1 = matrix_multiply(
-            [0.0, 1.0, 2.0],
-            [[1.0, 2.0, 3.0], [2.0, 3.0, 4.0], [4.0, 5.0, 6.0]],
-        );
-        let result2 = matrix_multiply(
-            [3.0, 4.0, 5.0],
-            [[3.0, 7.0, 1.0], [5.0, 8.0, 2.0], [6.0, 9.0, 3.0]],
-        );
+        let result1 = matrix_multiply([0.0, 1.0, 2.0], [[1.0, 2.0, 3.0], [2.0, 3.0, 4.0], [4.0, 5.0, 6.0]]);
+        let result2 = matrix_multiply([3.0, 4.0, 5.0], [[3.0, 7.0, 1.0], [5.0, 8.0, 2.0], [6.0, 9.0, 3.0]]);
 
         assert_approx_eq!(&[f64], &result1, &[8.0, 11.0, 17.0]);
         assert_approx_eq!(&[f64], &result2, &[42.0, 57.0, 69.0]);
@@ -182,7 +160,7 @@ mod tests {
 
     // Original implementation for MathUtils.rotateDirection.
     // Included here to test equivalence with new implementation.
-    fn _rotate_direction(from: f64, to: f64) -> f64 {
+    fn old_rotate_direction(from: f64, to: f64) -> f64 {
         let a = to - from;
         let b = to - from + 360.0;
         let c = to - from - 360.0;
@@ -190,17 +168,9 @@ mod tests {
         let (a_abs, b_abs, c_abs) = (a.abs(), b.abs(), c.abs());
 
         if a_abs <= b_abs && a_abs <= c_abs {
-            if a >= 0.0 {
-                1.0
-            } else {
-                -1.0
-            }
+            if a >= 0.0 { 1.0 } else { -1.0 }
         } else if b_abs <= a_abs && b_abs <= c_abs {
-            if b >= 0.0 {
-                1.0
-            } else {
-                -1.0
-            }
+            if b >= 0.0 { 1.0 } else { -1.0 }
         } else if c >= 0.0 {
             1.0
         } else {

@@ -1,7 +1,5 @@
 use core::fmt;
-
-#[cfg(feature = "std")]
-use std::error::Error as Err;
+#[cfg(feature = "std")] use std::error::Error as Err;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {

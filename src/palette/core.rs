@@ -1,8 +1,9 @@
 #![allow(deprecated)]
 
+use core::fmt;
+
 use super::TonalPalette;
 use crate::{color::Argb, hct::Cam16};
-use core::fmt;
 
 /// An intermediate concept between the key color for a UI theme, and a full
 /// color scheme. 5 tonal palettes are generated, all except one use the same
@@ -79,8 +80,8 @@ impl fmt::Display for CorePalette {
 }
 
 /// Comprises foundational palettes to build a color scheme. Generated from a
-/// source color, these palettes will then be part of a [`DynamicScheme`] together
-/// with appearance preferences.
+/// source color, these palettes will then be part of a [`DynamicScheme`]
+/// together with appearance preferences.
 ///
 /// [`DynamicScheme`]: [crate::dynamic_color::dynamic_scheme::DynamicScheme]
 pub struct CorePalettes {
@@ -93,9 +94,11 @@ pub struct CorePalettes {
 
 #[cfg(test)]
 mod tests {
-    use crate::{color::Argb, palette::CorePalette};
-    use ahash::AHasher;
     use core::hash::{Hash, Hasher};
+
+    use ahash::AHasher;
+
+    use crate::{color::Argb, palette::CorePalette};
 
     fn hash_value<T: Hash>(value: &T) -> u64 {
         let mut hasher = AHasher::default();
@@ -107,9 +110,9 @@ mod tests {
 
     #[test]
     fn test_equals_and_hash() {
-        let core_palette_a = CorePalette::of(Argb::from_u32(0xff0000ff));
-        let core_palette_b = CorePalette::of(Argb::from_u32(0xff0000ff));
-        let core_palette_c = CorePalette::of(Argb::from_u32(0xff123456));
+        let core_palette_a = CorePalette::of(Argb::from_u32(0xFF0000FF));
+        let core_palette_b = CorePalette::of(Argb::from_u32(0xFF0000FF));
+        let core_palette_c = CorePalette::of(Argb::from_u32(0xFF123456));
 
         assert_eq!(core_palette_a, core_palette_b);
         assert!(core_palette_b != core_palette_c);
@@ -120,61 +123,61 @@ mod tests {
 
     #[test]
     fn test_of_blue() {
-        let core = CorePalette::of(Argb::from_u32(0xff0000ff));
+        let core = CorePalette::of(Argb::from_u32(0xFF0000FF));
 
-        assert_eq!(core.primary.tone(100), Argb::from_u32(0xffffffff));
-        assert_eq!(core.primary.tone(95), Argb::from_u32(0xfff1efff));
-        assert_eq!(core.primary.tone(90), Argb::from_u32(0xffe0e0ff));
-        assert_eq!(core.primary.tone(80), Argb::from_u32(0xffbec2ff));
-        assert_eq!(core.primary.tone(70), Argb::from_u32(0xff9da3ff));
-        assert_eq!(core.primary.tone(60), Argb::from_u32(0xff7c84ff));
-        assert_eq!(core.primary.tone(50), Argb::from_u32(0xff5a64ff));
-        assert_eq!(core.primary.tone(40), Argb::from_u32(0xff343dff));
-        assert_eq!(core.primary.tone(30), Argb::from_u32(0xff0000ef));
-        assert_eq!(core.primary.tone(20), Argb::from_u32(0xff0001ac));
-        assert_eq!(core.primary.tone(10), Argb::from_u32(0xff00006e));
-        assert_eq!(core.primary.tone(0), Argb::from_u32(0xff000000));
-        assert_eq!(core.secondary.tone(100), Argb::from_u32(0xffffffff));
-        assert_eq!(core.secondary.tone(95), Argb::from_u32(0xfff1efff));
-        assert_eq!(core.secondary.tone(90), Argb::from_u32(0xffe1e0f9));
-        assert_eq!(core.secondary.tone(80), Argb::from_u32(0xffc5c4dd));
-        assert_eq!(core.secondary.tone(70), Argb::from_u32(0xffa9a9c1));
-        assert_eq!(core.secondary.tone(60), Argb::from_u32(0xff8f8fa6));
-        assert_eq!(core.secondary.tone(50), Argb::from_u32(0xff75758b));
-        assert_eq!(core.secondary.tone(40), Argb::from_u32(0xff5c5d72));
-        assert_eq!(core.secondary.tone(30), Argb::from_u32(0xff444559));
-        assert_eq!(core.secondary.tone(20), Argb::from_u32(0xff2e2f42));
-        assert_eq!(core.secondary.tone(10), Argb::from_u32(0xff191a2c));
-        assert_eq!(core.secondary.tone(0), Argb::from_u32(0xff000000));
+        assert_eq!(core.primary.tone(100), Argb::from_u32(0xFFFFFFFF));
+        assert_eq!(core.primary.tone(95), Argb::from_u32(0xFFF1EFFF));
+        assert_eq!(core.primary.tone(90), Argb::from_u32(0xFFE0E0FF));
+        assert_eq!(core.primary.tone(80), Argb::from_u32(0xFFBEC2FF));
+        assert_eq!(core.primary.tone(70), Argb::from_u32(0xFF9DA3FF));
+        assert_eq!(core.primary.tone(60), Argb::from_u32(0xFF7C84FF));
+        assert_eq!(core.primary.tone(50), Argb::from_u32(0xFF5A64FF));
+        assert_eq!(core.primary.tone(40), Argb::from_u32(0xFF343DFF));
+        assert_eq!(core.primary.tone(30), Argb::from_u32(0xFF0000EF));
+        assert_eq!(core.primary.tone(20), Argb::from_u32(0xFF0001AC));
+        assert_eq!(core.primary.tone(10), Argb::from_u32(0xFF00006E));
+        assert_eq!(core.primary.tone(0), Argb::from_u32(0xFF000000));
+        assert_eq!(core.secondary.tone(100), Argb::from_u32(0xFFFFFFFF));
+        assert_eq!(core.secondary.tone(95), Argb::from_u32(0xFFF1EFFF));
+        assert_eq!(core.secondary.tone(90), Argb::from_u32(0xFFE1E0F9));
+        assert_eq!(core.secondary.tone(80), Argb::from_u32(0xFFC5C4DD));
+        assert_eq!(core.secondary.tone(70), Argb::from_u32(0xFFA9A9C1));
+        assert_eq!(core.secondary.tone(60), Argb::from_u32(0xFF8F8FA6));
+        assert_eq!(core.secondary.tone(50), Argb::from_u32(0xFF75758B));
+        assert_eq!(core.secondary.tone(40), Argb::from_u32(0xFF5C5D72));
+        assert_eq!(core.secondary.tone(30), Argb::from_u32(0xFF444559));
+        assert_eq!(core.secondary.tone(20), Argb::from_u32(0xFF2E2F42));
+        assert_eq!(core.secondary.tone(10), Argb::from_u32(0xFF191A2C));
+        assert_eq!(core.secondary.tone(0), Argb::from_u32(0xFF000000));
     }
 
     #[test]
     fn test_content_of_blue() {
-        let core = CorePalette::content_of(Argb::from_u32(0xff0000ff));
+        let core = CorePalette::content_of(Argb::from_u32(0xFF0000FF));
 
-        assert_eq!(core.primary.tone(100), Argb::from_u32(0xffffffff));
-        assert_eq!(core.primary.tone(95), Argb::from_u32(0xfff1efff));
-        assert_eq!(core.primary.tone(90), Argb::from_u32(0xffe0e0ff));
-        assert_eq!(core.primary.tone(80), Argb::from_u32(0xffbec2ff));
-        assert_eq!(core.primary.tone(70), Argb::from_u32(0xff9da3ff));
-        assert_eq!(core.primary.tone(60), Argb::from_u32(0xff7c84ff));
-        assert_eq!(core.primary.tone(50), Argb::from_u32(0xff5a64ff));
-        assert_eq!(core.primary.tone(40), Argb::from_u32(0xff343dff));
-        assert_eq!(core.primary.tone(30), Argb::from_u32(0xff0000ef));
-        assert_eq!(core.primary.tone(20), Argb::from_u32(0xff0001ac));
-        assert_eq!(core.primary.tone(10), Argb::from_u32(0xff00006e));
-        assert_eq!(core.primary.tone(0), Argb::from_u32(0xff000000));
-        assert_eq!(core.secondary.tone(100), Argb::from_u32(0xffffffff));
-        assert_eq!(core.secondary.tone(95), Argb::from_u32(0xfff1efff));
-        assert_eq!(core.secondary.tone(90), Argb::from_u32(0xffe0e0ff));
-        assert_eq!(core.secondary.tone(80), Argb::from_u32(0xffc1c3f4));
-        assert_eq!(core.secondary.tone(70), Argb::from_u32(0xffa5a7d7));
-        assert_eq!(core.secondary.tone(60), Argb::from_u32(0xff8b8dbb));
-        assert_eq!(core.secondary.tone(50), Argb::from_u32(0xff7173a0));
-        assert_eq!(core.secondary.tone(40), Argb::from_u32(0xff585b86));
-        assert_eq!(core.secondary.tone(30), Argb::from_u32(0xff40436d));
-        assert_eq!(core.secondary.tone(20), Argb::from_u32(0xff2a2d55));
-        assert_eq!(core.secondary.tone(10), Argb::from_u32(0xff14173f));
-        assert_eq!(core.secondary.tone(0), Argb::from_u32(0xff000000));
+        assert_eq!(core.primary.tone(100), Argb::from_u32(0xFFFFFFFF));
+        assert_eq!(core.primary.tone(95), Argb::from_u32(0xFFF1EFFF));
+        assert_eq!(core.primary.tone(90), Argb::from_u32(0xFFE0E0FF));
+        assert_eq!(core.primary.tone(80), Argb::from_u32(0xFFBEC2FF));
+        assert_eq!(core.primary.tone(70), Argb::from_u32(0xFF9DA3FF));
+        assert_eq!(core.primary.tone(60), Argb::from_u32(0xFF7C84FF));
+        assert_eq!(core.primary.tone(50), Argb::from_u32(0xFF5A64FF));
+        assert_eq!(core.primary.tone(40), Argb::from_u32(0xFF343DFF));
+        assert_eq!(core.primary.tone(30), Argb::from_u32(0xFF0000EF));
+        assert_eq!(core.primary.tone(20), Argb::from_u32(0xFF0001AC));
+        assert_eq!(core.primary.tone(10), Argb::from_u32(0xFF00006E));
+        assert_eq!(core.primary.tone(0), Argb::from_u32(0xFF000000));
+        assert_eq!(core.secondary.tone(100), Argb::from_u32(0xFFFFFFFF));
+        assert_eq!(core.secondary.tone(95), Argb::from_u32(0xFFF1EFFF));
+        assert_eq!(core.secondary.tone(90), Argb::from_u32(0xFFE0E0FF));
+        assert_eq!(core.secondary.tone(80), Argb::from_u32(0xFFC1C3F4));
+        assert_eq!(core.secondary.tone(70), Argb::from_u32(0xFFA5A7D7));
+        assert_eq!(core.secondary.tone(60), Argb::from_u32(0xFF8B8DBB));
+        assert_eq!(core.secondary.tone(50), Argb::from_u32(0xFF7173A0));
+        assert_eq!(core.secondary.tone(40), Argb::from_u32(0xFF585B86));
+        assert_eq!(core.secondary.tone(30), Argb::from_u32(0xFF40436D));
+        assert_eq!(core.secondary.tone(20), Argb::from_u32(0xFF2A2D55));
+        assert_eq!(core.secondary.tone(10), Argb::from_u32(0xFF14173F));
+        assert_eq!(core.secondary.tone(0), Argb::from_u32(0xFF000000));
     }
 }

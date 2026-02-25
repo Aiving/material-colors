@@ -1,0 +1,1 @@
+allowed-duplicate-crates = ["zune-core", "zune-jpeg"]

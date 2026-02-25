@@ -1,11 +1,4 @@
-use super::{PointProvider, PointProviderLab, QuantizerResult};
-use crate::{
-    color::{Argb, Lab},
-    utils::random::Random,
-    IndexMap,
-};
-#[cfg(not(feature = "std"))]
-use alloc::{vec, vec::Vec};
+#[cfg(not(feature = "std"))] use alloc::{vec, vec::Vec};
 use core::cmp::Ordering;
 #[cfg(feature = "std")]
 use std::{
@@ -13,6 +6,13 @@ use std::{
     string::String,
     time::Instant,
     {vec, vec::Vec},
+};
+
+use super::{PointProvider, PointProviderLab, QuantizerResult};
+use crate::{
+    IndexMap,
+    color::{Argb, Lab},
+    utils::random::Random,
 };
 
 struct DistanceAndIndex {
@@ -69,11 +69,7 @@ impl QuantizerWsmeans {
         }
     }
 
-    pub fn quantize(
-        input_pixels: &[Argb],
-        max_colors: usize,
-        starting_clusters: &[Argb],
-    ) -> QuantizerResult {
+    pub fn quantize(input_pixels: &[Argb], max_colors: usize, starting_clusters: &[Argb]) -> QuantizerResult {
         let mut pixel_to_count: IndexMap<Argb, u32> = IndexMap::default();
         let mut points: Vec<Lab> = vec![];
         let mut pixels: Vec<Argb> = vec![];
@@ -92,10 +88,7 @@ impl QuantizerWsmeans {
 
         let cluster_count = max_colors.min(points.len());
 
-        let mut clusters = starting_clusters
-            .iter()
-            .map(PointProviderLab::lab_from_int)
-            .collect::<Vec<_>>();
+        let mut clusters = starting_clusters.iter().map(PointProviderLab::lab_from_int).collect::<Vec<_>>();
         let additional_clusters_needed = cluster_count - clusters.len();
 
         if additional_clusters_needed > 0 {
@@ -134,19 +127,13 @@ impl QuantizerWsmeans {
         }
 
         #[cfg(feature = "std")]
-        Self::debug_log(format!(
-            "have {} starting clusters, {} points",
-            clusters.len(),
-            points.len()
-        ));
+        Self::debug_log(format!("have {} starting clusters, {} points", clusters.len(), points.len()));
 
         let mut cluster_indices = fill_array(points.len(), |index| index % cluster_count);
         let mut index_matrix = vec![vec![0; cluster_count]; cluster_count];
 
         let mut distance_to_index_matrix: Vec<Vec<DistanceAndIndex>> =
-            fill_array(cluster_count, |_| {
-                fill_array(cluster_count, |index| DistanceAndIndex::new(0.0, index))
-            });
+            fill_array(cluster_count, |_| fill_array(cluster_count, |index| DistanceAndIndex::new(0.0, index)));
         let mut pixel_count_sums = vec![0; cluster_count];
 
         for iteration in 0..10 {
@@ -206,9 +193,7 @@ impl QuantizerWsmeans {
                 let mut new_cluster_index = None;
 
                 for (j, cluster) in clusters.iter().enumerate().take(cluster_count) {
-                    if distance_to_index_matrix[previous_cluster_index][j].distance
-                        >= 4.0 * previous_distance
-                    {
+                    if distance_to_index_matrix[previous_cluster_index][j].distance >= 4.0 * previous_distance {
                         continue;
                     }
 
@@ -317,9 +302,7 @@ impl QuantizerWsmeans {
         let time_elapsed = start_time.elapsed().as_millis();
 
         #[cfg(feature = "std")]
-        Self::debug_log(format!(
-            "took {time_elapsed} ms to create input to cluster map"
-        ));
+        Self::debug_log(format!("took {time_elapsed} ms to create input to cluster map"));
 
         let mut color_to_count: IndexMap<Argb, u32> = IndexMap::default();
 
@@ -349,26 +332,25 @@ fn fill_array<T>(count: usize, callback: impl Fn(usize) -> T) -> Vec<T> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(not(feature = "std"))] use alloc::vec::Vec;
+    #[cfg(feature = "std")] use std::vec::Vec;
+
     use super::QuantizerWsmeans;
     use crate::color::Argb;
-    #[cfg(not(feature = "std"))]
-    use alloc::vec::Vec;
-    #[cfg(feature = "std")]
-    use std::vec::Vec;
 
-    const RED: Argb = Argb::from_u32(0xffff0000);
-    const GREEN: Argb = Argb::from_u32(0xff00ff00);
-    const BLUE: Argb = Argb::from_u32(0xff0000ff);
+    const RED: Argb = Argb::from_u32(0xFFFF0000);
+    const GREEN: Argb = Argb::from_u32(0xFF00FF00);
+    const BLUE: Argb = Argb::from_u32(0xFF0000FF);
     // const WHITE: Argb = Argb::from_u32(0xffffffff);
     // const RANDOM: Argb = Argb::from_u32(0xff426088);
     const MAX_COLORS: usize = 256;
 
     #[test]
     fn test_1rando() {
-        let result = QuantizerWsmeans::quantize(&[Argb::from_u32(0xff141216)], MAX_COLORS, &[]);
+        let result = QuantizerWsmeans::quantize(&[Argb::from_u32(0xFF141216)], MAX_COLORS, &[]);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
-        assert_eq!(colors[0], &Argb::from_u32(0xff141216));
+        assert_eq!(colors[0], &Argb::from_u32(0xFF141216));
     }
 
     #[test]

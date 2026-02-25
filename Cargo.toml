@@ -1,7 +1,7 @@
 [package]
 name = "material-colors"
 version = "0.4.2"
-edition = "2021"
+edition = "2024"
 description = "Up-to-date material-color-utilities port"
 documentation = "https://docs.rs/material-colors"
 homepage = "https://github.com/Aiving/material-colors"
@@ -10,14 +10,14 @@ readme = "README.md"
 license = "MIT OR Apache-2.0"
 keywords = ["no_std", "palette", "color-scheme", "material-you"]
 categories = ["graphics", "no-std"]
-rust-version = "1.63.0"
+rust-version = "1.87.0"
 
 [dependencies]
-ahash = { version = "0.8.11", default-features = false }
-indexmap = { version = "2.3.0", default-features = false }
-images = { package = "image", version = "0.25.2", optional = true }
-serde = { version = "1.0.205", features = ["derive"], optional = true }
-libm = { version = "0.2.8", optional = true }
+ahash = { version = "0.8.12", default-features = false }
+indexmap = { version = "2.13.0", default-features = false }
+images = { package = "image", version = "0.25.9", default-features = false, optional = true }
+serde = { version = "1.0.228", features = ["derive"], optional = true }
+libm = { version = "0.2.16", optional = true }
 
 [features]
 default = ["std"]
@@ -33,6 +33,6 @@ opt-level = 1
 opt-level = 3
 
 [dev-dependencies]
-float-cmp = "0.9"
-reqwest = "0.12.5"
-tokio = { version = "1.39.2", features = ["rt", "macros"] }
+float-cmp = "0.10.0"
+reqwest = "0.13.2"
+tokio = { version = "1.49.0", features = ["rt", "macros"] }

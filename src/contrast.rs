@@ -16,20 +16,18 @@ pub fn ratio_of_tones(tone_a: f64, tone_b: f64) -> f64 {
 
 fn ratio_of_ys(y1: f64, y2: f64) -> f64 {
     let lighter = if y1 > y2 { y1 } else { y2 };
-    let darker = if (lighter - y2).abs() < f64::EPSILON {
-        y1
-    } else {
-        y2
-    };
+    let darker = if (lighter - y2).abs() < f64::EPSILON { y1 } else { y2 };
 
     (lighter + 5.0) / (darker + 5.0)
 }
 
-/// Returns a tone >= `tone` that ensures `ratio`. Return value is between 0 and 100.
-/// Returns -1 if `ratio` cannot be achieved with `tone`.
+/// Returns a tone >= `tone` that ensures `ratio`. Return value is between 0 and
+/// 100. Returns -1 if `ratio` cannot be achieved with `tone`.
 ///
-/// - `tone`: Tone return value must contrast with. Range is 0 to 100. Invalid values will result in -1 being returned.
-/// - `ratio`: Contrast ratio of return value and `tone`. Range is 1 to 21, invalid values have undefined behavior.
+/// - `tone`: Tone return value must contrast with. Range is 0 to 100. Invalid
+///   values will result in -1 being returned.
+/// - `ratio`: Contrast ratio of return value and `tone`. Range is 1 to 21,
+///   invalid values have undefined behavior.
 pub fn lighter(tone: f64, ratio: f64) -> f64 {
     if !(0.0..=100.0).contains(&tone) {
         return -1.0;
@@ -55,11 +53,13 @@ pub fn lighter(tone: f64, ratio: f64) -> f64 {
     return_value
 }
 
-/// Returns a tone <= `tone` that ensures `ratio`. Return value is between 0 and 100.
-/// Returns -1 if `ratio` cannot be achieved with `tone`.
+/// Returns a tone <= `tone` that ensures `ratio`. Return value is between 0 and
+/// 100. Returns -1 if `ratio` cannot be achieved with `tone`.
 ///
-/// - `tone`: Tone return value must contrast with. Range is 0 to 100. Invalid values will result in -1 being returned.
-/// - `ratio`: Contrast ratio of return value and `tone`. Range is 1 to 21, invalid values have undefined behavior.
+/// - `tone`: Tone return value must contrast with. Range is 0 to 100. Invalid
+///   values will result in -1 being returned.
+/// - `ratio`: Contrast ratio of return value and `tone`. Range is 1 to 21,
+///   invalid values have undefined behavior.
 pub fn darker(tone: f64, ratio: f64) -> f64 {
     if !(0.0..=100.0).contains(&tone) {
         return -1.0;
@@ -86,49 +86,46 @@ pub fn darker(tone: f64, ratio: f64) -> f64 {
     return_value
 }
 
-/// Returns a tone >= `tone` that ensures `ratio`. Return value is between 0 and 100.
-/// Returns 100 if `ratio` cannot be achieved with `tone`.
+/// Returns a tone >= `tone` that ensures `ratio`. Return value is between 0 and
+/// 100. Returns 100 if `ratio` cannot be achieved with `tone`.
 ///
-/// This method is unsafe because the returned value is guaranteed to be in bounds for tone, i.e. between 0 and 100.
-/// However, that value may not reach the `ratio` with `tone`. For example, there is no color lighter than T100.
+/// This method is unsafe because the returned value is guaranteed to be in
+/// bounds for tone, i.e. between 0 and 100. However, that value may not reach
+/// the `ratio` with `tone`. For example, there is no color lighter than T100.
 ///
-/// - `tone`: Tone return value must contrast with. Range is 0 to 100. Invalid values will result in 100 being returned.
-/// - `ratio`: Desired contrast ratio of return value and tone parameter. Range is 1 to 21, invalid values have undefined behavior.
+/// - `tone`: Tone return value must contrast with. Range is 0 to 100. Invalid
+///   values will result in 100 being returned.
+/// - `ratio`: Desired contrast ratio of return value and tone parameter. Range
+///   is 1 to 21, invalid values have undefined behavior.
 pub fn lighter_unsafe(tone: f64, ratio: f64) -> f64 {
     let lighter_safe = lighter(tone, ratio);
 
-    if lighter_safe < 0.0 {
-        100.0
-    } else {
-        lighter_safe
-    }
+    if lighter_safe < 0.0 { 100.0 } else { lighter_safe }
 }
 
-/// Returns a tone <= `tone` that ensures `ratio`. Return value is between 0 and 100.
-/// Returns 0 if `ratio` cannot be achieved with `tone`.
+/// Returns a tone <= `tone` that ensures `ratio`. Return value is between 0 and
+/// 100. Returns 0 if `ratio` cannot be achieved with `tone`.
 ///
-/// This method is unsafe because the returned value is guaranteed to be in bounds for tone, i.e. between 0 and 100.
-/// However, that value may not reach the `ratio` with `tone`. For example, there is no color darker than T0.
+/// This method is unsafe because the returned value is guaranteed to be in
+/// bounds for tone, i.e. between 0 and 100. However, that value may not reach
+/// the `ratio` with `tone`. For example, there is no color darker than T0.
 ///
-/// - `tone`: Tone return value must contrast with. Range is 0 to 100. Invalid values will result in 0 being returned.
-/// - `ratio`: Desired contrast ratio of return value and tone parameter. Range is 1 to 21, invalid values have undefined behavior.
+/// - `tone`: Tone return value must contrast with. Range is 0 to 100. Invalid
+///   values will result in 0 being returned.
+/// - `ratio`: Desired contrast ratio of return value and tone parameter. Range
+///   is 1 to 21, invalid values have undefined behavior.
 pub fn darker_unsafe(tone: f64, ratio: f64) -> f64 {
     let darker_safe = darker(tone, ratio);
 
-    if darker_safe < 0.0 {
-        0.0
-    } else {
-        darker_safe
-    }
+    if darker_safe < 0.0 { 0.0 } else { darker_safe }
 }
 
 #[cfg(test)]
 mod tests {
     use float_cmp::assert_approx_eq;
 
-    use crate::contrast::ratio_of_tones;
-
     use super::{darker, darker_unsafe, lighter, lighter_unsafe};
+    use crate::contrast::ratio_of_tones;
 
     #[test]
     fn test_ratio_of_tones_out_of_bounds_input() {

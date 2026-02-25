@@ -36,7 +36,7 @@ use material_colors::{
     theme::ThemeBuilder,
 };
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), reqwest::Error> {
     let image = reqwest::get("https://picsum.photos/id/866/1920/1080")
         .await?
@@ -68,7 +68,7 @@ In case you have a platform where there are corresponding instructions for opera
 
 ## MSRV
 
-The Minimum Supported Rust Version is currently 1.63.0.
+The Minimum Supported Rust Version is currently 1.87.0.
 
 ## License
 

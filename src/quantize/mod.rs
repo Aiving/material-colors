@@ -1,7 +1,6 @@
 pub use point_provider::PointProvider;
 pub use point_provider_lab::PointProviderLab;
-pub use quantizer::Quantizer;
-pub use quantizer::QuantizerResult;
+pub use quantizer::{Quantizer, QuantizerResult};
 pub use quantizer_celebi::QuantizerCelebi;
 pub use quantizer_map::QuantizerMap;
 pub use quantizer_wsmeans::QuantizerWsmeans;

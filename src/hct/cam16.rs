@@ -1,3 +1,5 @@
+use core::f64::consts::PI;
+
 use super::ViewingConditions;
 #[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
@@ -6,7 +8,6 @@ use crate::{
     color::{Argb, Xyz},
     utils::math::signum,
 };
-use core::f64::consts::PI;
 
 /// CAM16, a color appearance model. Colors are not just defined by their hex
 /// code, but rather, a hex code and viewing conditions.
@@ -70,8 +71,9 @@ pub struct Cam16 {
 
 impl Cam16 {
     /// CAM16 instances also have coordinates in the CAM16-UCS space, called J*,
-    /// a*, b*, or jstar, astar, bstar in code. CAM16-UCS is included in the CAM16
-    /// specification, and should be used when measuring distances between colors.
+    /// a*, b*, or jstar, astar, bstar in code. CAM16-UCS is included in the
+    /// CAM16 specification, and should be used when measuring distances
+    /// between colors.
     pub fn distance(&self, other: &Self) -> f64 {
         let d_j = self.jstar - other.jstar;
         let d_a = self.astar - other.astar;
@@ -82,28 +84,20 @@ impl Cam16 {
     }
 
     /// Given `viewing_conditions`, convert `argb` to
-    pub fn fromi32_in_viewing_conditions(
-        argb: Argb,
-        viewing_conditions: &ViewingConditions,
-    ) -> Self {
+    pub fn fromi32_in_viewing_conditions(argb: Argb, viewing_conditions: &ViewingConditions) -> Self {
         // Transform Argb int to Xyz
         let Xyz { x, y, z } = Xyz::from(argb);
 
         Self::from_xyz_in_viewing_conditions(x, y, z, viewing_conditions)
     }
 
-    /// Given color expressed in Xyz and viewed in `viewing_conditions`, convert to
-    /// Cam16
+    /// Given color expressed in Xyz and viewed in `viewing_conditions`, convert
+    /// to Cam16
     ///
     /// # Panics
     ///
     /// Will panic if the hue is between 0 and 360
-    pub fn from_xyz_in_viewing_conditions(
-        x: f64,
-        y: f64,
-        z: f64,
-        viewing_conditions: &ViewingConditions,
-    ) -> Self {
+    pub fn from_xyz_in_viewing_conditions(x: f64, y: f64, z: f64, viewing_conditions: &ViewingConditions) -> Self {
         let (r_c, g_c, b_c) = (
             0.051461f64.mul_add(-z, 0.401288f64.mul_add(x, 0.650173 * y)),
             0.045854f64.mul_add(z, (-0.250268f64).mul_add(x, 1.204414 * y)),
@@ -150,21 +144,16 @@ impl Cam16 {
         let ac = p2 * viewing_conditions.nbb;
 
         // CAM16 lightness and brightness
-        let j =
-            100.0 * (ac / viewing_conditions.aw).powf(viewing_conditions.c * viewing_conditions.z);
+        let j = 100.0 * (ac / viewing_conditions.aw).powf(viewing_conditions.c * viewing_conditions.z);
 
-        let q = (4.0 / viewing_conditions.c)
-            * (j / 100.0).sqrt()
-            * (viewing_conditions.aw + 4.0)
-            * (viewing_conditions.f_lroot);
+        let q = (4.0 / viewing_conditions.c) * (j / 100.0).sqrt() * (viewing_conditions.aw + 4.0) * (viewing_conditions.f_lroot);
 
         let hue_prime = if hue < 20.14 { hue + 360.0 } else { hue };
         let e_hue = (1.0 / 4.0) * ((hue_prime.to_radians() + 2.0).cos() + 3.8);
         let p1 = 50000.0 / 13.0 * e_hue * viewing_conditions.n_c * viewing_conditions.ncb;
         let t = p1 * a.hypot(b) / (u + 0.305);
 
-        let alpha = t.powf(0.9)
-            * (1.64 - 0.29f64.powf(viewing_conditions.background_ytowhite_point_y)).powf(0.73);
+        let alpha = t.powf(0.9) * (1.64 - 0.29f64.powf(viewing_conditions.background_ytowhite_point_y)).powf(0.73);
 
         // CAM16 chroma, colorfulness, chroma
         let c = alpha * (j / 100.0).sqrt();
@@ -172,10 +161,7 @@ impl Cam16 {
         let s = 50.0 * ((alpha * viewing_conditions.c) / (viewing_conditions.aw + 4.0)).sqrt();
 
         // CAM16-UCS components
-        let (jstar, mstar) = (
-            100.0f64.mul_add(0.007, 1.0) * j / 0.007f64.mul_add(j, 1.0),
-            (0.0228 * m).ln_1p() / 0.0228,
-        );
+        let (jstar, mstar) = (100.0f64.mul_add(0.007, 1.0) * j / 0.007f64.mul_add(j, 1.0), (0.0228 * m).ln_1p() / 0.0228);
 
         let (astar, bstar) = (mstar * hue_radians.cos(), mstar * hue_radians.sin());
 
@@ -200,16 +186,8 @@ impl Cam16 {
 
     /// Create a CAM16 color from lightness `j`, chroma `c`, and hue `h`,
     /// in `viewing_conditions`.
-    pub fn from_jch_in_viewing_conditions(
-        j: f64,
-        c: f64,
-        h: f64,
-        viewing_conditions: &ViewingConditions,
-    ) -> Self {
-        let q = (4.0 / viewing_conditions.c)
-            * (j / 100.0).sqrt()
-            * (viewing_conditions.aw + 4.0)
-            * (viewing_conditions.f_lroot);
+    pub fn from_jch_in_viewing_conditions(j: f64, c: f64, h: f64, viewing_conditions: &ViewingConditions) -> Self {
+        let q = (4.0 / viewing_conditions.c) * (j / 100.0).sqrt() * (viewing_conditions.aw + 4.0) * (viewing_conditions.f_lroot);
         let m = c * viewing_conditions.f_lroot;
         let alpha = c / (j / 100.0).sqrt();
         let s = 50.0 * ((alpha * viewing_conditions.c) / (viewing_conditions.aw + 4.0)).sqrt();
@@ -235,20 +213,16 @@ impl Cam16 {
         }
     }
 
-    /// Create a CAM16 color from CAM16-UCS coordinates `jstar`, `astar`, `bstar`.
-    /// assuming the color was viewed in default viewing conditions.
+    /// Create a CAM16 color from CAM16-UCS coordinates `jstar`, `astar`,
+    /// `bstar`. assuming the color was viewed in default viewing
+    /// conditions.
     pub fn from_ucs(jstar: f64, astar: f64, bstar: f64) -> Self {
         Self::from_ucs_in_viewing_conditions(jstar, astar, bstar, &ViewingConditions::standard())
     }
 
-    /// Create a CAM16 color from CAM16-UCS coordinates `jstar`, `astar`, `bstar`.
-    /// in `viewing_conditions`.
-    pub fn from_ucs_in_viewing_conditions(
-        jstar: f64,
-        astar: f64,
-        bstar: f64,
-        viewing_conditions: &ViewingConditions,
-    ) -> Self {
+    /// Create a CAM16 color from CAM16-UCS coordinates `jstar`, `astar`,
+    /// `bstar`. in `viewing_conditions`.
+    pub fn from_ucs_in_viewing_conditions(jstar: f64, astar: f64, bstar: f64, viewing_conditions: &ViewingConditions) -> Self {
         let a = astar;
         let b = bstar;
         let m = a.hypot(b);
@@ -277,22 +251,18 @@ impl Cam16 {
             self.chroma / (self.j / 100.0).sqrt()
         };
 
-        let t = (alpha
-            / (1.64 - 0.29_f64.powf(viewing_conditions.background_ytowhite_point_y)).powf(0.73))
-        .powf(1.0 / 0.9);
+        let t = (alpha / (1.64 - 0.29_f64.powf(viewing_conditions.background_ytowhite_point_y)).powf(0.73)).powf(1.0 / 0.9);
         let h_rad = self.hue.to_radians();
 
         let e_hue = 0.25 * ((h_rad + 2.0).cos() + 3.8);
-        let ac = viewing_conditions.aw
-            * (self.j / 100.0).powf(1.0 / viewing_conditions.c / viewing_conditions.z);
+        let ac = viewing_conditions.aw * (self.j / 100.0).powf(1.0 / viewing_conditions.c / viewing_conditions.z);
         let p1 = e_hue * (50000.0 / 13.0) * viewing_conditions.n_c * viewing_conditions.ncb;
 
         let p2 = ac / viewing_conditions.nbb;
 
         let (h_sin, h_cos) = (h_rad.sin(), h_rad.cos());
 
-        let gamma = 23.0 * (p2 + 0.305) * t
-            / (108.0 * t).mul_add(h_sin, 23.0f64.mul_add(p1, 11.0 * t * h_cos));
+        let gamma = 23.0 * (p2 + 0.305) * t / (108.0 * t).mul_add(h_sin, 23.0f64.mul_add(p1, 11.0 * t * h_cos));
         let a = gamma * h_cos;
         let b = gamma * h_sin;
         let (r_a, g_a, b_a) = (
@@ -341,9 +311,11 @@ impl From<Cam16> for Argb {
 
 #[cfg(test)]
 mod tests {
-    use crate::{color::Argb, hct::Cam16};
     use core::str::FromStr;
+
     use float_cmp::assert_approx_eq;
+
+    use crate::{color::Argb, hct::Cam16};
 
     #[test]
     fn test_cam16() {

@@ -1,30 +1,19 @@
+use core::f64::consts::PI;
+
 use super::{Cam16, ViewingConditions};
 #[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 use crate::{
-    color::{y_from_lstar, Argb, LinearRgb},
+    color::{Argb, LinearRgb, y_from_lstar},
     utils::math::{matrix_multiply, sanitize_degrees_double, signum},
 };
-use core::f64::consts::PI;
 
 /// A struct that solves the HCT equation.
 const SCALED_DISCOUNT_FROM_LINRGB: [[f64; 3]; 3] = [
-    [
-        0.001200833568784504,
-        0.002389694492170889,
-        0.0002795742885861124,
-    ],
-    [
-        0.0005891086651375999,
-        0.0029785502573438758,
-        0.0003270666104008398,
-    ],
-    [
-        0.00010146692491640572,
-        0.0005364214359186694,
-        0.0032979401770712076,
-    ],
+    [0.001200833568784504, 0.002389694492170889, 0.0002795742885861124],
+    [0.0005891086651375999, 0.0029785502573438758, 0.0003270666104008398],
+    [0.00010146692491640572, 0.0005364214359186694, 0.0032979401770712076],
 ];
 
 const LINRGB_FROM_SCALED_DISCOUNT: [[f64; 3]; 3] = [
@@ -372,16 +361,9 @@ impl HctSolver {
     ///
     /// Returns the intersection point of:
     /// - the segment with `source` and `target` as its endpoints, and
-    /// - the plane
-    ///   ... R = `coordinate` if `axis` == 0
-    ///   ... G = `coordinate` if `axis` == 1
-    ///   ... B = `coordinate` if `axis` == 2
-    fn set_coordinate(
-        source: [f64; 3],
-        coordinate: f64,
-        target: [f64; 3],
-        axis: usize,
-    ) -> [f64; 3] {
+    /// - the plane ... R = `coordinate` if `axis` == 0 ... G = `coordinate` if
+    ///   `axis` == 1 ... B = `coordinate` if `axis` == 2
+    fn set_coordinate(source: [f64; 3], coordinate: f64, target: [f64; 3], axis: usize) -> [f64; 3] {
         let t = Self::intercept(source[axis], coordinate, target[axis]);
 
         Self::lerp_point(source, t, target)
@@ -412,31 +394,19 @@ impl HctSolver {
             let b: f64 = coord_b;
             let r = b.mul_add(-k_b, g.mul_add(-k_g, y)) / k_r;
 
-            if Self::is_bounded(r) {
-                [r, g, b]
-            } else {
-                [-1.0; 3]
-            }
+            if Self::is_bounded(r) { [r, g, b] } else { [-1.0; 3] }
         } else if n < 8 {
             let b = coord_a;
             let r = coord_b;
             let g = b.mul_add(-k_b, r.mul_add(-k_r, y)) / k_g;
 
-            if Self::is_bounded(g) {
-                [r, g, b]
-            } else {
-                [-1.0; 3]
-            }
+            if Self::is_bounded(g) { [r, g, b] } else { [-1.0; 3] }
         } else {
             let r = coord_a;
             let g = coord_b;
             let b = g.mul_add(-k_g, r.mul_add(-k_r, y)) / k_b;
 
-            if Self::is_bounded(b) {
-                [r, g, b]
-            } else {
-                [-1.0; 3]
-            }
+            if Self::is_bounded(b) { [r, g, b] } else { [-1.0; 3] }
         }
     }
 
@@ -487,12 +457,8 @@ impl HctSolver {
         [left, right]
     }
 
-    fn mid_point(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
-        [
-            (a[0] + b[0]) / 2.0,
-            (a[1] + b[1]) / 2.0,
-            (a[2] + b[2]) / 2.0,
-        ]
+    const fn mid_point(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
+        [f64::midpoint(a[0], b[0]), f64::midpoint(a[1], b[1]), f64::midpoint(a[2], b[2])]
     }
 
     fn critical_plane_below(x: f64) -> i16 {
@@ -533,7 +499,7 @@ impl HctSolver {
                         break;
                     }
 
-                    let m_plane = ((f64::from(l_plane) + f64::from(r_plane)) / 2.0).floor() as i16;
+                    let m_plane = f64::midpoint(f64::from(l_plane), f64::from(r_plane)).floor() as i16;
                     let mid_plane_coordinate = CRITICAL_PLANES[m_plane as usize];
                     let mid = Self::set_coordinate(left, mid_plane_coordinate, right, axis);
                     let mid_hue = Self::hue_of(mid);
@@ -571,8 +537,7 @@ impl HctSolver {
         // Operations inlined from Cam16 to avoid repeated calculation
         // ===========================================================
         let viewing_conditions = ViewingConditions::standard();
-        let t_inner_coeff =
-            1.0 / (1.64 - 0.29f64.powf(viewing_conditions.background_ytowhite_point_y)).powf(0.73);
+        let t_inner_coeff = 1.0 / (1.64 - 0.29f64.powf(viewing_conditions.background_ytowhite_point_y)).powf(0.73);
         let e_hue = 0.25 * ((hue_radians + 2.0).cos() + 3.8);
         let p1 = e_hue * (50000.0 / 13.0) * viewing_conditions.n_c * viewing_conditions.ncb;
         let (h_sin, h_cos) = (hue_radians.sin(), hue_radians.cos());
@@ -582,18 +547,12 @@ impl HctSolver {
             // Operations inlined from Cam16 to avoid repeated calculation
             // ===========================================================
             let j_normalized = j / 100.0;
-            let alpha = if chroma == 0.0 || j == 0.0 {
-                0.0
-            } else {
-                chroma / j_normalized.sqrt()
-            };
+            let alpha = if chroma == 0.0 || j == 0.0 { 0.0 } else { chroma / j_normalized.sqrt() };
 
             let t = (alpha * t_inner_coeff).powf(1.0 / 0.9);
-            let ac = viewing_conditions.aw
-                * j_normalized.powf(1.0 / viewing_conditions.c / viewing_conditions.z);
+            let ac = viewing_conditions.aw * j_normalized.powf(1.0 / viewing_conditions.c / viewing_conditions.z);
             let p2 = ac / viewing_conditions.nbb;
-            let gamma = 23.0 * (p2 + 0.305) * t
-                / (108.0 * t).mul_add(h_sin, 23.0f64.mul_add(p1, 11.0 * t * h_cos));
+            let gamma = 23.0 * (p2 + 0.305) * t / (108.0 * t).mul_add(h_sin, 23.0f64.mul_add(p1, 11.0 * t * h_cos));
             let a = gamma * h_cos;
             let b = gamma * h_sin;
             let (r_a, g_a, b_a) = (
@@ -605,10 +564,7 @@ impl HctSolver {
             let r_cscaled = Self::inverse_chromatic_adaptation(r_a);
             let g_cscaled = Self::inverse_chromatic_adaptation(g_a);
             let b_cscaled = Self::inverse_chromatic_adaptation(b_a);
-            let [red, green, blue] = matrix_multiply(
-                [r_cscaled, g_cscaled, b_cscaled],
-                LINRGB_FROM_SCALED_DISCOUNT,
-            );
+            let [red, green, blue] = matrix_multiply([r_cscaled, g_cscaled, b_cscaled], LINRGB_FROM_SCALED_DISCOUNT);
 
             let linrgb = LinearRgb { red, green, blue };
             // ===========================================================

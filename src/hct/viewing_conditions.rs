@@ -1,22 +1,24 @@
+use core::f64::consts::PI;
+
 #[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 use crate::{
-    color::{y_from_lstar, WHITE_POINT_D65},
+    color::{WHITE_POINT_D65, y_from_lstar},
     utils::math::lerp,
 };
-use core::f64::consts::PI;
 
 /// In traditional color spaces, a color can be identified solely by the
-/// observer's measurement of the color. Color appearance models such as CAM16
-/// also use information about the environment where the color was
-/// observed, known as the viewing conditions.
+/// observer's measurement of the color.
+///
+/// Color appearance models such as CAM16 also use information about the
+/// environment where the color was observed, known as the viewing conditions.
 ///
 /// For example, white under the traditional assumption of a midday sun white
 /// point is accurately measured as a slightly chromatic blue by CAM16.
 /// (roughly, hue 203, chroma 3, lightness 100)
 ///
-/// This class caches intermediate values of the CAM16 conversion process that
+/// This struct caches intermediate values of the CAM16 conversion process that
 /// depend only on viewing conditions, enabling speed ups.
 #[derive(Debug)]
 pub struct ViewingConditions {
@@ -132,11 +134,9 @@ impl ViewingConditions {
         let k4_f = 1.0 - k4;
 
         // Luminance-level adaptation factor
-        let fl = k4.mul_add(
-            adapting_luminance,
-            0.1 * k4_f * k4_f * (5.0 * adapting_luminance).cbrt(),
-        );
-        // Intermediate factor, ratio of background relative luminance to white relative luminance
+        let fl = k4.mul_add(adapting_luminance, 0.1 * k4_f * k4_f * (5.0 * adapting_luminance).cbrt());
+        // Intermediate factor, ratio of background relative luminance to white relative
+        // luminance
         let n = y_from_lstar(background_lstar) / white_point[1];
 
         // Base exponential nonlinearity
@@ -187,8 +187,9 @@ impl ViewingConditions {
 
 #[cfg(test)]
 mod tests {
-    use super::ViewingConditions;
     use float_cmp::assert_approx_eq;
+
+    use super::ViewingConditions;
 
     #[test]
     fn test_viewing_conditions() {

@@ -1,26 +1,25 @@
-use super::Palette;
-#[cfg(all(not(feature = "std"), feature = "libm"))]
-#[allow(unused_imports)]
-use crate::utils::no_std::FloatExt;
-use crate::{
-    color::Argb,
-    dynamic_color::Variant,
-    hct::Hct,
-    scheme::variant::{
-        SchemeContent, SchemeExpressive, SchemeFidelity, SchemeFruitSalad, SchemeMonochrome,
-        SchemeNeutral, SchemeRainbow, SchemeTonalSpot, SchemeVibrant,
-    },
-    Map,
-};
-#[cfg(not(feature = "std"))]
-use alloc::vec::Vec;
+#[cfg(not(feature = "std"))] use alloc::vec::Vec;
 use core::{
     cmp::Ordering,
     fmt,
     hash::{Hash, Hasher},
 };
-#[cfg(feature = "serde")]
-use serde::Serialize;
+
+#[cfg(feature = "serde")] use serde::Serialize;
+
+use super::Palette;
+#[cfg(all(not(feature = "std"), feature = "libm"))]
+#[allow(unused_imports)]
+use crate::utils::no_std::FloatExt;
+use crate::{
+    Map,
+    color::Argb,
+    dynamic_color::Variant,
+    hct::Hct,
+    scheme::variant::{
+        SchemeContent, SchemeExpressive, SchemeFidelity, SchemeFruitSalad, SchemeMonochrome, SchemeNeutral, SchemeRainbow, SchemeTonalSpot, SchemeVibrant,
+    },
+};
 
 /// A convenience class for retrieving colors that are constant in hue and
 /// chroma, but vary in tone.
@@ -53,11 +52,7 @@ impl TonalPalette {
     }
 
     const fn new(_hue: f64, _chroma: f64, _key_color: Hct) -> Self {
-        Self {
-            _hue,
-            _chroma,
-            _key_color,
-        }
+        Self { _hue, _chroma, _key_color }
     }
 
     /// Create a Tonal Palette from hue and chroma of `hct`.
@@ -79,7 +74,8 @@ impl TonalPalette {
         }
     }
 
-    /// Create a Tonal Palette from `hue` and `chroma`, which generates a key color.
+    /// Create a Tonal Palette from `hue` and `chroma`, which generates a key
+    /// color.
     pub fn from_hue_and_chroma(hue: f64, chroma: f64) -> Self {
         Self::new(hue, chroma, KeyColor::new(hue, chroma).create())
     }
@@ -93,8 +89,8 @@ impl TonalPalette {
     ///
     /// If the class was instantiated from `_hue` and `_chroma`, will return the
     /// color with corresponding `tone`.
-    /// If the class was instantiated from a fixed-size list of color ints, `tone`
-    /// must be in `common_mones`.
+    /// If the class was instantiated from a fixed-size list of color ints,
+    /// `tone` must be in `common_mones`.
     pub fn tone(&self, tone: i32) -> Argb {
         Hct::from(self.hue(), self.chroma(), f64::from(tone)).into()
     }
@@ -152,13 +148,13 @@ impl KeyColor {
     }
 
     /// Creates a key color from a [`hue`] and a [`chroma`].
-    /// The key color is the first tone, starting from T50, matching the given hue
-    /// and chroma.
+    /// The key color is the first tone, starting from T50, matching the given
+    /// hue and chroma.
     ///
     /// Returns key color in [`Hct`].
     pub fn create(&mut self) -> Hct {
-        // Pivot around T50 because T50 has the most chroma available, on average. Thus it is most
-        // likely to have a direct answer.
+        // Pivot around T50 because T50 has the most chroma available, on average. Thus
+        // it is most likely to have a direct answer.
         let pivot_tone = 50;
         let tone_step_size = 1;
         // Epsilon to accept values slightly higher than the requested chroma.
@@ -170,14 +166,13 @@ impl KeyColor {
         let mut upper_tone = 100;
 
         while lower_tone < upper_tone {
-            let mid_tone = (lower_tone + upper_tone) / 2;
-            let is_ascending =
-                self.max_chroma(mid_tone) < self.max_chroma(mid_tone + tone_step_size);
+            let mid_tone = i32::midpoint(lower_tone, upper_tone);
+            let is_ascending = self.max_chroma(mid_tone) < self.max_chroma(mid_tone + tone_step_size);
             let sufficient_chroma = self.max_chroma(mid_tone) >= self.requested_chroma - epsilon;
 
             if sufficient_chroma {
-                // Either range [lowerTone, midTone] or [midTone, upperTone] has answer, so search in the
-                // range that is closer the pivot tone.
+                // Either range [lowerTone, midTone] or [midTone, upperTone] has answer, so
+                // search in the range that is closer the pivot tone.
                 if (lower_tone - pivot_tone).abs() < (upper_tone - pivot_tone).abs() {
                     upper_tone = mid_tone;
                 } else if lower_tone == mid_tone {
@@ -186,8 +181,8 @@ impl KeyColor {
                     lower_tone = mid_tone;
                 }
             } else if is_ascending {
-                // As there is no sufficient chroma in the midTone, follow the direction to the chroma
-                // peak.
+                // As there is no sufficient chroma in the midTone, follow the direction to the
+                // chroma peak.
                 lower_tone = mid_tone + tone_step_size;
             } else {
                 // Keep midTone for potential chroma peak.
@@ -253,33 +248,33 @@ mod tests {
 
     #[test]
     fn test_of_tones_of_blue() {
-        let hct: Hct = Argb::from_u32(0xff0000ff).into();
+        let hct: Hct = Argb::from_u32(0xFF0000FF).into();
         let tones = TonalPalette::of(hct.get_hue(), hct.get_chroma());
 
-        assert_eq!(tones.tone(0), Argb::from_u32(0xff000000));
-        assert_eq!(tones.tone(10), Argb::from_u32(0xff00006e));
-        assert_eq!(tones.tone(20), Argb::from_u32(0xff0001ac));
-        assert_eq!(tones.tone(30), Argb::from_u32(0xff0000ef));
-        assert_eq!(tones.tone(40), Argb::from_u32(0xff343dff));
-        assert_eq!(tones.tone(50), Argb::from_u32(0xff5a64ff));
-        assert_eq!(tones.tone(60), Argb::from_u32(0xff7c84ff));
-        assert_eq!(tones.tone(70), Argb::from_u32(0xff9da3ff));
-        assert_eq!(tones.tone(80), Argb::from_u32(0xffbec2ff));
-        assert_eq!(tones.tone(90), Argb::from_u32(0xffe0e0ff));
-        assert_eq!(tones.tone(95), Argb::from_u32(0xfff1efff));
-        assert_eq!(tones.tone(99), Argb::from_u32(0xfffffbff));
-        assert_eq!(tones.tone(100), Argb::from_u32(0xffffffff));
+        assert_eq!(tones.tone(0), Argb::from_u32(0xFF000000));
+        assert_eq!(tones.tone(10), Argb::from_u32(0xFF00006E));
+        assert_eq!(tones.tone(20), Argb::from_u32(0xFF0001AC));
+        assert_eq!(tones.tone(30), Argb::from_u32(0xFF0000EF));
+        assert_eq!(tones.tone(40), Argb::from_u32(0xFF343DFF));
+        assert_eq!(tones.tone(50), Argb::from_u32(0xFF5A64FF));
+        assert_eq!(tones.tone(60), Argb::from_u32(0xFF7C84FF));
+        assert_eq!(tones.tone(70), Argb::from_u32(0xFF9DA3FF));
+        assert_eq!(tones.tone(80), Argb::from_u32(0xFFBEC2FF));
+        assert_eq!(tones.tone(90), Argb::from_u32(0xFFE0E0FF));
+        assert_eq!(tones.tone(95), Argb::from_u32(0xFFF1EFFF));
+        assert_eq!(tones.tone(99), Argb::from_u32(0xFFFFFBFF));
+        assert_eq!(tones.tone(100), Argb::from_u32(0xFFFFFFFF));
 
         // Tone not in [TonalPalette.commonTones]
-        assert_eq!(tones.tone(3), Argb::from_u32(0xff00003c));
+        assert_eq!(tones.tone(3), Argb::from_u32(0xFF00003C));
     }
 
     #[test]
     fn test_of_operator_and_hash() {
-        let hct_ab: Hct = Argb::from_u32(0xff0000ff).into();
+        let hct_ab: Hct = Argb::from_u32(0xFF0000FF).into();
         let tones_a = TonalPalette::of(hct_ab.get_hue(), hct_ab.get_chroma());
         let tones_b = TonalPalette::of(hct_ab.get_hue(), hct_ab.get_chroma());
-        let hct_c: Hct = Argb::from_u32(0xff123456).into();
+        let hct_c: Hct = Argb::from_u32(0xFF123456).into();
         let tones_c = TonalPalette::of(hct_c.get_hue(), hct_c.get_chroma());
 
         assert_eq!(tones_a, tones_b);

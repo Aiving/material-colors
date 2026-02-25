@@ -1,24 +1,25 @@
-use super::{MaterialDynamicColors, Variant};
-use crate::{
-    color::Argb,
-    hct::Hct,
-    palette::TonalPalette,
-    scheme::variant::{
-        SchemeContent, SchemeExpressive, SchemeFidelity, SchemeFruitSalad, SchemeMonochrome,
-        SchemeNeutral, SchemeRainbow, SchemeTonalSpot, SchemeVibrant,
-    },
-    utils::math::sanitize_degrees_double,
-};
 use core::{
     cmp::Ordering,
     fmt,
     hash::{Hash, Hasher},
 };
 
-/// Constructed by a set of values representing the current UI state (such as
-/// whether or not its dark theme, what the theme style is, etc.), and
-/// provides a set of [`TonalPalette`]s that can create colors that fit in
-/// with the theme style. Used by [`DynamicColor`] to resolve into a color.
+use super::{MaterialDynamicColors, Variant};
+use crate::{
+    color::Argb,
+    hct::Hct,
+    palette::TonalPalette,
+    scheme::variant::{
+        SchemeContent, SchemeExpressive, SchemeFidelity, SchemeFruitSalad, SchemeMonochrome, SchemeNeutral, SchemeRainbow, SchemeTonalSpot, SchemeVibrant,
+    },
+    utils::math::sanitize_degrees_double,
+};
+
+/// Constructed by a set of values representing the current UI state and
+/// provides a set of [`TonalPalette`]s that can create colors that fit in with
+/// the theme style.
+///
+/// Used by [`DynamicColor`] to resolve into a color.
 ///
 /// [`DynamicColor`]: super::DynamicColor
 #[derive(Clone, PartialOrd)]
@@ -36,27 +37,30 @@ pub struct DynamicScheme {
     /// standard (i.e. the design as spec'd), and 1 represents maximum contrast.
     pub contrast_level: f64,
 
-    /// Given a tone, produces a color. Hue and chroma of the color are specified
-    /// in the design specification of the variant. Usually colorful.
+    /// Given a tone, produces a color. Hue and chroma of the color are
+    /// specified in the design specification of the variant. Usually
+    /// colorful.
     pub primary_palette: TonalPalette,
 
-    /// Given a tone, produces a color. Hue and chroma of the color are specified
-    /// in the design specification of the variant. Usually less colorful.
+    /// Given a tone, produces a color. Hue and chroma of the color are
+    /// specified in the design specification of the variant. Usually less
+    /// colorful.
     pub secondary_palette: TonalPalette,
 
-    /// Given a tone, produces a color. Hue and chroma of the color are specified
-    /// in the design specification of the variant. Usually a different hue from
-    /// primary and colorful.
+    /// Given a tone, produces a color. Hue and chroma of the color are
+    /// specified in the design specification of the variant. Usually a
+    /// different hue from primary and colorful.
     pub tertiary_palette: TonalPalette,
 
-    /// Given a tone, produces a color. Hue and chroma of the color are specified
-    /// in the design specification of the variant. Usually not colorful at all,
-    /// intended for background & surface colors.
+    /// Given a tone, produces a color. Hue and chroma of the color are
+    /// specified in the design specification of the variant. Usually not
+    /// colorful at all, intended for background & surface colors.
     pub neutral_palette: TonalPalette,
 
-    /// Given a tone, produces a color. Hue and chroma of the color are specified
-    /// in the design specification of the variant. Usually not colorful, but
-    /// slightly more colorful than Neutral. Intended for backgrounds & surfaces.
+    /// Given a tone, produces a color. Hue and chroma of the color are
+    /// specified in the design specification of the variant. Usually not
+    /// colorful, but slightly more colorful than Neutral. Intended for
+    /// backgrounds & surfaces.
     pub neutral_variant_palette: TonalPalette,
 
     /// Given a tone, produces a reddish, colorful, color.
@@ -90,30 +94,19 @@ impl DynamicScheme {
         }
     }
 
-    pub fn by_variant(
-        source: Argb,
-        variant: &Variant,
-        is_dark: bool,
-        contrast_level: Option<f64>,
-    ) -> Self {
+    pub fn by_variant(source: Argb, variant: &Variant, is_dark: bool, contrast_level: Option<f64>) -> Self {
         let source_hct = source.into();
 
         match variant {
-            Variant::Monochrome => {
-                SchemeMonochrome::new(source_hct, is_dark, contrast_level).scheme
-            }
+            Variant::Monochrome => SchemeMonochrome::new(source_hct, is_dark, contrast_level).scheme,
             Variant::Neutral => SchemeNeutral::new(source_hct, is_dark, contrast_level).scheme,
             Variant::TonalSpot => SchemeTonalSpot::new(source_hct, is_dark, contrast_level).scheme,
             Variant::Vibrant => SchemeVibrant::new(source_hct, is_dark, contrast_level).scheme,
-            Variant::Expressive => {
-                SchemeExpressive::new(source_hct, is_dark, contrast_level).scheme
-            }
+            Variant::Expressive => SchemeExpressive::new(source_hct, is_dark, contrast_level).scheme,
             Variant::Fidelity => SchemeFidelity::new(source_hct, is_dark, contrast_level).scheme,
             Variant::Content => SchemeContent::new(source_hct, is_dark, contrast_level).scheme,
             Variant::Rainbow => SchemeRainbow::new(source_hct, is_dark, contrast_level).scheme,
-            Variant::FruitSalad => {
-                SchemeFruitSalad::new(source_hct, is_dark, contrast_level).scheme
-            }
+            Variant::FruitSalad => SchemeFruitSalad::new(source_hct, is_dark, contrast_level).scheme,
         }
     }
 
@@ -145,8 +138,8 @@ impl DynamicScheme {
             i += 1;
         }
 
-        // If this statement executes, something is wrong, there should have been a rotation
-        // found using the arrays.
+        // If this statement executes, something is wrong, there should have been a
+        // rotation found using the arrays.
         source_hue
     }
 
@@ -411,27 +404,15 @@ impl fmt::Display for DynamicScheme {
         writeln!(f, "  primary = {}", self.primary())?;
         writeln!(f, "  on_primary = {}", self.on_primary())?;
         writeln!(f, "  primary_container = {}", self.primary_container())?;
-        writeln!(
-            f,
-            "  on_primary_container = {}",
-            self.on_primary_container()
-        )?;
+        writeln!(f, "  on_primary_container = {}", self.on_primary_container())?;
         writeln!(f, "  secondary = {}", self.secondary())?;
         writeln!(f, "  on_secondary = {}", self.on_secondary())?;
         writeln!(f, "  secondary_container = {}", self.secondary_container())?;
-        writeln!(
-            f,
-            "  on_secondary_container = {}",
-            self.on_secondary_container()
-        )?;
+        writeln!(f, "  on_secondary_container = {}", self.on_secondary_container())?;
         writeln!(f, "  tertiary = {}", self.tertiary())?;
         writeln!(f, "  on_tertiary = {}", self.on_tertiary())?;
         writeln!(f, "  tertiary_container = {}", self.tertiary_container())?;
-        writeln!(
-            f,
-            "  on_tertiary_container = {}",
-            self.on_tertiary_container()
-        )?;
+        writeln!(f, "  on_tertiary_container = {}", self.on_tertiary_container())?;
         writeln!(f, "  error = {}", self.error())?;
         writeln!(f, "  on_error = {}", self.on_error())?;
         writeln!(f, "  error_container = {}", self.error_container())?;
@@ -455,8 +436,9 @@ impl fmt::Display for DynamicScheme {
 
 #[cfg(test)]
 mod tests {
-    use crate::{dynamic_color::DynamicScheme, hct::Hct};
     use float_cmp::assert_approx_eq;
+
+    use crate::{dynamic_color::DynamicScheme, hct::Hct};
 
     #[test]
     fn test_0_length_input() {
@@ -467,30 +449,21 @@ mod tests {
 
     #[test]
     fn test_1_length_input_no_rotation() {
-        let hue =
-            DynamicScheme::get_rotated_hue(Hct::from(43.0, 16.0, 16.0).get_hue(), &[0.0], &[0.0]);
+        let hue = DynamicScheme::get_rotated_hue(Hct::from(43.0, 16.0, 16.0).get_hue(), &[0.0], &[0.0]);
 
         assert_approx_eq!(f64, hue, 43.0, epsilon = 1.0);
     }
 
     #[test]
     fn test_on_boundary_rotation_correct() {
-        let hue = DynamicScheme::get_rotated_hue(
-            Hct::from(43.0, 16.0, 16.0).get_hue(),
-            &[0.0, 42.0, 360.0],
-            &[0.0, 15.0, 0.0],
-        );
+        let hue = DynamicScheme::get_rotated_hue(Hct::from(43.0, 16.0, 16.0).get_hue(), &[0.0, 42.0, 360.0], &[0.0, 15.0, 0.0]);
 
         assert_approx_eq!(f64, hue, 43.0 + 15.0, epsilon = 1.0);
     }
 
     #[test]
     fn test_rotation_result_larger_than_360_degrees_wraps() {
-        let hue = DynamicScheme::get_rotated_hue(
-            Hct::from(43.0, 16.0, 16.0).get_hue(),
-            &[0.0, 42.0, 360.0],
-            &[0.0, 480.0, 0.0],
-        );
+        let hue = DynamicScheme::get_rotated_hue(Hct::from(43.0, 16.0, 16.0).get_hue(), &[0.0, 42.0, 360.0], &[0.0, 480.0, 0.0]);
 
         assert_approx_eq!(f64, hue, 163.0, epsilon = 1.0);
     }

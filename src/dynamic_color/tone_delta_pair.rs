@@ -11,11 +11,12 @@ pub enum TonePolarity {
     Farther,
 }
 
-/// Documents a constraint between two `DynamicColor`s, in which their tones must
-/// have a certain distance from each other. Prefer a `DynamicColor` with a
-/// background, this is for special cases when designers want tonal distance,
-/// literally contrast, between two colors that don't have a background /
-/// foreground relationship or a contrast guarantee.
+/// Documents a constraint between two `DynamicColor`s, in which their tones
+/// must have a certain distance from each other.
+///
+/// Prefer a `DynamicColor` with a background, this is for special cases when
+/// designers want tonal distance, literally contrast, between two colors that
+/// don't have a background / foreground relationship or a contrast guarantee.
 pub struct ToneDeltaPair {
     pub subject: DynamicColor,
     pub basis: DynamicColor,
@@ -29,8 +30,8 @@ impl ToneDeltaPair {
     ///
     /// The polarity is an adjective that describes "A", compared to "B".
     ///
-    /// For instance, ToneDeltaPair(A, B, 15, 'darker', stayTogether) states that
-    /// A's tone should be at least 15 darker than B's.
+    /// For instance, ToneDeltaPair(A, B, 15, 'darker', stayTogether) states
+    /// that A's tone should be at least 15 darker than B's.
     ///
     /// 'nearer' and 'farther' describes closeness to the surface roles. For
     /// instance, ToneDeltaPair(A, B, 10, 'nearer', stayTogether) states that A
@@ -45,16 +46,10 @@ impl ToneDeltaPair {
     ///   values have undefined behavior.
     /// * `polarity`: The relative relation between tones of subject and basis,
     ///   as described above.
-    /// * `stayTogether`: Whether these two roles should stay on the same side of
-    ///   the "awkward zone" (T50-59). This is necessary for certain cases where
-    ///   one role has two backgrounds.
-    pub const fn new(
-        subject: DynamicColor,
-        basis: DynamicColor,
-        delta: f64,
-        polarity: TonePolarity,
-        stay_together: bool,
-    ) -> Self {
+    /// * `stayTogether`: Whether these two roles should stay on the same side
+    ///   of the "awkward zone" (T50-59). This is necessary for certain cases
+    ///   where one role has two backgrounds.
+    pub const fn new(subject: DynamicColor, basis: DynamicColor, delta: f64, polarity: TonePolarity, stay_together: bool) -> Self {
         Self {
             subject,
             basis,

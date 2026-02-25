@@ -14,10 +14,7 @@ pub fn harmonize(design_color: Argb, source_color: Argb) -> Argb {
     let difference_degrees = difference_degrees(from_hct.get_hue(), to_hct.get_hue());
     let rotation_degrees = (difference_degrees * 0.5).min(15.0);
 
-    let output_hue = sanitize_degrees_double(rotation_degrees.mul_add(
-        rotate_direction(from_hct.get_hue(), to_hct.get_hue()),
-        from_hct.get_hue(),
-    ));
+    let output_hue = sanitize_degrees_double(rotation_degrees.mul_add(rotate_direction(from_hct.get_hue(), to_hct.get_hue()), from_hct.get_hue()));
 
     Hct::from(output_hue, from_hct.get_chroma(), from_hct.get_tone()).into()
 }
@@ -56,17 +53,14 @@ pub fn cam16_ucs(from: Argb, to: Argb, amount: f64) -> Argb {
 
 #[cfg(test)]
 mod tests {
+    use core::str::FromStr;
+
     use super::hct_hue;
     use crate::color::Argb;
-    use core::str::FromStr;
 
     #[test]
     fn test_red_to_blue() {
-        let blended = hct_hue(
-            Argb::from_str("ff0000").unwrap(),
-            Argb::from_str("0000ff").unwrap(),
-            0.8,
-        );
+        let blended = hct_hue(Argb::from_str("ff0000").unwrap(), Argb::from_str("0000ff").unwrap(), 0.8);
 
         assert_eq!(blended.to_hex(), "905eff");
     }

@@ -1,5 +1,14 @@
 #![allow(clippy::too_many_arguments)]
 
+#[cfg(not(feature = "std"))] use alloc::{vec, vec::Vec};
+#[cfg(feature = "std")] use std::{vec, vec::Vec};
+
+pub use contrast_curve::ContrastCurve;
+pub use dynamic_scheme::DynamicScheme;
+pub use material_dynamic_colors::MaterialDynamicColors;
+pub use tone_delta_pair::{ToneDeltaPair, TonePolarity};
+pub use variant::Variant;
+
 #[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
@@ -8,16 +17,6 @@ use crate::{
     contrast::{darker, darker_unsafe, lighter, lighter_unsafe, ratio_of_tones},
     hct::Hct,
     palette::TonalPalette,
-};
-#[cfg(not(feature = "std"))]
-use alloc::{boxed::Box, string::String, vec, vec::Vec};
-#[cfg(feature = "std")]
-use std::{boxed::Box, string::String, vec, vec::Vec};
-
-pub use {
-    contrast_curve::ContrastCurve, dynamic_scheme::DynamicScheme,
-    material_dynamic_colors::MaterialDynamicColors, tone_delta_pair::ToneDeltaPair,
-    tone_delta_pair::TonePolarity, variant::Variant,
 };
 
 pub mod contrast_curve;
@@ -49,22 +48,23 @@ type DynamicSchemeFnRef<T> = fn(&DynamicScheme) -> &T;
 /// desired behavior of a color for any design system, but it usually
 /// unnecessary. See the default constructor for more information.
 pub struct DynamicColor {
-    pub name: String,
-    palette: Box<DynamicSchemeFnRef<TonalPalette>>,
-    tone: Box<fn(&DynamicScheme) -> f64>,
+    pub name: &'static str,
+    palette: DynamicSchemeFnRef<TonalPalette>,
+    tone: DynamicSchemeFn<f64>,
     is_background: bool,
-    background: Option<Box<DynamicSchemeFn<DynamicColor>>>,
-    second_background: Option<Box<DynamicSchemeFn<DynamicColor>>>,
+    background: Option<DynamicSchemeFn<DynamicColor>>,
+    second_background: Option<DynamicSchemeFn<DynamicColor>>,
     contrast_curve: Option<ContrastCurve>,
-    tone_delta_pair: Option<Box<DynamicSchemeFn<ToneDeltaPair>>>,
+    tone_delta_pair: Option<DynamicSchemeFn<ToneDeltaPair>>,
 }
 
 impl DynamicColor {
     /// The base constructor for `DynamicColor`.
     ///
-    /// _Strongly_ prefer using one of the convenience constructors. This class is
-    /// arguably too flexible to ensure it can support any scenario. Functional
-    /// arguments allow  overriding without risks that come with subclasses.
+    /// _Strongly_ prefer using one of the convenience constructors. This class
+    /// is arguably too flexible to ensure it can support any scenario.
+    /// Functional arguments allow  overriding without risks that come with
+    /// subclasses.
     ///
     /// For example, the default behavior of adjust tone at max contrast
     /// to be at a 7.0 ratio with its background is principled and
@@ -74,80 +74,108 @@ impl DynamicColor {
     ///
     /// - Parameters:
     ///   - `name`: The name of the dynamic color.
-    ///   - `palette`: Function that provides a [`TonalPalette`] given [`DynamicScheme`].
-    ///       A [`TonalPalette`] is defined by a hue and chroma, so this
-    ///       replaces the need to specify hue/chroma. By providing a tonal palette,
-    ///       when contrast adjustments are made, intended chroma can be preserved.
+    ///   - `palette`: Function that provides a [`TonalPalette`] given
+    ///     [`DynamicScheme`]. A [`TonalPalette`] is defined by a hue and
+    ///     chroma, so this replaces the need to specify hue/chroma. By
+    ///     providing a tonal palette, when contrast adjustments are made,
+    ///     intended chroma can be preserved.
     ///   - `tone`: Function that provides a tone, given a [`DynamicScheme`].
     ///   - `isBackground`: Whether this dynamic color is a background, with
-    ///       some other color as the foreground.
-    ///   - `background`: The background of the dynamic color (as a function of a
-    ///       [`DynamicScheme`]), if it exists.
-    ///   - `secondBackground`: A second background of the dynamic color (as a function
-    ///       of a [`DynamicScheme`]), if it exists.
-    ///   - `contrastCurve`: A [`ContrastCurve`] object specifying how its contrast
-    ///       against its background should behave in various contrast levels options.
+    ///     some other color as the foreground.
+    ///   - `background`: The background of the dynamic color (as a function of
+    ///     a [`DynamicScheme`]), if it exists.
+    ///   - `secondBackground`: A second background of the dynamic color (as a
+    ///     function of a [`DynamicScheme`]), if it exists.
+    ///   - `contrastCurve`: A [`ContrastCurve`] object specifying how its
+    ///     contrast against its background should behave in various contrast
+    ///     levels options.
     ///   - `toneDeltaPair`: A [`ToneDeltaPair`] object specifying a tone delta
-    ///       constraint between two colors. One of them must be the color being constructed.
+    ///     constraint between two colors. One of them must be the color being
+    ///     constructed.
     ///
     /// Unlikely to be useful unless a design system has some distortions
     /// where colors that don't have a background/foreground relationship
     /// don't want to have a formal relationship or a principled value for their
     /// tone distance based on common contrast / tone delta values, yet, want
     /// tone distance.
-    pub fn new<T: Into<String>>(
-        name: T,
-        palette: fn(&DynamicScheme) -> &TonalPalette,
-        tone: fn(&DynamicScheme) -> f64,
-        is_background: bool,
-        background: Option<fn(&DynamicScheme) -> Self>,
-        second_background: Option<fn(&DynamicScheme) -> Self>,
-        contrast_curve: Option<ContrastCurve>,
-        tone_delta_pair: Option<fn(&DynamicScheme) -> ToneDeltaPair>,
-    ) -> Self {
+    pub const fn foreground(name: &'static str, palette: DynamicSchemeFnRef<TonalPalette>, tone: DynamicSchemeFn<f64>) -> Self {
         Self {
-            name: name.into(),
-            palette: Box::new(palette),
-            tone: Box::new(tone),
-            is_background,
-            background: background.map(Box::new),
-            second_background: second_background.map(Box::new),
-            contrast_curve,
-            tone_delta_pair: tone_delta_pair.map(Box::new),
+            name,
+            palette,
+            tone,
+            is_background: false,
+            background: None,
+            second_background: None,
+            contrast_curve: None,
+            tone_delta_pair: None,
         }
     }
 
-    pub fn from_palette<T: Into<String>>(
-        name: T,
-        palette: fn(&DynamicScheme) -> &TonalPalette,
-        tone: fn(&DynamicScheme) -> f64,
-    ) -> Self {
-        Self::new(name, palette, tone, false, None, None, None, None)
+    pub const fn background(name: &'static str, palette: DynamicSchemeFnRef<TonalPalette>, tone: DynamicSchemeFn<f64>) -> Self {
+        Self {
+            name,
+            palette,
+            tone,
+            is_background: true,
+            background: None,
+            second_background: None,
+            contrast_curve: None,
+            tone_delta_pair: None,
+        }
+    }
+
+    #[must_use]
+    pub const fn with_background(mut self, func: DynamicSchemeFn<Self>) -> Self {
+        self.background = Some(func);
+
+        self
+    }
+
+    #[must_use]
+    pub const fn with_second_background(mut self, func: DynamicSchemeFn<Self>) -> Self {
+        self.second_background = Some(func);
+
+        self
+    }
+
+    #[must_use]
+    pub const fn with_contrast_curve(mut self, curve: ContrastCurve) -> Self {
+        self.contrast_curve = Some(curve);
+
+        self
+    }
+
+    #[must_use]
+    pub const fn with_tone_delta_pair(mut self, func: DynamicSchemeFn<ToneDeltaPair>) -> Self {
+        self.tone_delta_pair = Some(func);
+
+        self
     }
 
     /// Return a Argb integer (i.e. a hex code).
     ///
-    /// - Parameter scheme: Defines the conditions of the user interface, for example,
-    ///   whether or not it is dark mode or light mode, and what the desired contrast level is.
+    /// - Parameter scheme: Defines the conditions of the user interface, for
+    ///   example, whether or not it is dark mode or light mode, and what the
+    ///   desired contrast level is.
     /// - Returns: The color as an integer (Argb).
     pub fn get_argb(&self, scheme: &DynamicScheme) -> Argb {
         self.get_hct(scheme).into()
     }
 
-    /// - Parameter scheme: Defines the conditions of the user interface, for example,
-    ///   whether or not it is dark mode or light mode, and what the desired
-    ///   contrast level is.
+    /// - Parameter scheme: Defines the conditions of the user interface, for
+    ///   example, whether or not it is dark mode or light mode, and what the
+    ///   desired contrast level is.
     /// - Returns: a color, expressed in the HCT color space, that this
     ///   `DynamicColor` is under the conditions in `scheme`.
     pub fn get_hct(&self, scheme: &DynamicScheme) -> Hct {
         (self.palette)(scheme).get_hct(self.get_tone(scheme))
     }
 
-    /// - Parameter scheme: Defines the conditions of the user interface, for example,
-    ///   whether or not it is dark mode or light mode, and what the desired
-    ///   contrast level is.
-    /// - Returns: a tone, T in the HCT color space, that this `DynamicColor` is under
-    ///   the conditions in `scheme`.
+    /// - Parameter scheme: Defines the conditions of the user interface, for
+    ///   example, whether or not it is dark mode or light mode, and what the
+    ///   desired contrast level is.
+    /// - Returns: a tone, T in the HCT color space, that this `DynamicColor` is
+    ///   under the conditions in `scheme`.
     pub fn get_tone(&self, scheme: &DynamicScheme) -> f64 {
         let decreasing_contrast = scheme.contrast_level < 0.0;
 
@@ -172,16 +200,8 @@ impl DynamicColor {
             let expansion_dir = if scheme.is_dark { 1.0 } else { -1.0 };
 
             // 1st round: solve to min, each
-            let n_contrast = nearer
-                .contrast_curve
-                .as_ref()
-                .unwrap()
-                .get(scheme.contrast_level);
-            let f_contrast = farther
-                .contrast_curve
-                .as_ref()
-                .unwrap()
-                .get(scheme.contrast_level);
+            let n_contrast = nearer.contrast_curve.as_ref().unwrap().get(scheme.contrast_level);
+            let f_contrast = farther.contrast_curve.as_ref().unwrap().get(scheme.contrast_level);
 
             // If a color is good enough, it is not adjusted.
             // Initial and adjusted tones for `nearer`
@@ -254,11 +274,7 @@ impl DynamicColor {
             }
 
             // Returns `nTone` if this color is `nearer`, otherwise `fTone`.
-            if am_nearer {
-                n_tone
-            } else {
-                f_tone
-            }
+            if am_nearer { n_tone } else { f_tone }
         } else {
             // Case 2: No contrast pair; just solve for itself.
             let mut answer = (self.tone)(scheme);
@@ -266,11 +282,7 @@ impl DynamicColor {
             if let Some(background) = &self.background {
                 let bg_tone = background(scheme).get_tone(scheme);
 
-                let desired_ratio = self
-                    .contrast_curve
-                    .as_ref()
-                    .unwrap()
-                    .get(scheme.contrast_level);
+                let desired_ratio = self.contrast_curve.as_ref().unwrap().get(scheme.contrast_level);
 
                 if ratio_of_tones(bg_tone, answer) >= desired_ratio {
                     // Don't "improve" what's good enough.
@@ -301,9 +313,7 @@ impl DynamicColor {
                     let upper = bg_tone1.max(bg_tone2);
                     let lower = bg_tone1.min(bg_tone2);
 
-                    if ratio_of_tones(upper, answer) >= desired_ratio
-                        && ratio_of_tones(lower, answer) >= desired_ratio
-                    {
+                    if ratio_of_tones(upper, answer) >= desired_ratio && ratio_of_tones(lower, answer) >= desired_ratio {
                         return answer;
                     }
 
@@ -326,15 +336,10 @@ impl DynamicColor {
                         availables.push(dark_option);
                     }
 
-                    let prefers_light = Self::tone_prefers_light_foreground(bg_tone1)
-                        || Self::tone_prefers_light_foreground(bg_tone2);
+                    let prefers_light = Self::tone_prefers_light_foreground(bg_tone1) || Self::tone_prefers_light_foreground(bg_tone2);
 
                     if prefers_light {
-                        return if light_option < 0.0 {
-                            100.0
-                        } else {
-                            light_option
-                        };
+                        return if light_option < 0.0 { 100.0 } else { light_option };
                     }
 
                     if availables.len() == 1 {
@@ -349,13 +354,14 @@ impl DynamicColor {
         }
     }
 
-    /// Given a background tone, find a foreground tone, while ensuring they reach
-    /// a contrast ratio that is as close to `ratio` as possible.
+    /// Given a background tone, find a foreground tone, while ensuring they
+    /// reach a contrast ratio that is as close to `ratio` as possible.
     ///
     /// - Parameters:
-    ///   - bgTone: Tone in HCT. Range is 0 to 100, undefined behavior when it falls
-    ///     outside that range.
-    ///   - ratio: The contrast ratio desired between `bgTone` and the return value.
+    ///   - bgTone: Tone in HCT. Range is 0 to 100, undefined behavior when it
+    ///     falls outside that range.
+    ///   - ratio: The contrast ratio desired between `bgTone` and the return
+    ///     value.
     ///
     /// - Returns: The desired foreground tone.
     pub fn foreground_tone(bg_tone: f64, ratio: f64) -> f64 {
@@ -374,9 +380,7 @@ impl DynamicColor {
             // momentarily between high and max contrast in light mode.
             // PC's standard tone was T90, OPC's was T10, it was light mode, and the
             // contrast value was 0.6568521221032331.
-            let negligible_difference = (lighter_ratio - darker_ratio).abs() < 0.1
-                && lighter_ratio < ratio
-                && darker_ratio < ratio;
+            let negligible_difference = (lighter_ratio - darker_ratio).abs() < 0.1 && lighter_ratio < ratio && darker_ratio < ratio;
 
             if lighter_ratio >= ratio || lighter_ratio >= darker_ratio || negligible_difference {
                 lighter_tone
@@ -431,15 +435,16 @@ impl DynamicColor {
 
 #[cfg(test)]
 mod tests {
+    use float_cmp::assert_approx_eq;
+
     use super::{DynamicColor, MaterialDynamicColors};
     use crate::{
+        Map,
         color::Argb,
         contrast::ratio_of_tones,
         hct::Hct,
         scheme::variant::{SchemeContent, SchemeFidelity, SchemeMonochrome, SchemeTonalSpot},
-        Map,
     };
-    use float_cmp::assert_approx_eq;
 
     #[test]
     fn test_contrast_pairs() {
@@ -458,37 +463,16 @@ mod tests {
             ("surface", MaterialDynamicColors::surface()),
             ("surfaceDim", MaterialDynamicColors::surface_dim()),
             ("surfaceBright", MaterialDynamicColors::surface_bright()),
-            (
-                "surfaceContainerLowest",
-                MaterialDynamicColors::surface_container_lowest(),
-            ),
-            (
-                "surfaceContainerLow",
-                MaterialDynamicColors::surface_container_low(),
-            ),
-            (
-                "surfaceContainer",
-                MaterialDynamicColors::surface_container(),
-            ),
-            (
-                "surfaceContainerHigh",
-                MaterialDynamicColors::surface_container_high(),
-            ),
-            (
-                "surfaceContainerHighest",
-                MaterialDynamicColors::surface_container_highest(),
-            ),
+            ("surfaceContainerLowest", MaterialDynamicColors::surface_container_lowest()),
+            ("surfaceContainerLow", MaterialDynamicColors::surface_container_low()),
+            ("surfaceContainer", MaterialDynamicColors::surface_container()),
+            ("surfaceContainerHigh", MaterialDynamicColors::surface_container_high()),
+            ("surfaceContainerHighest", MaterialDynamicColors::surface_container_highest()),
             ("onSurface", MaterialDynamicColors::on_surface()),
             ("surfaceVariant", MaterialDynamicColors::surface_variant()),
-            (
-                "onSurfaceVariant",
-                MaterialDynamicColors::on_surface_variant(),
-            ),
+            ("onSurfaceVariant", MaterialDynamicColors::on_surface_variant()),
             ("inverseSurface", MaterialDynamicColors::inverse_surface()),
-            (
-                "inverseOnSurface",
-                MaterialDynamicColors::inverse_on_surface(),
-            ),
+            ("inverseOnSurface", MaterialDynamicColors::inverse_on_surface()),
             ("outline", MaterialDynamicColors::outline()),
             ("outlineVariant", MaterialDynamicColors::outline_variant()),
             ("shadow", MaterialDynamicColors::shadow()),
@@ -496,42 +480,21 @@ mod tests {
             ("surfaceTint", MaterialDynamicColors::surface_tint()),
             ("primary", MaterialDynamicColors::primary()),
             ("onPrimary", MaterialDynamicColors::on_primary()),
-            (
-                "primaryContainer",
-                MaterialDynamicColors::primary_container(),
-            ),
-            (
-                "onPrimaryContainer",
-                MaterialDynamicColors::on_primary_container(),
-            ),
+            ("primaryContainer", MaterialDynamicColors::primary_container()),
+            ("onPrimaryContainer", MaterialDynamicColors::on_primary_container()),
             ("inversePrimary", MaterialDynamicColors::inverse_primary()),
             ("secondary", MaterialDynamicColors::secondary()),
             ("onSecondary", MaterialDynamicColors::on_secondary()),
-            (
-                "secondaryContainer",
-                MaterialDynamicColors::secondary_container(),
-            ),
-            (
-                "onSecondaryContainer",
-                MaterialDynamicColors::on_secondary_container(),
-            ),
+            ("secondaryContainer", MaterialDynamicColors::secondary_container()),
+            ("onSecondaryContainer", MaterialDynamicColors::on_secondary_container()),
             ("tertiary", MaterialDynamicColors::tertiary()),
             ("onTertiary", MaterialDynamicColors::on_tertiary()),
-            (
-                "tertiaryContainer",
-                MaterialDynamicColors::tertiary_container(),
-            ),
-            (
-                "onTertiaryContainer",
-                MaterialDynamicColors::on_tertiary_container(),
-            ),
+            ("tertiaryContainer", MaterialDynamicColors::tertiary_container()),
+            ("onTertiaryContainer", MaterialDynamicColors::on_tertiary_container()),
             ("error", MaterialDynamicColors::error()),
             ("onError", MaterialDynamicColors::on_error()),
             ("errorContainer", MaterialDynamicColors::error_container()),
-            (
-                "onErrorContainer",
-                MaterialDynamicColors::on_error_container(),
-            ),
+            ("onErrorContainer", MaterialDynamicColors::on_error_container()),
         ]);
 
         for color in seed_colors {
@@ -539,22 +502,10 @@ mod tests {
                 for is_dark in [false, true] {
                     #[allow(unused_variables)]
                     for (scheme_name, scheme) in [
-                        (
-                            "SchemeContent",
-                            SchemeContent::new(color, is_dark, Some(contrast_level)).scheme,
-                        ),
-                        (
-                            "SchemeMonochrome",
-                            SchemeMonochrome::new(color, is_dark, Some(contrast_level)).scheme,
-                        ),
-                        (
-                            "SchemeTonalSpot",
-                            SchemeTonalSpot::new(color, is_dark, Some(contrast_level)).scheme,
-                        ),
-                        (
-                            "SchemeFidelity",
-                            SchemeFidelity::new(color, is_dark, Some(contrast_level)).scheme,
-                        ),
+                        ("SchemeContent", SchemeContent::new(color, is_dark, Some(contrast_level)).scheme),
+                        ("SchemeMonochrome", SchemeMonochrome::new(color, is_dark, Some(contrast_level)).scheme),
+                        ("SchemeTonalSpot", SchemeTonalSpot::new(color, is_dark, Some(contrast_level)).scheme),
+                        ("SchemeFidelity", SchemeFidelity::new(color, is_dark, Some(contrast_level)).scheme),
                     ] {
                         #[cfg(feature = "std")]
                         std::println!("Scheme: {scheme_name}; Seed color: {color}; Contrast level: {contrast_level}; Dark: {is_dark}");
@@ -572,23 +523,15 @@ mod tests {
                             ("onSurfaceVariant", "surfaceBright"),
                             ("onSurfaceVariant", "surfaceDim"),
                         ] {
-                            let foreground_tone = _colors
-                                .get_mut(fg_name)
-                                .unwrap()
-                                .get_hct(&scheme)
-                                .get_tone();
-                            let background_tone = _colors
-                                .get_mut(bg_name)
-                                .unwrap()
-                                .get_hct(&scheme)
-                                .get_tone();
+                            let foreground_tone = _colors.get_mut(fg_name).unwrap().get_hct(&scheme).get_tone();
+                            let background_tone = _colors.get_mut(bg_name).unwrap().get_hct(&scheme).get_tone();
                             let contrast = ratio_of_tones(foreground_tone, background_tone);
 
                             let minimum_requirement = if contrast_level >= 0.0 { 4.5 } else { 3.0 };
 
                             assert!(
-                              contrast >= minimum_requirement,
-                              "Contrast {contrast} is too low between foreground ({fg_name}; {foreground_tone}) and ({bg_name}; {background_tone})"
+                                contrast >= minimum_requirement,
+                                "Contrast {contrast} is too low between foreground ({fg_name}; {foreground_tone}) and ({bg_name}; {background_tone})"
                             );
                         }
                     }
@@ -600,102 +543,47 @@ mod tests {
     // Tests for fixed colors.
     #[test]
     fn test_fixed_colors_in_non_monochrome_schemes() {
-        let scheme =
-            SchemeTonalSpot::new(Argb::from_u32(0xFFFF0000).into(), true, Some(0.0)).scheme;
+        let scheme = SchemeTonalSpot::new(Argb::from_u32(0xFFFF0000).into(), true, Some(0.0)).scheme;
 
+        assert_approx_eq!(f64, MaterialDynamicColors::primary_fixed().get_hct(&scheme).get_tone(), 90.0, epsilon = 1.0);
+        assert_approx_eq!(f64, MaterialDynamicColors::primary_fixed_dim().get_hct(&scheme).get_tone(), 80.0, epsilon = 1.0);
+        assert_approx_eq!(f64, MaterialDynamicColors::on_primary_fixed().get_hct(&scheme).get_tone(), 10.0, epsilon = 1.0);
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::primary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
-            90.0,
-            epsilon = 1.0
-        );
-        assert_approx_eq!(
-            f64,
-            MaterialDynamicColors::primary_fixed_dim()
-                .get_hct(&scheme)
-                .get_tone(),
-            80.0,
-            epsilon = 1.0
-        );
-        assert_approx_eq!(
-            f64,
-            MaterialDynamicColors::on_primary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
-            10.0,
-            epsilon = 1.0
-        );
-        assert_approx_eq!(
-            f64,
-            MaterialDynamicColors::on_primary_fixed_variant()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::on_primary_fixed_variant().get_hct(&scheme).get_tone(),
             30.0,
             epsilon = 1.0
         );
+        assert_approx_eq!(f64, MaterialDynamicColors::secondary_fixed().get_hct(&scheme).get_tone(), 90.0, epsilon = 1.0);
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::secondary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
-            90.0,
-            epsilon = 1.0
-        );
-        assert_approx_eq!(
-            f64,
-            MaterialDynamicColors::secondary_fixed_dim()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::secondary_fixed_dim().get_hct(&scheme).get_tone(),
             80.0,
             epsilon = 1.0
         );
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::on_secondary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::on_secondary_fixed().get_hct(&scheme).get_tone(),
             10.0,
             epsilon = 1.0
         );
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::on_secondary_fixed_variant()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::on_secondary_fixed_variant().get_hct(&scheme).get_tone(),
             30.0,
             epsilon = 1.0
         );
+        assert_approx_eq!(f64, MaterialDynamicColors::tertiary_fixed().get_hct(&scheme).get_tone(), 90.0, epsilon = 1.0);
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::tertiary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
-            90.0,
-            epsilon = 1.0
-        );
-        assert_approx_eq!(
-            f64,
-            MaterialDynamicColors::tertiary_fixed_dim()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::tertiary_fixed_dim().get_hct(&scheme).get_tone(),
             80.0,
             epsilon = 1.0
         );
+        assert_approx_eq!(f64, MaterialDynamicColors::on_tertiary_fixed().get_hct(&scheme).get_tone(), 10.0, epsilon = 1.0);
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::on_tertiary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
-            10.0,
-            epsilon = 1.0
-        );
-        assert_approx_eq!(
-            f64,
-            MaterialDynamicColors::on_tertiary_fixed_variant()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::on_tertiary_fixed_variant().get_hct(&scheme).get_tone(),
             30.0,
             epsilon = 1.0
         );
@@ -703,102 +591,52 @@ mod tests {
 
     #[test]
     fn test_fixed_colors_in_light_monochrome_schemes() {
-        let scheme =
-            SchemeMonochrome::new(Argb::from_u32(0xFFFF0000).into(), false, Some(0.0)).scheme;
+        let scheme = SchemeMonochrome::new(Argb::from_u32(0xFFFF0000).into(), false, Some(0.0)).scheme;
 
+        assert_approx_eq!(f64, MaterialDynamicColors::primary_fixed().get_hct(&scheme).get_tone(), 40.0, epsilon = 1.0);
+        assert_approx_eq!(f64, MaterialDynamicColors::primary_fixed_dim().get_hct(&scheme).get_tone(), 30.0, epsilon = 1.0);
+        assert_approx_eq!(f64, MaterialDynamicColors::on_primary_fixed().get_hct(&scheme).get_tone(), 100.0, epsilon = 1.0);
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::primary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
-            40.0,
-            epsilon = 1.0
-        );
-        assert_approx_eq!(
-            f64,
-            MaterialDynamicColors::primary_fixed_dim()
-                .get_hct(&scheme)
-                .get_tone(),
-            30.0,
-            epsilon = 1.0
-        );
-        assert_approx_eq!(
-            f64,
-            MaterialDynamicColors::on_primary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
-            100.0,
-            epsilon = 1.0
-        );
-        assert_approx_eq!(
-            f64,
-            MaterialDynamicColors::on_primary_fixed_variant()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::on_primary_fixed_variant().get_hct(&scheme).get_tone(),
             90.0,
             epsilon = 1.0
         );
+        assert_approx_eq!(f64, MaterialDynamicColors::secondary_fixed().get_hct(&scheme).get_tone(), 80.0, epsilon = 1.0);
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::secondary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
-            80.0,
-            epsilon = 1.0
-        );
-        assert_approx_eq!(
-            f64,
-            MaterialDynamicColors::secondary_fixed_dim()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::secondary_fixed_dim().get_hct(&scheme).get_tone(),
             70.0,
             epsilon = 1.0
         );
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::on_secondary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::on_secondary_fixed().get_hct(&scheme).get_tone(),
             10.0,
             epsilon = 1.0
         );
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::on_secondary_fixed_variant()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::on_secondary_fixed_variant().get_hct(&scheme).get_tone(),
             25.0,
             epsilon = 1.0
         );
+        assert_approx_eq!(f64, MaterialDynamicColors::tertiary_fixed().get_hct(&scheme).get_tone(), 40.0, epsilon = 1.0);
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::tertiary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
-            40.0,
-            epsilon = 1.0
-        );
-        assert_approx_eq!(
-            f64,
-            MaterialDynamicColors::tertiary_fixed_dim()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::tertiary_fixed_dim().get_hct(&scheme).get_tone(),
             30.0,
             epsilon = 1.0
         );
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::on_tertiary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::on_tertiary_fixed().get_hct(&scheme).get_tone(),
             100.0,
             epsilon = 1.0
         );
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::on_tertiary_fixed_variant()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::on_tertiary_fixed_variant().get_hct(&scheme).get_tone(),
             90.0,
             epsilon = 1.0
         );
@@ -806,102 +644,52 @@ mod tests {
 
     #[test]
     fn test_fixed_colors_in_dark_monochrome_schemes() {
-        let scheme =
-            SchemeMonochrome::new(Argb::from_u32(0xFFFF0000).into(), true, Some(0.0)).scheme;
+        let scheme = SchemeMonochrome::new(Argb::from_u32(0xFFFF0000).into(), true, Some(0.0)).scheme;
 
+        assert_approx_eq!(f64, MaterialDynamicColors::primary_fixed().get_hct(&scheme).get_tone(), 40.0, epsilon = 1.0);
+        assert_approx_eq!(f64, MaterialDynamicColors::primary_fixed_dim().get_hct(&scheme).get_tone(), 30.0, epsilon = 1.0);
+        assert_approx_eq!(f64, MaterialDynamicColors::on_primary_fixed().get_hct(&scheme).get_tone(), 100.0, epsilon = 1.0);
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::primary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
-            40.0,
-            epsilon = 1.0
-        );
-        assert_approx_eq!(
-            f64,
-            MaterialDynamicColors::primary_fixed_dim()
-                .get_hct(&scheme)
-                .get_tone(),
-            30.0,
-            epsilon = 1.0
-        );
-        assert_approx_eq!(
-            f64,
-            MaterialDynamicColors::on_primary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
-            100.0,
-            epsilon = 1.0
-        );
-        assert_approx_eq!(
-            f64,
-            MaterialDynamicColors::on_primary_fixed_variant()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::on_primary_fixed_variant().get_hct(&scheme).get_tone(),
             90.0,
             epsilon = 1.0
         );
+        assert_approx_eq!(f64, MaterialDynamicColors::secondary_fixed().get_hct(&scheme).get_tone(), 80.0, epsilon = 1.0);
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::secondary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
-            80.0,
-            epsilon = 1.0
-        );
-        assert_approx_eq!(
-            f64,
-            MaterialDynamicColors::secondary_fixed_dim()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::secondary_fixed_dim().get_hct(&scheme).get_tone(),
             70.0,
             epsilon = 1.0
         );
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::on_secondary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::on_secondary_fixed().get_hct(&scheme).get_tone(),
             10.0,
             epsilon = 1.0
         );
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::on_secondary_fixed_variant()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::on_secondary_fixed_variant().get_hct(&scheme).get_tone(),
             25.0,
             epsilon = 1.0
         );
+        assert_approx_eq!(f64, MaterialDynamicColors::tertiary_fixed().get_hct(&scheme).get_tone(), 40.0, epsilon = 1.0);
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::tertiary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
-            40.0,
-            epsilon = 1.0
-        );
-        assert_approx_eq!(
-            f64,
-            MaterialDynamicColors::tertiary_fixed_dim()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::tertiary_fixed_dim().get_hct(&scheme).get_tone(),
             30.0,
             epsilon = 1.0
         );
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::on_tertiary_fixed()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::on_tertiary_fixed().get_hct(&scheme).get_tone(),
             100.0,
             epsilon = 1.0
         );
         assert_approx_eq!(
             f64,
-            MaterialDynamicColors::on_tertiary_fixed_variant()
-                .get_hct(&scheme)
-                .get_tone(),
+            MaterialDynamicColors::on_tertiary_fixed_variant().get_hct(&scheme).get_tone(),
             90.0,
             epsilon = 1.0
         );

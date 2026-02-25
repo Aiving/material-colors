@@ -1,18 +1,21 @@
-#[cfg(all(not(feature = "std"), feature = "libm"))]
-#[allow(unused_imports)]
-use crate::utils::no_std::FloatExt;
-use crate::{
-    color::{lstar_from_y, Argb},
-    utils::FromRef,
-};
 use core::{
     cmp::Ordering,
     fmt,
     hash::{Hash, Hasher},
 };
-#[cfg(feature = "serde")]
-use serde::Serialize;
-pub use {cam16::Cam16, solver::HctSolver, viewing_conditions::ViewingConditions};
+
+pub use cam16::Cam16;
+#[cfg(feature = "serde")] use serde::Serialize;
+pub use solver::HctSolver;
+pub use viewing_conditions::ViewingConditions;
+
+#[cfg(all(not(feature = "std"), feature = "libm"))]
+#[allow(unused_imports)]
+use crate::utils::no_std::FloatExt;
+use crate::{
+    color::{Argb, lstar_from_y},
+    utils::FromRef,
+};
 
 pub mod cam16;
 pub mod solver;
@@ -123,8 +126,8 @@ impl Hct {
 
     /// 0 <= `hue` < 360; invalid values are corrected.
     /// 0 <= `chroma` <= ?; Informally, colorfulness. The color returned may be
-    ///    lower than the requested chroma. Chroma has a different maximum for any
-    ///    given hue and tone.
+    ///    lower than the requested chroma. Chroma has a different maximum for
+    /// any    given hue and tone.
     /// 0 <= `tone` <= 100; informally, lightness. Invalid values are corrected.
     pub fn from(hue: f64, chroma: f64, tone: f64) -> Self {
         let argb = HctSolver::solve_to_argb(hue, chroma, tone);
@@ -136,12 +139,13 @@ impl Hct {
     ///
     /// Colors change appearance. They look different with lights on versus off,
     /// the same color, as in hex code, on white looks different when on black.
-    /// This is called color relativity, most famously explicated by Josef Albers
-    /// in Interaction of Color.
+    /// This is called color relativity, most famously explicated by Josef
+    /// Albers in Interaction of Color.
     ///
     /// In color science, color appearance models can account for this and
-    /// calculate the appearance of a color in different settings. HCT is based on
-    /// CAM16, a color appearance model, and uses it to make these calculations.
+    /// calculate the appearance of a color in different settings. HCT is based
+    /// on CAM16, a color appearance model, and uses it to make these
+    /// calculations.
     ///
     /// See [`ViewingConditions`] for parameters affecting color appearance.
     #[must_use]
@@ -151,33 +155,18 @@ impl Hct {
         let viewed_in_vc = cam16.xyz_in_viewing_conditions(vc);
 
         // 2. Create CAM16 of those Xyz coordinates in default VC.
-        let recast_in_vc = Cam16::from_xyz_in_viewing_conditions(
-            viewed_in_vc.x,
-            viewed_in_vc.y,
-            viewed_in_vc.z,
-            &ViewingConditions::standard(),
-        );
+        let recast_in_vc = Cam16::from_xyz_in_viewing_conditions(viewed_in_vc.x, viewed_in_vc.y, viewed_in_vc.z, &ViewingConditions::standard());
 
         // 3. Create HCT from:
         // - CAM16 using default VC with Xyz coordinates in specified VC.
         // - L* converted from Y in Xyz coordinates in specified VC.
-        Self::from(
-            recast_in_vc.hue,
-            recast_in_vc.chroma,
-            lstar_from_y(viewed_in_vc.y),
-        )
+        Self::from(recast_in_vc.hue, recast_in_vc.chroma, lstar_from_y(viewed_in_vc.y))
     }
 }
 
 impl fmt::Display for Hct {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "H{} C{} T{}",
-            self.get_hue().round(),
-            self.get_chroma().round(),
-            self.get_tone().round()
-        )
+        write!(f, "H{} C{} T{}", self.get_hue().round(), self.get_chroma().round(), self.get_tone().round())
     }
 }
 
@@ -224,15 +213,15 @@ impl FromRef<Hct> for Argb {
 
 #[cfg(test)]
 mod tests {
-    use super::{Cam16, Hct, ViewingConditions};
-    use crate::color::{y_from_lstar, Argb};
-    use ahash::AHasher;
-    #[cfg(not(feature = "std"))]
-    use alloc::format;
+    #[cfg(not(feature = "std"))] use alloc::format;
     use core::hash::{Hash, Hasher};
+    #[cfg(feature = "std")] use std::format;
+
+    use ahash::AHasher;
     use float_cmp::{approx_eq, assert_approx_eq};
-    #[cfg(feature = "std")]
-    use std::format;
+
+    use super::{Cam16, Hct, ViewingConditions};
+    use crate::color::{Argb, y_from_lstar};
 
     const BLACK: Argb = Argb::from_u32(0xFF000000);
     const WHITE: Argb = Argb::from_u32(0xFFFFFFFF);
@@ -250,12 +239,7 @@ mod tests {
     }
 
     const fn color_is_on_boundary(argb: Argb) -> bool {
-        argb.red == 0
-            || argb.red == 255
-            || argb.green == 0
-            || argb.green == 255
-            || argb.blue == 0
-            || argb.blue == 255
+        argb.red == 0 || argb.red == 255 || argb.green == 0 || argb.green == 255 || argb.blue == 0 || argb.blue == 255
     }
 
     #[test]
@@ -457,8 +441,7 @@ mod tests {
         let color_to_test = RED;
         let hct: Hct = color_to_test.into();
 
-        let result =
-            hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
 
         assert_eq!(Argb::from(result), Argb::from_u32(0xFF9F5C51));
     }
@@ -468,13 +451,7 @@ mod tests {
         let color_to_test = RED;
         let hct: Hct = color_to_test.into();
 
-        let result = hct.in_viewing_conditions(&ViewingConditions::make(
-            None,
-            None,
-            Some(100.0),
-            None,
-            None,
-        ));
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(100.0), None, None));
 
         assert_eq!(Argb::from(result), Argb::from_u32(0xFFFF5D48));
     }
@@ -484,8 +461,7 @@ mod tests {
         let color_to_test = GREEN;
         let hct: Hct = color_to_test.into();
 
-        let result =
-            hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
 
         assert_eq!(Argb::from(result), Argb::from_u32(0xFFACD69D));
     }
@@ -495,13 +471,7 @@ mod tests {
         let color_to_test = GREEN;
         let hct: Hct = color_to_test.into();
 
-        let result = hct.in_viewing_conditions(&ViewingConditions::make(
-            None,
-            None,
-            Some(100.0),
-            None,
-            None,
-        ));
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(100.0), None, None));
 
         assert_eq!(Argb::from(result), Argb::from_u32(0xFF8EFF77));
     }
@@ -511,8 +481,7 @@ mod tests {
         let color_to_test = BLUE;
         let hct: Hct = color_to_test.into();
 
-        let result =
-            hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
 
         assert_eq!(Argb::from(result), Argb::from_u32(0xFF343654));
     }
@@ -522,13 +491,7 @@ mod tests {
         let color_to_test = BLUE;
         let hct: Hct = color_to_test.into();
 
-        let result = hct.in_viewing_conditions(&ViewingConditions::make(
-            None,
-            None,
-            Some(100.0),
-            None,
-            None,
-        ));
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(100.0), None, None));
 
         assert_eq!(Argb::from(result), Argb::from_u32(0xFF3F49FF));
     }
@@ -538,8 +501,7 @@ mod tests {
         let color_to_test = WHITE;
         let hct: Hct = color_to_test.into();
 
-        let result =
-            hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
 
         assert_eq!(Argb::from(result), Argb::from_u32(0xFFFFFFFF));
     }
@@ -549,13 +511,7 @@ mod tests {
         let color_to_test = WHITE;
         let hct: Hct = color_to_test.into();
 
-        let result = hct.in_viewing_conditions(&ViewingConditions::make(
-            None,
-            None,
-            Some(100.0),
-            None,
-            None,
-        ));
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(100.0), None, None));
 
         assert_eq!(Argb::from(result), Argb::from_u32(0xFFFFFFFF));
     }
@@ -565,8 +521,7 @@ mod tests {
         let color_to_test = MIDGRAY;
         let hct: Hct = color_to_test.into();
 
-        let result =
-            hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
 
         assert_eq!(Argb::from(result), Argb::from_u32(0xFF605F5F));
     }
@@ -576,13 +531,7 @@ mod tests {
         let color_to_test = MIDGRAY;
         let hct: Hct = color_to_test.into();
 
-        let result = hct.in_viewing_conditions(&ViewingConditions::make(
-            None,
-            None,
-            Some(100.0),
-            None,
-            None,
-        ));
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(100.0), None, None));
 
         assert_eq!(Argb::from(result), Argb::from_u32(0xFF8E8E8E));
     }
@@ -592,8 +541,7 @@ mod tests {
         let color_to_test = BLACK;
         let hct: Hct = color_to_test.into();
 
-        let result =
-            hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
 
         assert_eq!(Argb::from(result), Argb::from_u32(0xFF000000));
     }
@@ -603,13 +551,7 @@ mod tests {
         let color_to_test = BLACK;
         let hct: Hct = color_to_test.into();
 
-        let result = hct.in_viewing_conditions(&ViewingConditions::make(
-            None,
-            None,
-            Some(100.0),
-            None,
-            None,
-        ));
+        let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(100.0), None, None));
 
         assert_eq!(Argb::from(result), Argb::from_u32(0xFF000000));
     }
