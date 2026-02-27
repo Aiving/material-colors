@@ -5,7 +5,7 @@ use super::{Cam16, ViewingConditions};
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 use crate::{
-    color::{Argb, LinearRgb, y_from_lstar},
+    color::{Rgb, LinearRgb, y_from_lstar},
     utils::math::{matrix_multiply, sanitize_degrees_double, signum},
 };
 
@@ -290,8 +290,8 @@ impl HctSolver {
     /// - `angle`: An angle in radians; must not deviate too much from 0.
     ///
     /// Returns A coterminal angle between 0 and 2pi.
-    fn sanitize_radians(angle: f64) -> f64 {
-        PI.mul_add(8.0, angle) % (PI * 2.0)
+    const fn sanitize_radians(angle: f64) -> f64 {
+        (PI * 8.0 + angle) % (PI * 2.0)
     }
 
     /// Delinearizes an Rgb component, returning a floating-point
@@ -313,6 +313,7 @@ impl HctSolver {
 
     fn chromatic_adaptation(component: f64) -> f64 {
         let af = component.abs().powf(0.42);
+
         signum(component) * 400.0 * af / (af + 27.13)
     }
 
@@ -457,15 +458,15 @@ impl HctSolver {
         [left, right]
     }
 
-    const fn mid_point(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
+    const fn midpoint(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
         [f64::midpoint(a[0], b[0]), f64::midpoint(a[1], b[1]), f64::midpoint(a[2], b[2])]
     }
 
-    fn critical_plane_below(x: f64) -> i16 {
+    const fn critical_plane_below(x: f64) -> i16 {
         (x - 0.5).floor() as i16
     }
 
-    fn critical_plane_above(x: f64) -> i16 {
+    const fn critical_plane_above(x: f64) -> i16 {
         (x - 0.5).ceil() as i16
     }
 
@@ -516,7 +517,7 @@ impl HctSolver {
             }
         }
 
-        Self::mid_point(left, right)
+        Self::midpoint(left, right)
     }
 
     fn inverse_chromatic_adaptation(adapted: f64) -> f64 {
@@ -530,13 +531,13 @@ impl HctSolver {
     ///
     /// Returns a color with the desired `hue_radians`, `chroma`, and
     /// `y` as a hexadecimal integer, if found; and returns 0 otherwise.
-    fn find_result_by_j(hue_radians: f64, chroma: f64, y: f64) -> Argb {
+    fn find_result_by_j(hue_radians: f64, chroma: f64, y: f64) -> Rgb {
         // Initial estimate of j.
         let mut j = y.sqrt() * 11.0;
         // ===========================================================
         // Operations inlined from Cam16 to avoid repeated calculation
         // ===========================================================
-        let viewing_conditions = ViewingConditions::standard();
+        let viewing_conditions = ViewingConditions::s_rgb();
         let t_inner_coeff = 1.0 / (1.64 - 0.29f64.powf(viewing_conditions.background_ytowhite_point_y)).powf(0.73);
         let e_hue = 0.25 * ((hue_radians + 2.0).cos() + 3.8);
         let p1 = e_hue * (50000.0 / 13.0) * viewing_conditions.n_c * viewing_conditions.ncb;
@@ -571,18 +572,18 @@ impl HctSolver {
             // Operations inlined from Cam16 to avoid repeated calculation
             // ===========================================================
             if linrgb.red < 0.0 || linrgb.green < 0.0 || linrgb.blue < 0.0 {
-                return Argb::default();
+                return Rgb::default();
             }
 
             let [k_r, k_g, k_b] = Y_FROM_LINRGB;
             let fnj = k_b.mul_add(linrgb.blue, k_r.mul_add(linrgb.red, k_g * linrgb.green));
             if fnj <= 0.0 {
-                return Argb::default();
+                return Rgb::default();
             }
 
             if iteration_round == 4 || (fnj - y).abs() < 0.002 {
                 if linrgb.red > 100.01 || linrgb.green > 100.01 || linrgb.blue > 100.01 {
-                    return Argb::default();
+                    return Rgb::default();
                 }
 
                 return linrgb.into();
@@ -593,7 +594,7 @@ impl HctSolver {
             j = j - (fnj - y) * j / (2.0 * fnj);
         }
 
-        Argb::default()
+        Rgb::default()
     }
 
     /// Finds an sRgb color with the given hue, chroma, and L*, if
@@ -604,9 +605,9 @@ impl HctSolver {
     /// `lstar`, respectively. If it is impossible to satisfy all three
     /// constraints, the hue and L* will be sufficiently close, and the
     /// chroma will be maximized.
-    pub fn solve_to_argb(hue_degrees: f64, chroma: f64, lstar: f64) -> Argb {
+    pub fn solve_to_rgb(hue_degrees: f64, chroma: f64, lstar: f64) -> Rgb {
         if chroma < 0.0001 || !(0.0001..=99.9999).contains(&lstar) {
-            return Argb::from_lstar(lstar);
+            return Rgb::from_lstar(lstar);
         }
 
         let hue_degrees = sanitize_degrees_double(hue_degrees);
@@ -616,7 +617,7 @@ impl HctSolver {
 
         let exact_answer = Self::find_result_by_j(hue_radians, chroma, y);
 
-        if exact_answer != Argb::default() {
+        if exact_answer != Rgb::default() {
             return exact_answer;
         }
 
@@ -636,6 +637,6 @@ impl HctSolver {
     /// constraints, the hue and L* will be sufficiently close, and the
     /// chroma will be maximized.
     pub fn solve_to_cam(hue_degrees: f64, chroma: f64, lstar: f64) -> Cam16 {
-        Cam16::from(Self::solve_to_argb(hue_degrees, chroma, lstar))
+        Cam16::from(Self::solve_to_rgb(hue_degrees, chroma, lstar))
     }
 }

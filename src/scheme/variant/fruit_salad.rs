@@ -42,261 +42,261 @@ impl SchemeFruitSalad {
 #[cfg(test)]
 mod tests {
     use super::SchemeFruitSalad;
-    use crate::color::Argb;
+    use crate::color::Rgb;
 
     #[test]
     fn test_key_colors() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(0.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(0.0)).scheme;
 
-        assert_eq!(scheme.primary_palette_key_color(), Argb::from_u32(0xFF0393C3));
+        assert_eq!(scheme.primary_palette_key_color(), Rgb::from_u32(0x0393C3));
 
-        assert_eq!(scheme.secondary_palette_key_color(), Argb::from_u32(0xFF3A7E9E));
+        assert_eq!(scheme.secondary_palette_key_color(), Rgb::from_u32(0x3A7E9E));
 
-        assert_eq!(scheme.tertiary_palette_key_color(), Argb::from_u32(0xFF6E72AC));
+        assert_eq!(scheme.tertiary_palette_key_color(), Rgb::from_u32(0x6E72AC));
 
-        assert_eq!(scheme.neutral_palette_key_color(), Argb::from_u32(0xFF777682));
+        assert_eq!(scheme.neutral_palette_key_color(), Rgb::from_u32(0x777682));
 
         // assert_eq!(
         //     scheme.neutral_variant_palette_key_color(),
-        //     Argb::from_u32(0xff75758b)
+        //     Rgb::from_u32(0xff75758b)
         // );
     }
 
     #[test]
     fn test_light_theme_min_contrast_primary() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(-1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(-1.0)).scheme;
 
-        assert_eq!(scheme.primary(), Argb::from_u32(0xFF007EA7));
+        assert_eq!(scheme.primary(), Rgb::from_u32(0x007EA7));
     }
 
     #[test]
     fn test_light_theme_standard_contrast_primary() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(0.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(0.0)).scheme;
 
-        assert_eq!(scheme.primary(), Argb::from_u32(0xFF006688));
+        assert_eq!(scheme.primary(), Rgb::from_u32(0x006688));
     }
 
     #[test]
     fn test_light_theme_max_contrast_primary() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(1.0)).scheme;
 
-        assert_eq!(scheme.primary(), Argb::from_u32(0xFF003042));
+        assert_eq!(scheme.primary(), Rgb::from_u32(0x003042));
     }
 
     #[test]
     fn test_light_theme_min_contrast_primary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(-1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(-1.0)).scheme;
 
-        assert_eq!(scheme.primary_container(), Argb::from_u32(0xFFAAE0FF));
+        assert_eq!(scheme.primary_container(), Rgb::from_u32(0xAAE0FF));
     }
 
     #[test]
     fn test_light_theme_standard_contrast_primary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(0.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(0.0)).scheme;
 
-        assert_eq!(scheme.primary_container(), Argb::from_u32(0xFFC2E8FF));
+        assert_eq!(scheme.primary_container(), Rgb::from_u32(0xC2E8FF));
     }
 
     #[test]
     fn test_light_theme_max_contrast_primary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(1.0)).scheme;
 
-        assert_eq!(scheme.primary_container(), Argb::from_u32(0xFF004F6B));
+        assert_eq!(scheme.primary_container(), Rgb::from_u32(0x004F6B));
     }
 
     #[test]
     fn test_light_theme_min_contrast_tertiary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(-1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(-1.0)).scheme;
 
-        assert_eq!(scheme.tertiary_container(), Argb::from_u32(0xFFD5D6FF));
+        assert_eq!(scheme.tertiary_container(), Rgb::from_u32(0xD5D6FF));
     }
 
     #[test]
     fn test_light_theme_standard_contrast_tertiary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(0.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(0.0)).scheme;
 
-        assert_eq!(scheme.tertiary_container(), Argb::from_u32(0xFFE0E0FF));
+        assert_eq!(scheme.tertiary_container(), Rgb::from_u32(0xE0E0FF));
     }
 
     #[test]
     fn test_light_theme_max_contrast_tertiary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(1.0)).scheme;
 
-        assert_eq!(scheme.tertiary_container(), Argb::from_u32(0xFF40447B));
+        assert_eq!(scheme.tertiary_container(), Rgb::from_u32(0x40447B));
     }
 
     #[test]
     fn test_light_theme_min_contrast_on_primary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(-1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(-1.0)).scheme;
 
-        assert_eq!(scheme.on_primary_container(), Argb::from_u32(0xFF0083AE));
+        assert_eq!(scheme.on_primary_container(), Rgb::from_u32(0x0083AE));
     }
 
     #[test]
     fn test_light_theme_standard_contrast_on_primary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(0.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(0.0)).scheme;
 
-        assert_eq!(scheme.on_primary_container(), Argb::from_u32(0xFF004D67));
+        assert_eq!(scheme.on_primary_container(), Rgb::from_u32(0x004D67));
     }
 
     #[test]
     fn test_light_theme_max_contrast_on_primary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(1.0)).scheme;
 
-        assert_eq!(scheme.on_primary_container(), Argb::from_u32(0xFFFFFFFF));
+        assert_eq!(scheme.on_primary_container(), Rgb::from_u32(0xFFFFFF));
     }
 
     #[test]
     fn test_light_theme_min_contrast_surface() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(-1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(-1.0)).scheme;
 
-        assert_eq!(scheme.surface(), Argb::from_u32(0xFFFBF8FF));
+        assert_eq!(scheme.surface(), Rgb::from_u32(0xFBF8FF));
     }
 
     #[test]
     fn test_light_theme_standard_contrast_surface() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(0.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(0.0)).scheme;
 
-        assert_eq!(scheme.surface(), Argb::from_u32(0xFFFBF8FF));
+        assert_eq!(scheme.surface(), Rgb::from_u32(0xFBF8FF));
     }
 
     #[test]
     fn test_light_theme_max_contrast_surface() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(1.0)).scheme;
 
-        assert_eq!(scheme.surface(), Argb::from_u32(0xFFFBF8FF));
+        assert_eq!(scheme.surface(), Rgb::from_u32(0xFBF8FF));
     }
 
     #[test]
     fn test_light_theme_standard_contrast_secondary() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(0.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(0.0)).scheme;
 
-        assert_eq!(scheme.secondary(), Argb::from_u32(0xFF196584));
+        assert_eq!(scheme.secondary(), Rgb::from_u32(0x196584));
     }
 
     #[test]
     fn test_light_theme_standard_contrast_secondary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), false, Some(0.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), false, Some(0.0)).scheme;
 
-        assert_eq!(scheme.secondary_container(), Argb::from_u32(0xFFC2E8FF));
+        assert_eq!(scheme.secondary_container(), Rgb::from_u32(0xC2E8FF));
     }
 
     #[test]
     fn test_dark_theme_min_contrast_primary() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(-1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(-1.0)).scheme;
 
-        assert_eq!(scheme.primary(), Argb::from_u32(0xFF1E9BCB));
+        assert_eq!(scheme.primary(), Rgb::from_u32(0x1E9BCB));
     }
 
     #[test]
     fn test_dark_theme_standard_contrast_primary() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(0.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(0.0)).scheme;
 
-        assert_eq!(scheme.primary(), Argb::from_u32(0xFF76D1FF));
+        assert_eq!(scheme.primary(), Rgb::from_u32(0x76D1FF));
     }
 
     #[test]
     fn test_dark_theme_max_contrast_primary() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(1.0)).scheme;
 
-        assert_eq!(scheme.primary(), Argb::from_u32(0xFFE0F3FF));
+        assert_eq!(scheme.primary(), Rgb::from_u32(0xE0F3FF));
     }
 
     #[test]
     fn test_dark_theme_min_contrast_primary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(-1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(-1.0)).scheme;
 
-        assert_eq!(scheme.primary_container(), Argb::from_u32(0xFF003F56));
+        assert_eq!(scheme.primary_container(), Rgb::from_u32(0x003F56));
     }
 
     #[test]
     fn test_dark_theme_standard_contrast_primary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(0.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(0.0)).scheme;
 
-        assert_eq!(scheme.primary_container(), Argb::from_u32(0xFF004D67));
+        assert_eq!(scheme.primary_container(), Rgb::from_u32(0x004D67));
     }
 
     #[test]
     fn test_dark_theme_max_contrast_primary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(1.0)).scheme;
 
-        assert_eq!(scheme.primary_container(), Argb::from_u32(0xFF68CEFF));
+        assert_eq!(scheme.primary_container(), Rgb::from_u32(0x68CEFF));
     }
 
     #[test]
     fn test_dark_theme_min_contrast_on_primary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(-1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(-1.0)).scheme;
 
-        assert_eq!(scheme.on_primary_container(), Argb::from_u32(0xFF008EBC));
+        assert_eq!(scheme.on_primary_container(), Rgb::from_u32(0x008EBC));
     }
 
     #[test]
     fn test_dark_theme_standard_contrast_on_primary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(0.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(0.0)).scheme;
 
-        assert_eq!(scheme.on_primary_container(), Argb::from_u32(0xFFC2E8FF));
+        assert_eq!(scheme.on_primary_container(), Rgb::from_u32(0xC2E8FF));
     }
 
     #[test]
     fn test_dark_theme_max_contrast_on_primary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(1.0)).scheme;
 
-        assert_eq!(scheme.on_primary_container(), Argb::from_u32(0xFF000D15));
+        assert_eq!(scheme.on_primary_container(), Rgb::from_u32(0x000D15));
     }
 
     #[test]
     fn test_dark_theme_min_contrast_on_tertiary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(-1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(-1.0)).scheme;
 
-        assert_eq!(scheme.on_tertiary_container(), Argb::from_u32(0xFF7B7FBB));
+        assert_eq!(scheme.on_tertiary_container(), Rgb::from_u32(0x7B7FBB));
     }
 
     #[test]
     fn test_dark_theme_standard_contrast_on_tertiary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(0.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(0.0)).scheme;
 
-        assert_eq!(scheme.on_tertiary_container(), Argb::from_u32(0xFFE0E0FF));
+        assert_eq!(scheme.on_tertiary_container(), Rgb::from_u32(0xE0E0FF));
     }
 
     #[test]
     fn test_dark_theme_max_contrast_on_tertiary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(1.0)).scheme;
 
-        assert_eq!(scheme.on_tertiary_container(), Argb::from_u32(0xFF00003C));
+        assert_eq!(scheme.on_tertiary_container(), Rgb::from_u32(0x00003C));
     }
 
     #[test]
     fn test_dark_theme_min_contrast_surface() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(-1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(-1.0)).scheme;
 
-        assert_eq!(scheme.surface(), Argb::from_u32(0xFF12131C));
+        assert_eq!(scheme.surface(), Rgb::from_u32(0x12131C));
     }
 
     #[test]
     fn test_dark_theme_standard_contrast_surface() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(0.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(0.0)).scheme;
 
-        assert_eq!(scheme.surface(), Argb::from_u32(0xFF12131C));
+        assert_eq!(scheme.surface(), Rgb::from_u32(0x12131C));
     }
 
     #[test]
     fn test_dark_theme_max_contrast_surface() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(1.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(1.0)).scheme;
 
-        assert_eq!(scheme.surface(), Argb::from_u32(0xFF12131C));
+        assert_eq!(scheme.surface(), Rgb::from_u32(0x12131C));
     }
 
     #[test]
     fn test_dark_theme_standard_contrast_secondary() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(0.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(0.0)).scheme;
 
-        assert_eq!(scheme.secondary(), Argb::from_u32(0xFF8ECFF2));
+        assert_eq!(scheme.secondary(), Rgb::from_u32(0x8ECFF2));
     }
 
     #[test]
     fn test_dark_theme_standard_contrast_secondary_container() {
-        let scheme = SchemeFruitSalad::new(Argb::from_u32(0xFF0000FF).into(), true, Some(0.0)).scheme;
+        let scheme = SchemeFruitSalad::new(Rgb::from_u32(0x0000FF).into(), true, Some(0.0)).scheme;
 
-        assert_eq!(scheme.secondary_container(), Argb::from_u32(0xFF004D67));
+        assert_eq!(scheme.secondary_container(), Rgb::from_u32(0x004D67));
     }
 }

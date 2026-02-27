@@ -5,7 +5,6 @@ use core::{
 };
 
 pub use cam16::Cam16;
-#[cfg(feature = "serde")] use serde::Serialize;
 pub use solver::HctSolver;
 pub use viewing_conditions::ViewingConditions;
 
@@ -13,7 +12,7 @@ pub use viewing_conditions::ViewingConditions;
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 use crate::{
-    color::{Argb, lstar_from_y},
+    color::{Rgb, lstar_from_y},
     utils::FromRef,
 };
 
@@ -22,12 +21,12 @@ pub mod solver;
 pub mod viewing_conditions;
 
 #[derive(Default, Clone, Copy, Debug, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Hct {
-    _hue: f64,
-    _chroma: f64,
-    _tone: f64,
-    _argb: Argb,
+    hue: f64,
+    chroma: f64,
+    tone: f64,
+    rgb: Rgb,
 }
 
 impl Hct {
@@ -36,11 +35,11 @@ impl Hct {
     ///
     /// 0 <= `new_hue` < 360; invalid values are corrected.
     /// After setting hue, the color is mapped from HCT to the more
-    /// limited sRgb gamut for display. This will change its Argb/integer
+    /// limited sRgb gamut for display. This will change its Rgb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
     pub const fn get_hue(&self) -> f64 {
-        self._hue
+        self.hue
     }
 
     /// A number, in degrees, representing ex. red, orange, yellow, etc.
@@ -48,79 +47,79 @@ impl Hct {
     ///
     /// 0 <= `new_hue` < 360; invalid values are corrected.
     /// After setting hue, the color is mapped from HCT to the more
-    /// limited sRgb gamut for display. This will change its Argb/integer
+    /// limited sRgb gamut for display. This will change its Rgb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
     pub fn set_hue(&mut self, value: f64) {
-        self._argb = HctSolver::solve_to_argb(value, self.get_chroma(), self.get_tone());
+        self.rgb = HctSolver::solve_to_rgb(value, self.get_chroma(), self.get_tone());
 
-        let cam16 = Cam16::from(self._argb);
+        let cam16 = Cam16::from(self.rgb);
 
-        self._hue = cam16.hue;
-        self._chroma = cam16.chroma;
-        self._tone = self._argb.as_lstar();
+        self.hue = cam16.hue;
+        self.chroma = cam16.chroma;
+        self.tone = self.rgb.as_lstar();
     }
 
     /// 0 <= `new_chroma` <= ?
     /// After setting chroma, the color is mapped from HCT to the more
-    /// limited sRgb gamut for display. This will change its Argb/integer
+    /// limited sRgb gamut for display. This will change its Rgb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
     pub const fn get_chroma(&self) -> f64 {
-        self._chroma
+        self.chroma
     }
 
     /// 0 <= `new_chroma` <= ?
     /// After setting chroma, the color is mapped from HCT to the more
-    /// limited sRgb gamut for display. This will change its Argb/integer
+    /// limited sRgb gamut for display. This will change its Rgb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
     pub fn set_chroma(&mut self, value: f64) {
-        self._argb = HctSolver::solve_to_argb(self.get_hue(), value, self.get_tone());
+        self.rgb = HctSolver::solve_to_rgb(self.get_hue(), value, self.get_tone());
 
-        let cam16 = Cam16::from(self._argb);
+        let cam16 = Cam16::from(self.rgb);
 
-        self._hue = cam16.hue;
-        self._chroma = cam16.chroma;
-        self._tone = self._argb.as_lstar();
+        self.hue = cam16.hue;
+        self.chroma = cam16.chroma;
+        self.tone = self.rgb.as_lstar();
     }
 
     /// Lightness. Ranges from 0 to 100.
     ///
     /// 0 <= `new_tone` <= 100; invalid values are corrected.
     /// After setting tone, the color is mapped from HCT to the more
-    /// limited sRgb gamut for display. This will change its Argb/integer
+    /// limited sRgb gamut for display. This will change its Rgb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
     pub const fn get_tone(&self) -> f64 {
-        self._tone
+        self.tone
     }
 
     /// Lightness. Ranges from 0 to 100.
     ///
     /// 0 <= `new_tone` <= 100; invalid values are corrected.
     /// After setting tone, the color is mapped from HCT to the more
-    /// limited sRgb gamut for display. This will change its Argb/integer
+    /// limited sRgb gamut for display. This will change its Rgb/integer
     /// representation. If the HCT color is outside of the sRgb gamut, chroma
     /// will decrease until it is inside the gamut.
     pub fn set_tone(&mut self, value: f64) {
-        self._argb = HctSolver::solve_to_argb(self.get_hue(), self.get_chroma(), value);
+        self.rgb = HctSolver::solve_to_rgb(self.get_hue(), self.get_chroma(), value);
 
-        let cam16 = Cam16::from(self._argb);
+        let cam16 = Cam16::from(self.rgb);
 
-        self._hue = cam16.hue;
-        self._chroma = cam16.chroma;
-        self._tone = self._argb.as_lstar();
+        self.hue = cam16.hue;
+        self.chroma = cam16.chroma;
+        self.tone = self.rgb.as_lstar();
     }
 
-    pub fn new(argb: Argb) -> Self {
-        let cam16 = Cam16::from(argb);
+    pub fn new(rgb: Rgb) -> Self {
+        let cam16 = Cam16::from(rgb);
 
         Self {
-            _hue: cam16.hue,
-            _chroma: cam16.chroma,
-            _tone: argb.as_lstar(),
-            _argb: argb,
+            hue: cam16.hue,
+            chroma: cam16.chroma,
+            tone: rgb.as_lstar(),
+            rgb,
         }
     }
 
@@ -130,9 +129,7 @@ impl Hct {
     /// any    given hue and tone.
     /// 0 <= `tone` <= 100; informally, lightness. Invalid values are corrected.
     pub fn from(hue: f64, chroma: f64, tone: f64) -> Self {
-        let argb = HctSolver::solve_to_argb(hue, chroma, tone);
-
-        Self::new(argb)
+        Self::new(HctSolver::solve_to_rgb(hue, chroma, tone))
     }
 
     /// Translate a color into different [`ViewingConditions`].
@@ -151,11 +148,11 @@ impl Hct {
     #[must_use]
     pub fn in_viewing_conditions(self, vc: &ViewingConditions) -> Self {
         // 1. Use CAM16 to find Xyz coordinates of color in specified VC.
-        let cam16 = Cam16::from(Argb::from(self));
+        let cam16 = Cam16::from(Rgb::from(self));
         let viewed_in_vc = cam16.xyz_in_viewing_conditions(vc);
 
         // 2. Create CAM16 of those Xyz coordinates in default VC.
-        let recast_in_vc = Cam16::from_xyz_in_viewing_conditions(viewed_in_vc.x, viewed_in_vc.y, viewed_in_vc.z, &ViewingConditions::standard());
+        let recast_in_vc = Cam16::from_xyz_in_viewing_conditions(viewed_in_vc, &ViewingConditions::s_rgb());
 
         // 3. Create HCT from:
         // - CAM16 using default VC with Xyz coordinates in specified VC.
@@ -178,7 +175,7 @@ impl Ord for Hct {
 
 impl PartialEq for Hct {
     fn eq(&self, other: &Self) -> bool {
-        self._argb == other._argb
+        self.rgb == other.rgb
     }
 }
 
@@ -186,28 +183,28 @@ impl Eq for Hct {}
 
 impl Hash for Hct {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self._hue.to_bits().hash(state);
-        self._chroma.to_bits().hash(state);
-        self._tone.to_bits().hash(state);
-        self._argb.hash(state);
+        self.hue.to_bits().hash(state);
+        self.chroma.to_bits().hash(state);
+        self.tone.to_bits().hash(state);
+        self.rgb.hash(state);
     }
 }
 
-impl From<Argb> for Hct {
-    fn from(value: Argb) -> Self {
+impl From<Rgb> for Hct {
+    fn from(value: Rgb) -> Self {
         Self::new(value)
     }
 }
 
-impl From<Hct> for Argb {
+impl From<Hct> for Rgb {
     fn from(value: Hct) -> Self {
-        value._argb
+        value.rgb
     }
 }
 
-impl FromRef<Hct> for Argb {
+impl FromRef<Hct> for Rgb {
     fn from_ref(value: &Hct) -> Self {
-        value._argb
+        value.rgb
     }
 }
 
@@ -221,14 +218,14 @@ mod tests {
     use float_cmp::{approx_eq, assert_approx_eq};
 
     use super::{Cam16, Hct, ViewingConditions};
-    use crate::color::{Argb, y_from_lstar};
+    use crate::color::{Rgb, y_from_lstar};
 
-    const BLACK: Argb = Argb::from_u32(0xFF000000);
-    const WHITE: Argb = Argb::from_u32(0xFFFFFFFF);
-    const RED: Argb = Argb::from_u32(0xFFFF0000);
-    const GREEN: Argb = Argb::from_u32(0xFF00FF00);
-    const BLUE: Argb = Argb::from_u32(0xFF0000FF);
-    const MIDGRAY: Argb = Argb::from_u32(0xFF777777);
+    const BLACK: Rgb = Rgb::from_u32(0x000000);
+    const WHITE: Rgb = Rgb::from_u32(0xFFFFFF);
+    const RED: Rgb = Rgb::from_u32(0xFF0000);
+    const GREEN: Rgb = Rgb::from_u32(0x00FF00);
+    const BLUE: Rgb = Rgb::from_u32(0x0000FF);
+    const MIDGRAY: Rgb = Rgb::from_u32(0x777777);
 
     fn hash_value<T: Hash>(value: T) -> u64 {
         let mut hasher = AHasher::default();
@@ -238,14 +235,14 @@ mod tests {
         hasher.finish()
     }
 
-    const fn color_is_on_boundary(argb: Argb) -> bool {
-        argb.red == 0 || argb.red == 255 || argb.green == 0 || argb.green == 255 || argb.blue == 0 || argb.blue == 255
+    const fn color_is_on_boundary(rgb: Rgb) -> bool {
+        rgb.red == 0 || rgb.red == 255 || rgb.green == 0 || rgb.green == 255 || rgb.blue == 0 || rgb.blue == 255
     }
 
     #[test]
     fn test_hash_code() {
-        let a: Hct = Argb::from_u32(123).into();
-        let b: Hct = Argb::from_u32(123).into();
+        let a: Hct = Rgb::from_u32(123).into();
+        let b: Hct = Rgb::from_u32(123).into();
 
         assert_eq!(a, b);
         assert_eq!(hash_value(a), hash_value(b));
@@ -254,7 +251,7 @@ mod tests {
     #[test]
     fn test_conversions_are_reflexive() {
         let cam = Cam16::from(RED);
-        let color = cam.viewed(&ViewingConditions::standard());
+        let color = cam.viewed(&ViewingConditions::s_rgb());
 
         assert_eq!(color, RED);
     }
@@ -412,7 +409,7 @@ mod tests {
                         assert!(
                             color_is_on_boundary(hct_color.into()),
                             "HCT request for non-sRGB color should return a color on the boundary of the sRGB cube for {hct_request_description}, but got {} instead",
-                            Argb::from(hct_color).to_hex_with_pound()
+                            Rgb::from(hct_color).to_hex_with_pound()
                         );
                     }
 
@@ -443,7 +440,7 @@ mod tests {
 
         let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
 
-        assert_eq!(Argb::from(result), Argb::from_u32(0xFF9F5C51));
+        assert_eq!(Rgb::from(result), Rgb::from_u32(0x9F5C51));
     }
 
     #[test]
@@ -453,7 +450,7 @@ mod tests {
 
         let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(100.0), None, None));
 
-        assert_eq!(Argb::from(result), Argb::from_u32(0xFFFF5D48));
+        assert_eq!(Rgb::from(result), Rgb::from_u32(0xFF5D48));
     }
 
     #[test]
@@ -463,7 +460,7 @@ mod tests {
 
         let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
 
-        assert_eq!(Argb::from(result), Argb::from_u32(0xFFACD69D));
+        assert_eq!(Rgb::from(result), Rgb::from_u32(0xACD69D));
     }
 
     #[test]
@@ -473,7 +470,7 @@ mod tests {
 
         let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(100.0), None, None));
 
-        assert_eq!(Argb::from(result), Argb::from_u32(0xFF8EFF77));
+        assert_eq!(Rgb::from(result), Rgb::from_u32(0x8EFF77));
     }
 
     #[test]
@@ -483,7 +480,7 @@ mod tests {
 
         let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
 
-        assert_eq!(Argb::from(result), Argb::from_u32(0xFF343654));
+        assert_eq!(Rgb::from(result), Rgb::from_u32(0x343654));
     }
 
     #[test]
@@ -493,7 +490,7 @@ mod tests {
 
         let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(100.0), None, None));
 
-        assert_eq!(Argb::from(result), Argb::from_u32(0xFF3F49FF));
+        assert_eq!(Rgb::from(result), Rgb::from_u32(0x3F49FF));
     }
 
     #[test]
@@ -503,7 +500,7 @@ mod tests {
 
         let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
 
-        assert_eq!(Argb::from(result), Argb::from_u32(0xFFFFFFFF));
+        assert_eq!(Rgb::from(result), Rgb::from_u32(0xFFFFFF));
     }
 
     #[test]
@@ -513,7 +510,7 @@ mod tests {
 
         let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(100.0), None, None));
 
-        assert_eq!(Argb::from(result), Argb::from_u32(0xFFFFFFFF));
+        assert_eq!(Rgb::from(result), Rgb::from_u32(0xFFFFFF));
     }
 
     #[test]
@@ -523,7 +520,7 @@ mod tests {
 
         let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
 
-        assert_eq!(Argb::from(result), Argb::from_u32(0xFF605F5F));
+        assert_eq!(Rgb::from(result), Rgb::from_u32(0x605F5F));
     }
 
     #[test]
@@ -533,7 +530,7 @@ mod tests {
 
         let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(100.0), None, None));
 
-        assert_eq!(Argb::from(result), Argb::from_u32(0xFF8E8E8E));
+        assert_eq!(Rgb::from(result), Rgb::from_u32(0x8E8E8E));
     }
 
     #[test]
@@ -543,7 +540,7 @@ mod tests {
 
         let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(0.0), None, None));
 
-        assert_eq!(Argb::from(result), Argb::from_u32(0xFF000000));
+        assert_eq!(Rgb::from(result), Rgb::from_u32(0x000000));
     }
 
     #[test]
@@ -553,6 +550,6 @@ mod tests {
 
         let result = hct.in_viewing_conditions(&ViewingConditions::make(None, None, Some(100.0), None, None));
 
-        assert_eq!(Argb::from(result), Argb::from_u32(0xFF000000));
+        assert_eq!(Rgb::from(result), Rgb::from_u32(0x000000));
     }
 }

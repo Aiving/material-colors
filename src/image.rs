@@ -8,7 +8,7 @@ pub use images::imageops::FilterType;
 use images::{ImageReader as Reader, RgbaImage, imageops::resize};
 
 use crate::{
-    color::Argb,
+    color::Rgb,
     quantize::{Quantizer, QuantizerCelebi},
     score::Score,
 };
@@ -30,17 +30,17 @@ impl Image {
 }
 
 pub trait AsPixels {
-    fn as_pixels(&self) -> Vec<Argb>;
+    fn as_pixels(&self) -> Vec<Rgb>;
 }
 
 impl AsPixels for Image {
-    fn as_pixels(&self) -> Vec<Argb> {
+    fn as_pixels(&self) -> Vec<Rgb> {
         self.image
             .pixels()
             .map(|pixel| {
-                let [a, r, g, b] = u32::from_be_bytes(pixel.0).rotate_right(8).to_be_bytes();
+                let [_, r, g, b] = u32::from_be_bytes(pixel.0).rotate_right(8).to_be_bytes();
 
-                Argb::new(a, r, g, b)
+                Rgb::new(r, g, b)
             })
             .collect()
     }
@@ -80,7 +80,7 @@ impl ImageReader {
     /// `image` A struct that implements the [`AsPixels`] trait
     ///
     /// Returns source color - the color most suitable for creating a UI theme
-    pub fn extract_color<I>(image: &I) -> Argb
+    pub fn extract_color<I>(image: &I) -> Rgb
     where
         I: AsPixels,
     {

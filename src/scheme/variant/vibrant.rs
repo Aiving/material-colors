@@ -57,181 +57,181 @@ impl SchemeVibrant {
 #[cfg(test)]
 mod tests {
     use super::SchemeVibrant;
-    use crate::color::Argb;
+    use crate::color::Rgb;
 
     #[test]
     fn test_key_colors() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), false, Some(0.0)).scheme;
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), false, Some(0.0)).scheme;
 
-        assert_eq!(scheme.primary_palette_key_color(), Argb::from_u32(0xFF080CFF));
-        assert_eq!(scheme.secondary_palette_key_color(), Argb::from_u32(0xFF7B7296));
-        assert_eq!(scheme.tertiary_palette_key_color(), Argb::from_u32(0xFF886C9D));
-        assert_eq!(scheme.neutral_palette_key_color(), Argb::from_u32(0xFF777682));
+        assert_eq!(scheme.primary_palette_key_color(), Rgb::from_u32(0x080CFF));
+        assert_eq!(scheme.secondary_palette_key_color(), Rgb::from_u32(0x7B7296));
+        assert_eq!(scheme.tertiary_palette_key_color(), Rgb::from_u32(0x886C9D));
+        assert_eq!(scheme.neutral_palette_key_color(), Rgb::from_u32(0x777682));
         // assert_eq!(
         //     scheme.neutral_variant_palette_key_color(),
-        //     Argb::from_u32(0xff767685)
+        //     Rgb::from_u32(0xff767685)
         // );
     }
 
     #[test]
     fn test_light_theme_min_contrast_primary() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), false, Some(-1.0)).scheme;
-        assert_eq!(scheme.primary(), Argb::from_u32(0xFF5660FF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), false, Some(-1.0)).scheme;
+        assert_eq!(scheme.primary(), Rgb::from_u32(0x5660FF));
     }
 
     #[test]
     fn test_light_theme_standard_contrast_primary() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), false, Some(0.0)).scheme;
-        assert_eq!(scheme.primary(), Argb::from_u32(0xFF343DFF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), false, Some(0.0)).scheme;
+        assert_eq!(scheme.primary(), Rgb::from_u32(0x343DFF));
     }
 
     #[test]
     fn test_light_theme_max_contrast_primary() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), false, Some(1.0)).scheme;
-        assert_eq!(scheme.primary(), Argb::from_u32(0xFF00019F));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), false, Some(1.0)).scheme;
+        assert_eq!(scheme.primary(), Rgb::from_u32(0x00019F));
     }
 
     #[test]
     fn test_light_theme_min_contrast_primary_container() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), false, Some(-1.0)).scheme;
-        assert_eq!(scheme.primary_container(), Argb::from_u32(0xFFD5D6FF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), false, Some(-1.0)).scheme;
+        assert_eq!(scheme.primary_container(), Rgb::from_u32(0xD5D6FF));
     }
 
     #[test]
     fn test_light_theme_standard_contrast_primary_container() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), false, Some(0.0)).scheme;
-        assert_eq!(scheme.primary_container(), Argb::from_u32(0xFFE0E0FF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), false, Some(0.0)).scheme;
+        assert_eq!(scheme.primary_container(), Rgb::from_u32(0xE0E0FF));
     }
 
     #[test]
     fn test_light_theme_max_contrast_primary_container() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), false, Some(1.0)).scheme;
-        assert_eq!(scheme.primary_container(), Argb::from_u32(0xFF0000F6));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), false, Some(1.0)).scheme;
+        assert_eq!(scheme.primary_container(), Rgb::from_u32(0x0000F6));
     }
 
     #[test]
     fn test_light_theme_min_contrast_on_primary_container() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), false, Some(-1.0)).scheme;
-        assert_eq!(scheme.on_primary_container(), Argb::from_u32(0xFF5E68FF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), false, Some(-1.0)).scheme;
+        assert_eq!(scheme.on_primary_container(), Rgb::from_u32(0x5E68FF));
     }
 
     #[test]
     fn test_light_theme_standard_contrast_on_primary_container() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), false, Some(0.0)).scheme;
-        assert_eq!(scheme.on_primary_container(), Argb::from_u32(0xFF0000EF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), false, Some(0.0)).scheme;
+        assert_eq!(scheme.on_primary_container(), Rgb::from_u32(0x0000EF));
     }
 
     #[test]
     fn test_light_theme_max_contrast_on_primary_container() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), false, Some(1.0)).scheme;
-        assert_eq!(scheme.on_primary_container(), Argb::from_u32(0xFFFFFFFF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), false, Some(1.0)).scheme;
+        assert_eq!(scheme.on_primary_container(), Rgb::from_u32(0xFFFFFF));
     }
 
     #[test]
     fn test_light_theme_min_contrast_surface() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), false, Some(-1.0)).scheme;
-        assert_eq!(scheme.surface(), Argb::from_u32(0xFFFBF8FF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), false, Some(-1.0)).scheme;
+        assert_eq!(scheme.surface(), Rgb::from_u32(0xFBF8FF));
     }
 
     #[test]
     fn test_light_theme_standard_contrast_surface() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), false, Some(0.0)).scheme;
-        assert_eq!(scheme.surface(), Argb::from_u32(0xFFFBF8FF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), false, Some(0.0)).scheme;
+        assert_eq!(scheme.surface(), Rgb::from_u32(0xFBF8FF));
     }
 
     #[test]
     fn test_light_theme_max_contrast_surface() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), false, Some(1.0)).scheme;
-        assert_eq!(scheme.surface(), Argb::from_u32(0xFFFBF8FF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), false, Some(1.0)).scheme;
+        assert_eq!(scheme.surface(), Rgb::from_u32(0xFBF8FF));
     }
 
     #[test]
     fn test_dark_theme_min_contrast_primary() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), true, Some(-1.0)).scheme;
-        assert_eq!(scheme.primary(), Argb::from_u32(0xFF7C84FF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), true, Some(-1.0)).scheme;
+        assert_eq!(scheme.primary(), Rgb::from_u32(0x7C84FF));
     }
 
     #[test]
     fn test_dark_theme_standard_contrast_primary() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), true, Some(0.0)).scheme;
-        assert_eq!(scheme.primary(), Argb::from_u32(0xFFBEC2FF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), true, Some(0.0)).scheme;
+        assert_eq!(scheme.primary(), Rgb::from_u32(0xBEC2FF));
     }
 
     #[test]
     fn test_dark_theme_max_contrast_primary() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), true, Some(1.0)).scheme;
-        assert_eq!(scheme.primary(), Argb::from_u32(0xFFF0EEFF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), true, Some(1.0)).scheme;
+        assert_eq!(scheme.primary(), Rgb::from_u32(0xF0EEFF));
     }
 
     #[test]
     fn test_dark_theme_min_contrast_primary_container() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), true, Some(-1.0)).scheme;
-        assert_eq!(scheme.primary_container(), Argb::from_u32(0xFF0001C9));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), true, Some(-1.0)).scheme;
+        assert_eq!(scheme.primary_container(), Rgb::from_u32(0x0001C9));
     }
 
     #[test]
     fn test_dark_theme_standard_contrast_primary_container() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), true, Some(0.0)).scheme;
-        assert_eq!(scheme.primary_container(), Argb::from_u32(0xFF0000EF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), true, Some(0.0)).scheme;
+        assert_eq!(scheme.primary_container(), Rgb::from_u32(0x0000EF));
     }
 
     #[test]
     fn test_dark_theme_max_contrast_primary_container() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), true, Some(1.0)).scheme;
-        assert_eq!(scheme.primary_container(), Argb::from_u32(0xFFBABDFF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), true, Some(1.0)).scheme;
+        assert_eq!(scheme.primary_container(), Rgb::from_u32(0xBABDFF));
     }
 
     #[test]
     fn test_dark_theme_min_contrast_on_primary_container() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), true, Some(-1.0)).scheme;
-        assert_eq!(scheme.on_primary_container(), Argb::from_u32(0xFF6B75FF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), true, Some(-1.0)).scheme;
+        assert_eq!(scheme.on_primary_container(), Rgb::from_u32(0x6B75FF));
     }
 
     #[test]
     fn test_dark_theme_standard_contrast_on_primary_container() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), true, Some(0.0)).scheme;
-        assert_eq!(scheme.on_primary_container(), Argb::from_u32(0xFFE0E0FF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), true, Some(0.0)).scheme;
+        assert_eq!(scheme.on_primary_container(), Rgb::from_u32(0xE0E0FF));
     }
 
     #[test]
     fn test_dark_theme_max_contrast_on_primary_container() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), true, Some(1.0)).scheme;
-        assert_eq!(scheme.on_primary_container(), Argb::from_u32(0xFF00003D));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), true, Some(1.0)).scheme;
+        assert_eq!(scheme.on_primary_container(), Rgb::from_u32(0x00003D));
     }
 
     #[test]
     fn test_dark_theme_min_contrast_on_tertiary_container() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), true, Some(-1.0)).scheme;
-        assert_eq!(scheme.on_tertiary_container(), Argb::from_u32(0xFF9679AB));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), true, Some(-1.0)).scheme;
+        assert_eq!(scheme.on_tertiary_container(), Rgb::from_u32(0x9679AB));
     }
 
     #[test]
     fn test_dark_theme_standard_contrast_on_tertiary_container() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), true, Some(0.0)).scheme;
-        assert_eq!(scheme.on_tertiary_container(), Argb::from_u32(0xFFF2DAFF));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), true, Some(0.0)).scheme;
+        assert_eq!(scheme.on_tertiary_container(), Rgb::from_u32(0xF2DAFF));
     }
 
     #[test]
     fn test_dark_theme_max_contrast_on_tertiary_container() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), true, Some(1.0)).scheme;
-        assert_eq!(scheme.on_tertiary_container(), Argb::from_u32(0xFF16002A));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), true, Some(1.0)).scheme;
+        assert_eq!(scheme.on_tertiary_container(), Rgb::from_u32(0x16002A));
     }
 
     #[test]
     fn test_dark_theme_min_contrast_surface() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), true, Some(-1.0)).scheme;
-        assert_eq!(scheme.surface(), Argb::from_u32(0xFF12131C));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), true, Some(-1.0)).scheme;
+        assert_eq!(scheme.surface(), Rgb::from_u32(0x12131C));
     }
 
     #[test]
     fn test_dark_theme_standard_contrast_surface() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), true, Some(0.0)).scheme;
-        assert_eq!(scheme.surface(), Argb::from_u32(0xFF12131C));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), true, Some(0.0)).scheme;
+        assert_eq!(scheme.surface(), Rgb::from_u32(0x12131C));
     }
 
     #[test]
     fn test_dark_theme_max_contrast_surface() {
-        let scheme = SchemeVibrant::new(Argb::from_u32(0xFF0000FF).into(), true, Some(1.0)).scheme;
-        assert_eq!(scheme.surface(), Argb::from_u32(0xFF12131C));
+        let scheme = SchemeVibrant::new(Rgb::from_u32(0x0000FF).into(), true, Some(1.0)).scheme;
+        assert_eq!(scheme.surface(), Rgb::from_u32(0x12131C));
     }
 }

@@ -8,10 +8,7 @@ use super::{Quantizer, QuantizerMap, QuantizerResult};
 #[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
-use crate::{
-    IndexMap,
-    color::{Argb, Rgb},
-};
+use crate::{IndexMap, color::Rgb};
 
 // A histogram of all the input colors is constructed. It has the shape of a
 //  The cube would be too large if it contained all 16 million colors:
@@ -51,7 +48,7 @@ impl QuantizerWu {
 }
 
 impl Quantizer for QuantizerWu {
-    fn quantize(pixels: &[Argb], max_colors: usize) -> QuantizerResult {
+    fn quantize(pixels: &[Rgb], max_colors: usize) -> QuantizerResult {
         let mut result = QuantizerMap::quantize(pixels, max_colors);
 
         result.color_to_count.sort_by(|_, a, _, b| a.cmp(b));
@@ -80,7 +77,7 @@ impl QuantizerWu {
         (r << (INDEX_BITS * 2)) + (r << (INDEX_BITS + 1)) + (g << INDEX_BITS) + r + g + b
     }
 
-    pub fn construct_histogram(&mut self, pixels: IndexMap<Argb, u32>) {
+    pub fn construct_histogram(&mut self, pixels: IndexMap<Rgb, u32>) {
         for (pixel, count) in pixels {
             let red = pixel.red;
             let green = pixel.green;
@@ -197,7 +194,7 @@ impl QuantizerWu {
         }
     }
 
-    pub fn create_result(&self, color_count: usize) -> IndexMap<Argb, u32> {
+    pub fn create_result(&self, color_count: usize) -> IndexMap<Rgb, u32> {
         let mut result = IndexMap::default();
 
         for i in 0..color_count {
@@ -209,9 +206,7 @@ impl QuantizerWu {
                 let g = ((Self::volume(cube, &self.moments_g)) / weight) as u8;
                 let b = ((Self::volume(cube, &self.moments_b)) / weight) as u8;
 
-                let color = Rgb::new(r, g, b).into();
-
-                result.insert(color, 0);
+                result.insert(Rgb::new(r, g, b), 0);
             }
         }
 
@@ -481,22 +476,22 @@ mod tests {
     #[cfg(feature = "std")] use std::vec::Vec;
 
     use super::{Quantizer, QuantizerWu};
-    use crate::color::Argb;
+    use crate::color::Rgb;
 
-    const RED: Argb = Argb::from_u32(0xFFFF0000);
-    const GREEN: Argb = Argb::from_u32(0xFF00FF00);
-    const BLUE: Argb = Argb::from_u32(0xFF0000FF);
-    // const WHITE: Argb = Argb::from_u32(0xffffffff);
-    // const RANDOM: Argb = Argb::from_u32(0xff426088);
+    const RED: Rgb = Rgb::from_u32(0xFF0000);
+    const GREEN: Rgb = Rgb::from_u32(0x00FF00);
+    const BLUE: Rgb = Rgb::from_u32(0x0000FF);
+    // const WHITE: Rgb = Rgb::from_u32(0xffffffff);
+    // const RANDOM: Rgb = Rgb::from_u32(0xff426088);
     const MAX_COLORS: usize = 256;
 
     #[test]
     fn test_1rando() {
-        let result = QuantizerWu::quantize(&[Argb::from_u32(0xFF14_1216)], MAX_COLORS);
+        let result = QuantizerWu::quantize(&[Rgb::from_u32(0xFF14_1216)], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
-        assert_eq!(colors[0], &Argb::from_u32(0xFF14_1216));
+        assert_eq!(colors[0], &Rgb::from_u32(0xFF14_1216));
     }
 
     #[test]

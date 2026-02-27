@@ -5,7 +5,7 @@ use super::ViewingConditions;
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 use crate::{
-    color::{Argb, Xyz},
+    color::{Rgb, Xyz},
     utils::math::signum,
 };
 
@@ -83,25 +83,27 @@ impl Cam16 {
         1.41 * d_eprime.powf(0.63)
     }
 
-    /// Given `viewing_conditions`, convert `argb` to
-    pub fn fromi32_in_viewing_conditions(argb: Argb, viewing_conditions: &ViewingConditions) -> Self {
-        // Transform Argb int to Xyz
-        let Xyz { x, y, z } = Xyz::from(argb);
-
-        Self::from_xyz_in_viewing_conditions(x, y, z, viewing_conditions)
-    }
-
-    /// Given color expressed in Xyz and viewed in `viewing_conditions`, convert
-    /// to Cam16
+    /// Given color expressed in [`Rgb`] form and viewed in
+    /// `viewing_conditions`, convert to [`Cam16`].
     ///
     /// # Panics
     ///
     /// Will panic if the hue is between 0 and 360
-    pub fn from_xyz_in_viewing_conditions(x: f64, y: f64, z: f64, viewing_conditions: &ViewingConditions) -> Self {
+    pub fn from_rgb_in_viewing_conditions(rgb: Rgb, viewing_conditions: &ViewingConditions) -> Self {
+        Self::from_xyz_in_viewing_conditions(rgb.into(), viewing_conditions)
+    }
+
+    /// Given color expressed in [`Xyz`] form and viewed in
+    /// `viewing_conditions`, convert to [`Cam16`].
+    ///
+    /// # Panics
+    ///
+    /// Will panic if the hue is between 0 and 360
+    pub fn from_xyz_in_viewing_conditions(value: Xyz, viewing_conditions: &ViewingConditions) -> Self {
         let (r_c, g_c, b_c) = (
-            0.051461f64.mul_add(-z, 0.401288f64.mul_add(x, 0.650173 * y)),
-            0.045854f64.mul_add(z, (-0.250268f64).mul_add(x, 1.204414 * y)),
-            0.953127f64.mul_add(z, (-0.002079f64).mul_add(x, 0.048952 * y)),
+            0.051461f64.mul_add(-value.z, 0.401288f64.mul_add(value.x, 0.650173 * value.y)),
+            0.045854f64.mul_add(value.z, (-0.250268f64).mul_add(value.x, 1.204414 * value.y)),
+            0.953127f64.mul_add(value.z, (-0.002079f64).mul_add(value.x, 0.048952 * value.y)),
         );
 
         // Discount illuminant
@@ -217,7 +219,7 @@ impl Cam16 {
     /// `bstar`. assuming the color was viewed in default viewing
     /// conditions.
     pub fn from_ucs(jstar: f64, astar: f64, bstar: f64) -> Self {
-        Self::from_ucs_in_viewing_conditions(jstar, astar, bstar, &ViewingConditions::standard())
+        Self::from_ucs_in_viewing_conditions(jstar, astar, bstar, &ViewingConditions::s_rgb())
     }
 
     /// Create a CAM16 color from CAM16-UCS coordinates `jstar`, `astar`,
@@ -235,9 +237,9 @@ impl Cam16 {
         Self::from_jch_in_viewing_conditions(j, c, h, viewing_conditions)
     }
 
-    /// Argb representation of a color, given the color was viewed in
+    /// Rgb representation of a color, given the color was viewed in
     /// `viewing_conditions`
-    pub fn viewed(&self, viewing_conditions: &ViewingConditions) -> Argb {
+    pub fn viewed(&self, viewing_conditions: &ViewingConditions) -> Rgb {
         let xyz = self.xyz_in_viewing_conditions(viewing_conditions);
 
         xyz.into()
@@ -297,13 +299,13 @@ impl Cam16 {
     }
 }
 
-impl From<Argb> for Cam16 {
-    fn from(argb: Argb) -> Self {
-        Self::fromi32_in_viewing_conditions(argb, &ViewingConditions::s_rgb())
+impl From<Rgb> for Cam16 {
+    fn from(rgb: Rgb) -> Self {
+        Self::from_rgb_in_viewing_conditions(rgb, &ViewingConditions::s_rgb())
     }
 }
 
-impl From<Cam16> for Argb {
+impl From<Cam16> for Rgb {
     fn from(val: Cam16) -> Self {
         val.viewed(&ViewingConditions::s_rgb())
     }
@@ -315,20 +317,20 @@ mod tests {
 
     use float_cmp::assert_approx_eq;
 
-    use crate::{color::Argb, hct::Cam16};
+    use crate::{color::Rgb, hct::Cam16};
 
     #[test]
     fn test_cam16() {
-        let result0 = Cam16::from(Argb::from_str("449B3BEE").unwrap());
-        let result1 = Cam16::from(Argb::from_str("9AF54BA2").unwrap());
-        let result2 = Cam16::from(Argb::from_str("0C56B056").unwrap());
-        let result3 = Cam16::from(Argb::from_str("81D2AE51").unwrap());
-        let result4 = Cam16::from(Argb::from_str("88B0E2B9").unwrap());
-        let result5 = Cam16::from(Argb::from_str("7ECCD39F").unwrap());
-        let result6 = Cam16::from(Argb::from_str("A07D168E").unwrap());
-        let result7 = Cam16::from(Argb::from_str("1CB60B70").unwrap());
-        let result8 = Cam16::from(Argb::from_str("400279E4").unwrap());
-        let result9 = Cam16::from(Argb::from_str("DE9DA476").unwrap());
+        let result0 = Cam16::from(Rgb::from_str("9B3BEE").unwrap());
+        let result1 = Cam16::from(Rgb::from_str("F54BA2").unwrap());
+        let result2 = Cam16::from(Rgb::from_str("56B056").unwrap());
+        let result3 = Cam16::from(Rgb::from_str("D2AE51").unwrap());
+        let result4 = Cam16::from(Rgb::from_str("B0E2B9").unwrap());
+        let result5 = Cam16::from(Rgb::from_str("CCD39F").unwrap());
+        let result6 = Cam16::from(Rgb::from_str("7D168E").unwrap());
+        let result7 = Cam16::from(Rgb::from_str("B60B70").unwrap());
+        let result8 = Cam16::from(Rgb::from_str("0279E4").unwrap());
+        let result9 = Cam16::from(Rgb::from_str("9DA476").unwrap());
 
         assert_approx_eq!(f64, result0.hue, 311.42806917590127, epsilon = 1e-7);
         assert_approx_eq!(f64, result0.j, 39.80957637025326, epsilon = 1e-7);

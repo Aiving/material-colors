@@ -2,13 +2,13 @@
 #[cfg(feature = "std")] use std::vec::Vec;
 
 use super::{Quantizer, QuantizerResult, QuantizerWsmeans, QuantizerWu};
-use crate::color::Argb;
+use crate::color::Rgb;
 
 #[derive(Default)]
 pub struct QuantizerCelebi;
 
 impl Quantizer for QuantizerCelebi {
-    fn quantize(pixels: &[Argb], max_colors: usize) -> QuantizerResult {
+    fn quantize(pixels: &[Rgb], max_colors: usize) -> QuantizerResult {
         let wu_result = QuantizerWu::quantize(pixels, max_colors);
 
         QuantizerWsmeans::quantize(pixels, max_colors, &wu_result.color_to_count.into_keys().collect::<Vec<_>>())
@@ -21,109 +21,109 @@ mod tests {
     #[cfg(feature = "std")] use std::vec::Vec;
 
     use super::QuantizerCelebi;
-    use crate::{color::Argb, quantize::Quantizer};
+    use crate::{color::Rgb, quantize::Quantizer};
 
-    const RED: Argb = Argb::from_u32(0xFFFF0000);
-    const GREEN: Argb = Argb::from_u32(0xFF00FF00);
-    const BLUE: Argb = Argb::from_u32(0xFF0000FF);
-    // const WHITE: Argb = Argb::from_u32(0xffffffff);
-    // const RANDOM: Argb = Argb::from_u32(0xff426088);
+    const RED: Rgb = Rgb::from_u32(0xFF0000);
+    const GREEN: Rgb = Rgb::from_u32(0x00FF00);
+    const BLUE: Rgb = Rgb::from_u32(0x0000FF);
+    // const WHITE: Rgb = Rgb::from_u32(0xffffffff);
+    // const RANDOM: Rgb = Rgb::from_u32(0xff426088);
     const MAX_COLORS: usize = 256;
 
-    const IMAGE_PIXELS: [Argb; 84] = [
-        Argb::from_u32(0xFF050505),
-        Argb::from_u32(0xFF000000),
-        Argb::from_u32(0xFF000000),
-        Argb::from_u32(0xFF000000),
-        Argb::from_u32(0xFF000000),
-        Argb::from_u32(0xFF090909),
-        Argb::from_u32(0xFF060404),
-        Argb::from_u32(0xFF030102),
-        Argb::from_u32(0xFF080607),
-        Argb::from_u32(0xFF070506),
-        Argb::from_u32(0xFF010001),
-        Argb::from_u32(0xFF070506),
-        Argb::from_u32(0xFF364341),
-        Argb::from_u32(0xFF223529),
-        Argb::from_u32(0xFF14251C),
-        Argb::from_u32(0xFF11221A),
-        Argb::from_u32(0xFF1F3020),
-        Argb::from_u32(0xFF34443A),
-        Argb::from_u32(0xFF64817E),
-        Argb::from_u32(0xFF638777),
-        Argb::from_u32(0xFF486D58),
-        Argb::from_u32(0xFF2F5536),
-        Argb::from_u32(0xFF467258),
-        Argb::from_u32(0xFF7FB7B9),
-        Argb::from_u32(0xFF6D8473),
-        Argb::from_u32(0xFF859488),
-        Argb::from_u32(0xFF7A947E),
-        Argb::from_u32(0xFF5F815D),
-        Argb::from_u32(0xFF3A5D46),
-        Argb::from_u32(0xFF497469),
-        Argb::from_u32(0xFF737A73),
-        Argb::from_u32(0xFF656453),
-        Argb::from_u32(0xFF445938),
-        Argb::from_u32(0xFF657C4B),
-        Argb::from_u32(0xFF65715B),
-        Argb::from_u32(0xFF6A816E),
-        Argb::from_u32(0xFF667366),
-        Argb::from_u32(0xFF5B5547),
-        Argb::from_u32(0xFF3B391E),
-        Argb::from_u32(0xFF705E3D),
-        Argb::from_u32(0xFF7F6C5E),
-        Argb::from_u32(0xFF6D7C6C),
-        Argb::from_u32(0xFFA99C9C),
-        Argb::from_u32(0xFF8B7671),
-        Argb::from_u32(0xFF6A3229),
-        Argb::from_u32(0xFF80514B),
-        Argb::from_u32(0xFF857970),
-        Argb::from_u32(0xFF4F5A4C),
-        Argb::from_u32(0xFF897273),
-        Argb::from_u32(0xFF745451),
-        Argb::from_u32(0xFF512823),
-        Argb::from_u32(0xFF78585A),
-        Argb::from_u32(0xFF535552),
-        Argb::from_u32(0xFF40493F),
-        Argb::from_u32(0xFF151616),
-        Argb::from_u32(0xFF0A0C0C),
-        Argb::from_u32(0xFF050808),
-        Argb::from_u32(0xFF010303),
-        Argb::from_u32(0xFF000100),
-        Argb::from_u32(0xFF010200),
-        Argb::from_u32(0xFF191816),
-        Argb::from_u32(0xFF181818),
-        Argb::from_u32(0xFF0C0C0C),
-        Argb::from_u32(0xFF040404),
-        Argb::from_u32(0xFF0C0C0C),
-        Argb::from_u32(0xFF151514),
-        Argb::from_u32(0xFFB1C3B9),
-        Argb::from_u32(0xFFBFBFBF),
-        Argb::from_u32(0xFFBABABA),
-        Argb::from_u32(0xFFB7B7B7),
-        Argb::from_u32(0xFFB3B3B3),
-        Argb::from_u32(0xFFADADAD),
-        Argb::from_u32(0xFF535756),
-        Argb::from_u32(0xFF575656),
-        Argb::from_u32(0xFF555555),
-        Argb::from_u32(0xFF555555),
-        Argb::from_u32(0xFF545454),
-        Argb::from_u32(0xFF474646),
-        Argb::from_u32(0xFF000000),
-        Argb::from_u32(0xFF000000),
-        Argb::from_u32(0xFF0B0B0B),
-        Argb::from_u32(0xFF0B0B0B),
-        Argb::from_u32(0xFF000000),
-        Argb::from_u32(0xFF000000),
+    const IMAGE_PIXELS: [Rgb; 84] = [
+        Rgb::from_u32(0x050505),
+        Rgb::from_u32(0x000000),
+        Rgb::from_u32(0x000000),
+        Rgb::from_u32(0x000000),
+        Rgb::from_u32(0x000000),
+        Rgb::from_u32(0x090909),
+        Rgb::from_u32(0x060404),
+        Rgb::from_u32(0x030102),
+        Rgb::from_u32(0x080607),
+        Rgb::from_u32(0x070506),
+        Rgb::from_u32(0x010001),
+        Rgb::from_u32(0x070506),
+        Rgb::from_u32(0x364341),
+        Rgb::from_u32(0x223529),
+        Rgb::from_u32(0x14251C),
+        Rgb::from_u32(0x11221A),
+        Rgb::from_u32(0x1F3020),
+        Rgb::from_u32(0x34443A),
+        Rgb::from_u32(0x64817E),
+        Rgb::from_u32(0x638777),
+        Rgb::from_u32(0x486D58),
+        Rgb::from_u32(0x2F5536),
+        Rgb::from_u32(0x467258),
+        Rgb::from_u32(0x7FB7B9),
+        Rgb::from_u32(0x6D8473),
+        Rgb::from_u32(0x859488),
+        Rgb::from_u32(0x7A947E),
+        Rgb::from_u32(0x5F815D),
+        Rgb::from_u32(0x3A5D46),
+        Rgb::from_u32(0x497469),
+        Rgb::from_u32(0x737A73),
+        Rgb::from_u32(0x656453),
+        Rgb::from_u32(0x445938),
+        Rgb::from_u32(0x657C4B),
+        Rgb::from_u32(0x65715B),
+        Rgb::from_u32(0x6A816E),
+        Rgb::from_u32(0x667366),
+        Rgb::from_u32(0x5B5547),
+        Rgb::from_u32(0x3B391E),
+        Rgb::from_u32(0x705E3D),
+        Rgb::from_u32(0x7F6C5E),
+        Rgb::from_u32(0x6D7C6C),
+        Rgb::from_u32(0xA99C9C),
+        Rgb::from_u32(0x8B7671),
+        Rgb::from_u32(0x6A3229),
+        Rgb::from_u32(0x80514B),
+        Rgb::from_u32(0x857970),
+        Rgb::from_u32(0x4F5A4C),
+        Rgb::from_u32(0x897273),
+        Rgb::from_u32(0x745451),
+        Rgb::from_u32(0x512823),
+        Rgb::from_u32(0x78585A),
+        Rgb::from_u32(0x535552),
+        Rgb::from_u32(0x40493F),
+        Rgb::from_u32(0x151616),
+        Rgb::from_u32(0x0A0C0C),
+        Rgb::from_u32(0x050808),
+        Rgb::from_u32(0x010303),
+        Rgb::from_u32(0x000100),
+        Rgb::from_u32(0x010200),
+        Rgb::from_u32(0x191816),
+        Rgb::from_u32(0x181818),
+        Rgb::from_u32(0x0C0C0C),
+        Rgb::from_u32(0x040404),
+        Rgb::from_u32(0x0C0C0C),
+        Rgb::from_u32(0x151514),
+        Rgb::from_u32(0xB1C3B9),
+        Rgb::from_u32(0xBFBFBF),
+        Rgb::from_u32(0xBABABA),
+        Rgb::from_u32(0xB7B7B7),
+        Rgb::from_u32(0xB3B3B3),
+        Rgb::from_u32(0xADADAD),
+        Rgb::from_u32(0x535756),
+        Rgb::from_u32(0x575656),
+        Rgb::from_u32(0x555555),
+        Rgb::from_u32(0x555555),
+        Rgb::from_u32(0x545454),
+        Rgb::from_u32(0x474646),
+        Rgb::from_u32(0x000000),
+        Rgb::from_u32(0x000000),
+        Rgb::from_u32(0x0B0B0B),
+        Rgb::from_u32(0x0B0B0B),
+        Rgb::from_u32(0x000000),
+        Rgb::from_u32(0x000000),
     ];
 
     #[test]
     fn test_1rando() {
-        let result = QuantizerCelebi::quantize(&[Argb::from_u32(0xFF141216)], MAX_COLORS);
+        let result = QuantizerCelebi::quantize(&[Rgb::from_u32(0x141216)], MAX_COLORS);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
         assert_eq!(colors.len(), 1);
-        assert_eq!(colors[0], &Argb::from_u32(0xFF141216));
+        assert_eq!(colors[0], &Rgb::from_u32(0x141216));
     }
 
     #[test]

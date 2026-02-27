@@ -25,22 +25,22 @@ pub fn fix_if_disliked(hct: Hct) -> Hct {
 #[cfg(test)]
 mod tests {
     use super::is_disliked;
-    use crate::{color::Argb, dislike::fix_if_disliked, hct::Hct};
+    use crate::{color::Rgb, dislike::fix_if_disliked, hct::Hct};
 
     #[test]
     fn test_monk_skin_tone_scale_colors() {
         // From https://skintone.google#/get-started
         let monk_skin_tone_scale_colors = [
-            Argb::from_u32(0xFFF6EDE4),
-            Argb::from_u32(0xFFF3E7DB),
-            Argb::from_u32(0xFFF7EAD0),
-            Argb::from_u32(0xFFEADABA),
-            Argb::from_u32(0xFFD7BD96),
-            Argb::from_u32(0xFFA07E56),
-            Argb::from_u32(0xFF825C43),
-            Argb::from_u32(0xFF604134),
-            Argb::from_u32(0xFF3A312A),
-            Argb::from_u32(0xFF292420),
+            Rgb::from_u32(0xF6EDE4),
+            Rgb::from_u32(0xF3E7DB),
+            Rgb::from_u32(0xF7EAD0),
+            Rgb::from_u32(0xEADABA),
+            Rgb::from_u32(0xD7BD96),
+            Rgb::from_u32(0xA07E56),
+            Rgb::from_u32(0x825C43),
+            Rgb::from_u32(0x604134),
+            Rgb::from_u32(0x3A312A),
+            Rgb::from_u32(0x292420),
         ];
 
         for color in monk_skin_tone_scale_colors {
@@ -51,11 +51,11 @@ mod tests {
     #[test]
     fn test_bile_colors_disliked() {
         let unlikable = [
-            Argb::from_u32(0xFF95884B),
-            Argb::from_u32(0xFF716B40),
-            Argb::from_u32(0xFFB08E00),
-            Argb::from_u32(0xFF4C4308),
-            Argb::from_u32(0xFF464521),
+            Rgb::from_u32(0x95884B),
+            Rgb::from_u32(0x716B40),
+            Rgb::from_u32(0xB08E00),
+            Rgb::from_u32(0x4C4308),
+            Rgb::from_u32(0x464521),
         ];
 
         for color in unlikable {
@@ -66,11 +66,11 @@ mod tests {
     #[test]
     fn test_bile_colors_became_likable() {
         let unlikable = [
-            Argb::from_u32(0xFF95884B),
-            Argb::from_u32(0xFF716B40),
-            Argb::from_u32(0xFFB08E00),
-            Argb::from_u32(0xFF4C4308),
-            Argb::from_u32(0xFF464521),
+            Rgb::from_u32(0x95884B),
+            Rgb::from_u32(0x716B40),
+            Rgb::from_u32(0xB08E00),
+            Rgb::from_u32(0x4C4308),
+            Rgb::from_u32(0x464521),
         ];
 
         for color in unlikable {
@@ -89,6 +89,6 @@ mod tests {
         let color = Hct::from(100.0, 50.0, 67.0);
 
         assert!(!is_disliked(&color));
-        assert_eq!(Argb::from(fix_if_disliked(color)), Argb::from(color));
+        assert_eq!(Rgb::from(fix_if_disliked(color)), Rgb::from(color));
     }
 }

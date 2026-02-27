@@ -42,10 +42,6 @@ pub struct ViewingConditions {
 }
 
 impl ViewingConditions {
-    pub fn standard() -> Self {
-        Self::s_rgb()
-    }
-
     pub fn s_rgb() -> Self {
         Self::make(None, None, None, None, None)
     }

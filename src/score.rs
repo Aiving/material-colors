@@ -6,7 +6,7 @@
 use crate::utils::no_std::FloatExt;
 use crate::{
     IndexMap,
-    color::Argb,
+    color::Rgb,
     hct::Hct,
     utils::math::{difference_degrees, sanitize_degrees_int},
 };
@@ -41,8 +41,8 @@ impl Score {
     /// - Parameters: `colorsToPopulation`: is a map with keys of colors and
     ///   values of often the color appears, usually from a source image.
     ///   `desired`: Max count of colors to be returned in the list.
-    ///   `fallbackColorArgb`: Color to be returned if no other options
-    ///   available. `filter`: Whether to filter out undesireable combinations.
+    ///   `fallbackColorRgb`: Color to be returned if no other options
+    ///   available. `filter`: Whether to filter out undesirable combinations.
     ///
     /// - Returns: A list of color `Int` that can be used when generating a
     ///   theme. The list returned is of length <= `desired`. The recommended
@@ -52,18 +52,18 @@ impl Score {
     ///   Google Blue. The default number of colors returned is 4, simply
     ///   because thats the # of colors display in Android 12's wallpaper
     ///   picker.
-    pub fn score(colors_to_population: &IndexMap<Argb, u32>, desired: Option<i32>, fallback_color_argb: Option<Argb>, filter: Option<bool>) -> Vec<Argb> {
+    pub fn score(colors_to_population: &IndexMap<Rgb, u32>, desired: Option<i32>, fallback_color_rgb: Option<Rgb>, filter: Option<bool>) -> Vec<Rgb> {
         let desired = desired.unwrap_or(4);
-        let fallback_color_argb = fallback_color_argb.unwrap_or(Argb::new(255, 66, 133, 244));
+        let fallback_color_rgb = fallback_color_rgb.unwrap_or(Rgb::new(66, 133, 244));
         let filter = filter.unwrap_or(true);
-        // Get the HCT color for each Argb value, while finding the per hue count and
+        // Get the HCT color for each Rgb value, while finding the per hue count and
         // total count.
         let mut colors_hct = vec![];
         let mut hue_population = [0; 360];
         let mut population_sum = 0.0;
 
-        for (argb, population) in colors_to_population {
-            let hct: Hct = (*argb).into();
+        for (rgb, population) in colors_to_population {
+            let hct: Hct = (*rgb).into();
 
             let hue = hct.get_hue().floor() as i32;
 
@@ -149,11 +149,11 @@ impl Score {
         let mut colors = vec![];
 
         if chosen_colors.is_empty() {
-            colors.push(fallback_color_argb);
+            colors.push(fallback_color_rgb);
         }
 
         for chosen_hct in chosen_colors {
-            colors.push(Argb::from(chosen_hct));
+            colors.push(Rgb::from(chosen_hct));
         }
 
         colors
@@ -163,239 +163,239 @@ impl Score {
 #[cfg(test)]
 mod tests {
     use super::Score;
-    use crate::{IndexMap, color::Argb};
+    use crate::{IndexMap, color::Rgb};
 
     #[test]
     fn test_prioritizes_chroma() {
-        let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_u32(0xFF000000), 1),
-            (Argb::from_u32(0xFFFFFFFF), 1),
-            (Argb::from_u32(0xFF0000FF), 1),
+        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
+            (Rgb::from_u32(0x000000), 1),
+            (Rgb::from_u32(0xFFFFFF), 1),
+            (Rgb::from_u32(0x0000FF), 1),
         ]);
 
-        let ranked = Score::score(&argb_to_population, None, None, None);
+        let ranked = Score::score(&rgb_to_population, None, None, None);
 
         assert_eq!(ranked.len(), 1);
-        assert_eq!(ranked[0], Argb::from_u32(0xFF0000FF));
+        assert_eq!(ranked[0], Rgb::from_u32(0x0000FF));
     }
 
     #[test]
     fn test_prioritizes_chroma_when_proportions_equal() {
-        let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_u32(0xFFFF0000), 1),
-            (Argb::from_u32(0xFF00FF00), 1),
-            (Argb::from_u32(0xFF0000FF), 1),
+        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
+            (Rgb::from_u32(0xFF0000), 1),
+            (Rgb::from_u32(0x00FF00), 1),
+            (Rgb::from_u32(0x0000FF), 1),
         ]);
 
-        let ranked = Score::score(&argb_to_population, None, None, None);
+        let ranked = Score::score(&rgb_to_population, None, None, None);
 
         assert_eq!(ranked.len(), 3);
-        assert_eq!(ranked[0], Argb::from_u32(0xFFFF0000));
-        assert_eq!(ranked[1], Argb::from_u32(0xFF00FF00));
-        assert_eq!(ranked[2], Argb::from_u32(0xFF0000FF));
+        assert_eq!(ranked[0], Rgb::from_u32(0xFF0000));
+        assert_eq!(ranked[1], Rgb::from_u32(0x00FF00));
+        assert_eq!(ranked[2], Rgb::from_u32(0x0000FF));
     }
 
     #[test]
     fn test_generates_gblue_when_no_colors_available() {
-        let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([(Argb::from_u32(0xFF000000), 1)]);
+        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([(Rgb::from_u32(0x000000), 1)]);
 
-        let ranked = Score::score(&argb_to_population, None, None, None);
+        let ranked = Score::score(&rgb_to_population, None, None, None);
 
         assert_eq!(ranked.len(), 1);
-        assert_eq!(ranked[0], Argb::from_u32(0xFF4285F4));
+        assert_eq!(ranked[0], Rgb::from_u32(0x4285F4));
     }
 
     #[test]
     fn test_dedupes_nearby_hues() {
-        let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([(Argb::from_u32(0xFF008772), 1), (Argb::from_u32(0xFF318477), 1)]);
+        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([(Rgb::from_u32(0x008772), 1), (Rgb::from_u32(0x318477), 1)]);
 
-        let ranked = Score::score(&argb_to_population, None, None, None);
+        let ranked = Score::score(&rgb_to_population, None, None, None);
 
         assert_eq!(ranked.len(), 1);
-        assert_eq!(ranked[0], Argb::from_u32(0xFF008772));
+        assert_eq!(ranked[0], Rgb::from_u32(0x008772));
     }
 
     #[test]
     fn test_maximizes_hue_distance() {
-        let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_u32(0xFF008772), 1),
-            (Argb::from_u32(0xFF008587), 1),
-            (Argb::from_u32(0xFF007EBC), 1),
+        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
+            (Rgb::from_u32(0x008772), 1),
+            (Rgb::from_u32(0x008587), 1),
+            (Rgb::from_u32(0x007EBC), 1),
         ]);
 
-        let ranked = Score::score(&argb_to_population, Some(2), None, None);
+        let ranked = Score::score(&rgb_to_population, Some(2), None, None);
 
         assert_eq!(ranked.len(), 2);
-        assert_eq!(ranked[0], Argb::from_u32(0xFF007EBC));
-        assert_eq!(ranked[1], Argb::from_u32(0xFF008772));
+        assert_eq!(ranked[0], Rgb::from_u32(0x007EBC));
+        assert_eq!(ranked[1], Rgb::from_u32(0x008772));
     }
 
     #[test]
     fn test_generated_scenario_one() {
-        let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_u32(0xFF7EA16D), 67),
-            (Argb::from_u32(0xFFD8CCAE), 67),
-            (Argb::from_u32(0xFF835C0D), 49),
+        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
+            (Rgb::from_u32(0x7EA16D), 67),
+            (Rgb::from_u32(0xD8CCAE), 67),
+            (Rgb::from_u32(0x835C0D), 49),
         ]);
 
-        let ranked = Score::score(&argb_to_population, Some(3), Some(Argb::from_u32(0xFF8D3819)), Some(false));
+        let ranked = Score::score(&rgb_to_population, Some(3), Some(Rgb::from_u32(0x8D3819)), Some(false));
 
         assert_eq!(ranked.len(), 3);
-        assert_eq!(ranked[0], Argb::from_u32(0xFF7EA16D));
-        assert_eq!(ranked[1], Argb::from_u32(0xFFD8CCAE));
-        assert_eq!(ranked[2], Argb::from_u32(0xFF835C0D));
+        assert_eq!(ranked[0], Rgb::from_u32(0x7EA16D));
+        assert_eq!(ranked[1], Rgb::from_u32(0xD8CCAE));
+        assert_eq!(ranked[2], Rgb::from_u32(0x835C0D));
     }
 
     #[test]
     fn test_generated_scenario_two() {
-        let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_u32(0xFFD33881), 14),
-            (Argb::from_u32(0xFF3205CC), 77),
-            (Argb::from_u32(0xFF0B48CF), 36),
-            (Argb::from_u32(0xFFA08F5D), 81),
+        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
+            (Rgb::from_u32(0xD33881), 14),
+            (Rgb::from_u32(0x3205CC), 77),
+            (Rgb::from_u32(0x0B48CF), 36),
+            (Rgb::from_u32(0xA08F5D), 81),
         ]);
 
-        let ranked = Score::score(&argb_to_population, None, Some(Argb::from_u32(0xFF7D772B)), None);
+        let ranked = Score::score(&rgb_to_population, None, Some(Rgb::from_u32(0x7D772B)), None);
 
         assert_eq!(ranked.len(), 3);
-        assert_eq!(ranked[0], Argb::from_u32(0xFF3205CC));
-        assert_eq!(ranked[1], Argb::from_u32(0xFFA08F5D));
-        assert_eq!(ranked[2], Argb::from_u32(0xFFD33881));
+        assert_eq!(ranked[0], Rgb::from_u32(0x3205CC));
+        assert_eq!(ranked[1], Rgb::from_u32(0xA08F5D));
+        assert_eq!(ranked[2], Rgb::from_u32(0xD33881));
     }
 
     #[test]
     fn test_generated_scenario_three() {
-        let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_u32(0xFFBE94A6), 23),
-            (Argb::from_u32(0xFFC33FD7), 42),
-            (Argb::from_u32(0xFF899F36), 90),
-            (Argb::from_u32(0xFF94C574), 82),
+        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
+            (Rgb::from_u32(0xBE94A6), 23),
+            (Rgb::from_u32(0xC33FD7), 42),
+            (Rgb::from_u32(0x899F36), 90),
+            (Rgb::from_u32(0x94C574), 82),
         ]);
 
-        let ranked = Score::score(&argb_to_population, Some(3), Some(Argb::from_u32(0xFFAA79A4)), None);
+        let ranked = Score::score(&rgb_to_population, Some(3), Some(Rgb::from_u32(0xAA79A4)), None);
 
         assert_eq!(ranked.len(), 3);
-        assert_eq!(ranked[0], Argb::from_u32(0xFF94C574));
-        assert_eq!(ranked[1], Argb::from_u32(0xFFC33FD7));
-        assert_eq!(ranked[2], Argb::from_u32(0xFFBE94A6));
+        assert_eq!(ranked[0], Rgb::from_u32(0x94C574));
+        assert_eq!(ranked[1], Rgb::from_u32(0xC33FD7));
+        assert_eq!(ranked[2], Rgb::from_u32(0xBE94A6));
     }
 
     #[test]
     fn test_generated_scenario_four() {
-        let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_u32(0xFFDF241C), 85),
-            (Argb::from_u32(0xFF685859), 44),
-            (Argb::from_u32(0xFFD06D5F), 34),
-            (Argb::from_u32(0xFF561C54), 27),
-            (Argb::from_u32(0xFF713090), 88),
+        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
+            (Rgb::from_u32(0xDF241C), 85),
+            (Rgb::from_u32(0x685859), 44),
+            (Rgb::from_u32(0xD06D5F), 34),
+            (Rgb::from_u32(0x561C54), 27),
+            (Rgb::from_u32(0x713090), 88),
         ]);
 
-        let ranked = Score::score(&argb_to_population, Some(5), Some(Argb::from_u32(0xFF58C19C)), Some(false));
+        let ranked = Score::score(&rgb_to_population, Some(5), Some(Rgb::from_u32(0x58C19C)), Some(false));
 
         assert_eq!(ranked.len(), 2);
-        assert_eq!(ranked[0], Argb::from_u32(0xFFDF241C));
-        assert_eq!(ranked[1], Argb::from_u32(0xFF561C54));
+        assert_eq!(ranked[0], Rgb::from_u32(0xDF241C));
+        assert_eq!(ranked[1], Rgb::from_u32(0x561C54));
     }
 
     #[test]
     fn test_generated_scenario_five() {
-        let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_u32(0xFFBE66F8), 41),
-            (Argb::from_u32(0xFF4BBDA9), 88),
-            (Argb::from_u32(0xFF80F6F9), 44),
-            (Argb::from_u32(0xFFAB8017), 43),
-            (Argb::from_u32(0xFFE89307), 65),
+        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
+            (Rgb::from_u32(0xBE66F8), 41),
+            (Rgb::from_u32(0x4BBDA9), 88),
+            (Rgb::from_u32(0x80F6F9), 44),
+            (Rgb::from_u32(0xAB8017), 43),
+            (Rgb::from_u32(0xE89307), 65),
         ]);
 
-        let ranked = Score::score(&argb_to_population, Some(3), Some(Argb::from_u32(0xFF916691)), Some(false));
+        let ranked = Score::score(&rgb_to_population, Some(3), Some(Rgb::from_u32(0x916691)), Some(false));
 
         assert_eq!(ranked.len(), 3);
-        assert_eq!(ranked[0], Argb::from_u32(0xFFAB8017));
-        assert_eq!(ranked[1], Argb::from_u32(0xFF4BBDA9));
-        assert_eq!(ranked[2], Argb::from_u32(0xFFBE66F8));
+        assert_eq!(ranked[0], Rgb::from_u32(0xAB8017));
+        assert_eq!(ranked[1], Rgb::from_u32(0x4BBDA9));
+        assert_eq!(ranked[2], Rgb::from_u32(0xBE66F8));
     }
 
     #[test]
     fn test_generated_scenario_six() {
-        let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_u32(0xFF18EA8F), 93),
-            (Argb::from_u32(0xFF327593), 18),
-            (Argb::from_u32(0xFF066A18), 74),
-            (Argb::from_u32(0xFFFA8A23), 62),
-            (Argb::from_u32(0xFF04CA1F), 65),
+        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
+            (Rgb::from_u32(0x18EA8F), 93),
+            (Rgb::from_u32(0x327593), 18),
+            (Rgb::from_u32(0x066A18), 74),
+            (Rgb::from_u32(0xFA8A23), 62),
+            (Rgb::from_u32(0x04CA1F), 65),
         ]);
 
-        let ranked = Score::score(&argb_to_population, Some(2), Some(Argb::from_u32(0xFF4C377A)), Some(false));
+        let ranked = Score::score(&rgb_to_population, Some(2), Some(Rgb::from_u32(0x4C377A)), Some(false));
 
         assert_eq!(ranked.len(), 2);
-        assert_eq!(ranked[0], Argb::from_u32(0xFF18EA8F));
-        assert_eq!(ranked[1], Argb::from_u32(0xFFFA8A23));
+        assert_eq!(ranked[0], Rgb::from_u32(0x18EA8F));
+        assert_eq!(ranked[1], Rgb::from_u32(0xFA8A23));
     }
 
     #[test]
     fn test_generated_scenario_seven() {
-        let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_u32(0xFF2E05ED), 23),
-            (Argb::from_u32(0xFF153E55), 90),
-            (Argb::from_u32(0xFF9AB220), 23),
-            (Argb::from_u32(0xFF153379), 66),
-            (Argb::from_u32(0xFF68BCC3), 81),
+        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
+            (Rgb::from_u32(0x2E05ED), 23),
+            (Rgb::from_u32(0x153E55), 90),
+            (Rgb::from_u32(0x9AB220), 23),
+            (Rgb::from_u32(0x153379), 66),
+            (Rgb::from_u32(0x68BCC3), 81),
         ]);
 
-        let ranked = Score::score(&argb_to_population, Some(2), Some(Argb::from_u32(0xFFF588DC)), None);
+        let ranked = Score::score(&rgb_to_population, Some(2), Some(Rgb::from_u32(0xF588DC)), None);
 
         assert_eq!(ranked.len(), 2);
-        assert_eq!(ranked[0], Argb::from_u32(0xFF2E05ED));
-        assert_eq!(ranked[1], Argb::from_u32(0xFF9AB220));
+        assert_eq!(ranked[0], Rgb::from_u32(0x2E05ED));
+        assert_eq!(ranked[1], Rgb::from_u32(0x9AB220));
     }
 
     #[test]
     fn test_generated_scenario_eight() {
-        let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_u32(0xFF816EC5), 24),
-            (Argb::from_u32(0xFF6DCB94), 19),
-            (Argb::from_u32(0xFF3CAE91), 98),
-            (Argb::from_u32(0xFF5B542F), 25),
+        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
+            (Rgb::from_u32(0x816EC5), 24),
+            (Rgb::from_u32(0x6DCB94), 19),
+            (Rgb::from_u32(0x3CAE91), 98),
+            (Rgb::from_u32(0x5B542F), 25),
         ]);
 
-        let ranked = Score::score(&argb_to_population, Some(1), Some(Argb::from_u32(0xFF84B0FD)), Some(false));
+        let ranked = Score::score(&rgb_to_population, Some(1), Some(Rgb::from_u32(0x84B0FD)), Some(false));
 
         assert_eq!(ranked.len(), 1);
-        assert_eq!(ranked[0], Argb::from_u32(0xFF3CAE91));
+        assert_eq!(ranked[0], Rgb::from_u32(0x3CAE91));
     }
 
     #[test]
     fn test_generated_scenario_nine() {
-        let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_u32(0xFF206F86), 52),
-            (Argb::from_u32(0xFF4A620D), 96),
-            (Argb::from_u32(0xFFF51401), 85),
-            (Argb::from_u32(0xFF2B8EBF), 3),
-            (Argb::from_u32(0xFF277766), 59),
+        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
+            (Rgb::from_u32(0x206F86), 52),
+            (Rgb::from_u32(0x4A620D), 96),
+            (Rgb::from_u32(0xF51401), 85),
+            (Rgb::from_u32(0x2B8EBF), 3),
+            (Rgb::from_u32(0x277766), 59),
         ]);
 
-        let ranked = Score::score(&argb_to_population, Some(3), Some(Argb::from_u32(0xFF02B415)), None);
+        let ranked = Score::score(&rgb_to_population, Some(3), Some(Rgb::from_u32(0x02B415)), None);
 
         assert_eq!(ranked.len(), 3);
-        assert_eq!(ranked[0], Argb::from_u32(0xFFF51401));
-        assert_eq!(ranked[1], Argb::from_u32(0xFF4A620D));
-        assert_eq!(ranked[2], Argb::from_u32(0xFF2B8EBF));
+        assert_eq!(ranked[0], Rgb::from_u32(0xF51401));
+        assert_eq!(ranked[1], Rgb::from_u32(0x4A620D));
+        assert_eq!(ranked[2], Rgb::from_u32(0x2B8EBF));
     }
 
     #[test]
     fn test_generated_scenario_ten() {
-        let argb_to_population: IndexMap<Argb, u32> = IndexMap::from_iter([
-            (Argb::from_u32(0xFF8B1D99), 54),
-            (Argb::from_u32(0xFF27EFFE), 43),
-            (Argb::from_u32(0xFF6F558D), 2),
-            (Argb::from_u32(0xFF77FDF2), 78),
+        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
+            (Rgb::from_u32(0x8B1D99), 54),
+            (Rgb::from_u32(0x27EFFE), 43),
+            (Rgb::from_u32(0x6F558D), 2),
+            (Rgb::from_u32(0x77FDF2), 78),
         ]);
 
-        let ranked = Score::score(&argb_to_population, None, Some(Argb::from_u32(0xFF5E7A10)), None);
+        let ranked = Score::score(&rgb_to_population, None, Some(Rgb::from_u32(0x5E7A10)), None);
 
         assert_eq!(ranked.len(), 3);
-        assert_eq!(ranked[0], Argb::from_u32(0xFF27EFFE));
-        assert_eq!(ranked[1], Argb::from_u32(0xFF8B1D99));
-        assert_eq!(ranked[2], Argb::from_u32(0xFF6F558D));
+        assert_eq!(ranked[0], Rgb::from_u32(0x27EFFE));
+        assert_eq!(ranked[1], Rgb::from_u32(0x8B1D99));
+        assert_eq!(ranked[2], Rgb::from_u32(0x6F558D));
     }
 }

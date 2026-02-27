@@ -2,12 +2,12 @@
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 use crate::{
-    color::Argb,
+    color::Rgb,
     hct::{Cam16, Hct},
     utils::math::{difference_degrees, rotate_direction, sanitize_degrees_double},
 };
 
-pub fn harmonize(design_color: Argb, source_color: Argb) -> Argb {
+pub fn harmonize(design_color: Rgb, source_color: Rgb) -> Rgb {
     let from_hct: Hct = design_color.into();
     let to_hct: Hct = source_color.into();
 
@@ -19,7 +19,7 @@ pub fn harmonize(design_color: Argb, source_color: Argb) -> Argb {
     Hct::from(output_hue, from_hct.get_chroma(), from_hct.get_tone()).into()
 }
 
-pub fn hct_hue(from: Argb, to: Argb, amount: f64) -> Argb {
+pub fn hct_hue(from: Rgb, to: Rgb, amount: f64) -> Rgb {
     let ucs = cam16_ucs(from, to, amount);
 
     let ucs_cam = Cam16::from(ucs);
@@ -30,7 +30,7 @@ pub fn hct_hue(from: Argb, to: Argb, amount: f64) -> Argb {
     blended.into()
 }
 
-pub fn cam16_ucs(from: Argb, to: Argb, amount: f64) -> Argb {
+pub fn cam16_ucs(from: Rgb, to: Rgb, amount: f64) -> Rgb {
     let from_cam = Cam16::from(from);
     let to_cam = Cam16::from(to);
 
@@ -56,11 +56,11 @@ mod tests {
     use core::str::FromStr;
 
     use super::hct_hue;
-    use crate::color::Argb;
+    use crate::color::Rgb;
 
     #[test]
     fn test_red_to_blue() {
-        let blended = hct_hue(Argb::from_str("ff0000").unwrap(), Argb::from_str("0000ff").unwrap(), 0.8);
+        let blended = hct_hue(Rgb::from_str("ff0000").unwrap(), Rgb::from_str("0000ff").unwrap(), 0.8);
 
         assert_eq!(blended.to_hex(), "905eff");
     }

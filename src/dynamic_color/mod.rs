@@ -13,7 +13,7 @@ pub use variant::Variant;
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 use crate::{
-    color::Argb,
+    color::Rgb,
     contrast::{darker, darker_unsafe, lighter, lighter_unsafe, ratio_of_tones},
     hct::Hct,
     palette::TonalPalette,
@@ -52,8 +52,8 @@ pub struct DynamicColor {
     palette: DynamicSchemeFnRef<TonalPalette>,
     tone: DynamicSchemeFn<f64>,
     is_background: bool,
-    background: Option<DynamicSchemeFn<DynamicColor>>,
-    second_background: Option<DynamicSchemeFn<DynamicColor>>,
+    background: Option<DynamicSchemeFn<Self>>,
+    second_background: Option<DynamicSchemeFn<Self>>,
     contrast_curve: Option<ContrastCurve>,
     tone_delta_pair: Option<DynamicSchemeFn<ToneDeltaPair>>,
 }
@@ -152,13 +152,13 @@ impl DynamicColor {
         self
     }
 
-    /// Return a Argb integer (i.e. a hex code).
+    /// Return a Rgb integer (i.e. a hex code).
     ///
     /// - Parameter scheme: Defines the conditions of the user interface, for
     ///   example, whether or not it is dark mode or light mode, and what the
     ///   desired contrast level is.
-    /// - Returns: The color as an integer (Argb).
-    pub fn get_argb(&self, scheme: &DynamicScheme) -> Argb {
+    /// - Returns: The color as an integer (Rgb).
+    pub fn get_rgb(&self, scheme: &DynamicScheme) -> Rgb {
         self.get_hct(scheme).into()
     }
 
@@ -440,7 +440,7 @@ mod tests {
     use super::{DynamicColor, MaterialDynamicColors};
     use crate::{
         Map,
-        color::Argb,
+        color::Rgb,
         contrast::ratio_of_tones,
         hct::Hct,
         scheme::variant::{SchemeContent, SchemeFidelity, SchemeMonochrome, SchemeTonalSpot},
@@ -449,10 +449,10 @@ mod tests {
     #[test]
     fn test_contrast_pairs() {
         let seed_colors: [Hct; 4] = [
-            Argb::from_u32(0xFFFF0000).into(),
-            Argb::from_u32(0xFFFFFF00).into(),
-            Argb::from_u32(0xFF00FF00).into(),
-            Argb::from_u32(0xFF0000FF).into(),
+            Rgb::from_u32(0xFF0000).into(),
+            Rgb::from_u32(0xFFFF00).into(),
+            Rgb::from_u32(0x00FF00).into(),
+            Rgb::from_u32(0x0000FF).into(),
         ];
 
         let contrast_levels = [-1.0, -0.5, 0.0, 0.5, 1.0];
@@ -543,7 +543,7 @@ mod tests {
     // Tests for fixed colors.
     #[test]
     fn test_fixed_colors_in_non_monochrome_schemes() {
-        let scheme = SchemeTonalSpot::new(Argb::from_u32(0xFFFF0000).into(), true, Some(0.0)).scheme;
+        let scheme = SchemeTonalSpot::new(Rgb::from_u32(0xFF0000).into(), true, Some(0.0)).scheme;
 
         assert_approx_eq!(f64, MaterialDynamicColors::primary_fixed().get_hct(&scheme).get_tone(), 90.0, epsilon = 1.0);
         assert_approx_eq!(f64, MaterialDynamicColors::primary_fixed_dim().get_hct(&scheme).get_tone(), 80.0, epsilon = 1.0);
@@ -591,7 +591,7 @@ mod tests {
 
     #[test]
     fn test_fixed_colors_in_light_monochrome_schemes() {
-        let scheme = SchemeMonochrome::new(Argb::from_u32(0xFFFF0000).into(), false, Some(0.0)).scheme;
+        let scheme = SchemeMonochrome::new(Rgb::from_u32(0xFF0000).into(), false, Some(0.0)).scheme;
 
         assert_approx_eq!(f64, MaterialDynamicColors::primary_fixed().get_hct(&scheme).get_tone(), 40.0, epsilon = 1.0);
         assert_approx_eq!(f64, MaterialDynamicColors::primary_fixed_dim().get_hct(&scheme).get_tone(), 30.0, epsilon = 1.0);
@@ -644,7 +644,7 @@ mod tests {
 
     #[test]
     fn test_fixed_colors_in_dark_monochrome_schemes() {
-        let scheme = SchemeMonochrome::new(Argb::from_u32(0xFFFF0000).into(), true, Some(0.0)).scheme;
+        let scheme = SchemeMonochrome::new(Rgb::from_u32(0xFF0000).into(), true, Some(0.0)).scheme;
 
         assert_approx_eq!(f64, MaterialDynamicColors::primary_fixed().get_hct(&scheme).get_tone(), 40.0, epsilon = 1.0);
         assert_approx_eq!(f64, MaterialDynamicColors::primary_fixed_dim().get_hct(&scheme).get_tone(), 30.0, epsilon = 1.0);

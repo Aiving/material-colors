@@ -2,12 +2,10 @@
 use alloc::{string::String, vec::Vec};
 #[cfg(feature = "std")] use std::{string::String, vec::Vec};
 
-#[cfg(feature = "serde")] use serde::Serialize;
-
 #[allow(deprecated)]
 use crate::{
     blend::harmonize,
-    color::Argb,
+    color::Rgb,
     dynamic_color::{DynamicScheme, Variant},
     palette::{CorePalette, Palette, TonalPalette},
     scheme::Scheme,
@@ -15,29 +13,29 @@ use crate::{
 
 /// Custom color used to pair with a theme
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CustomColor {
-    pub value: Argb,
+    pub value: Rgb,
     pub name: String,
     pub blend: bool,
 }
 
 /// Color group
 #[derive(Debug, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ColorGroup {
-    pub color: Argb,
-    pub on_color: Argb,
-    pub color_container: Argb,
-    pub on_color_container: Argb,
+    pub color: Rgb,
+    pub on_color: Rgb,
+    pub color_container: Rgb,
+    pub on_color_container: Rgb,
 }
 
 /// Custom Color Group
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CustomColorGroup {
     pub color: CustomColor,
-    pub value: Argb,
+    pub value: Rgb,
     pub light: ColorGroup,
     pub dark: ColorGroup,
 }
@@ -46,7 +44,7 @@ impl CustomColorGroup {
     /// Generate custom color group from source and target color
     ///
     /// @link <https://m3.material.io/styles/color/the-color-system/color-roles>
-    fn new(source: Argb, color: CustomColor) -> Self {
+    fn new(source: Rgb, color: CustomColor) -> Self {
         let mut value = color.value;
 
         if color.blend {
@@ -78,14 +76,14 @@ impl CustomColorGroup {
 }
 
 #[derive(Debug, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Schemes {
     pub light: Scheme,
     pub dark: Scheme,
 }
 
 #[derive(Debug, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Palettes {
     pub primary: TonalPalette,
     pub secondary: TonalPalette,
@@ -96,22 +94,22 @@ pub struct Palettes {
 }
 
 pub struct ThemeBuilder {
-    source: Argb,
+    source: Rgb,
     variant: Variant,
     color_match: bool,
-    primary: Option<Argb>,
-    secondary: Option<Argb>,
-    tertiary: Option<Argb>,
-    error: Option<Argb>,
-    neutral: Option<Argb>,
-    neutral_variant: Option<Argb>,
+    primary: Option<Rgb>,
+    secondary: Option<Rgb>,
+    tertiary: Option<Rgb>,
+    error: Option<Rgb>,
+    neutral: Option<Rgb>,
+    neutral_variant: Option<Rgb>,
     custom_colors: Vec<CustomColor>,
 }
 
 impl ThemeBuilder {
     /// Creates a theme builder with a custom source color.
     #[must_use]
-    pub const fn with_source(source: Argb) -> Self {
+    pub const fn with_source(source: Rgb) -> Self {
         Self {
             source,
             variant: Variant::TonalSpot,
@@ -136,7 +134,7 @@ impl ThemeBuilder {
 
     /// Sets the primary color of the theme.
     #[must_use]
-    pub const fn primary(mut self, color: Argb) -> Self {
+    pub const fn primary(mut self, color: Rgb) -> Self {
         self.primary = Some(color);
 
         self
@@ -144,7 +142,7 @@ impl ThemeBuilder {
 
     /// Sets the secondary color of the theme.
     #[must_use]
-    pub const fn secondary(mut self, color: Argb) -> Self {
+    pub const fn secondary(mut self, color: Rgb) -> Self {
         self.secondary = Some(color);
 
         self
@@ -152,7 +150,7 @@ impl ThemeBuilder {
 
     /// Sets the tertiary color of the theme.
     #[must_use]
-    pub const fn tertiary(mut self, color: Argb) -> Self {
+    pub const fn tertiary(mut self, color: Rgb) -> Self {
         self.tertiary = Some(color);
 
         self
@@ -160,7 +158,7 @@ impl ThemeBuilder {
 
     /// Sets the error color of the theme.
     #[must_use]
-    pub const fn error(mut self, color: Argb) -> Self {
+    pub const fn error(mut self, color: Rgb) -> Self {
         self.error = Some(color);
 
         self
@@ -168,7 +166,7 @@ impl ThemeBuilder {
 
     /// Sets the neutral color, used for background and surfaces.
     #[must_use]
-    pub const fn neutral(mut self, color: Argb) -> Self {
+    pub const fn neutral(mut self, color: Rgb) -> Self {
         self.neutral = Some(color);
 
         self
@@ -177,7 +175,7 @@ impl ThemeBuilder {
     /// Sets the neutral variant color, used for for medium emphasis and
     /// variants.
     #[must_use]
-    pub const fn neutral_variant(mut self, color: Argb) -> Self {
+    pub const fn neutral_variant(mut self, color: Rgb) -> Self {
         self.neutral_variant = Some(color);
 
         self
@@ -275,9 +273,9 @@ impl ThemeBuilder {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Theme {
-    pub source: Argb,
+    pub source: Rgb,
     pub schemes: Schemes,
     pub palettes: Palettes,
     pub custom_colors: Vec<CustomColorGroup>,

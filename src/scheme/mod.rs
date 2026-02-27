@@ -3,64 +3,62 @@
 use core::{array::IntoIter, fmt};
 #[cfg(feature = "std")] use std::string::String;
 
-#[cfg(feature = "serde")] use serde::Serialize;
-
-use crate::{Map, color::Argb, dynamic_color::DynamicScheme, palette::CorePalette};
+use crate::{Map, color::Rgb, dynamic_color::DynamicScheme, palette::CorePalette};
 
 pub mod variant;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Scheme {
-    pub primary: Argb,
-    pub on_primary: Argb,
-    pub primary_container: Argb,
-    pub on_primary_container: Argb,
-    pub inverse_primary: Argb,
-    pub primary_fixed: Argb,
-    pub primary_fixed_dim: Argb,
-    pub on_primary_fixed: Argb,
-    pub on_primary_fixed_variant: Argb,
-    pub secondary: Argb,
-    pub on_secondary: Argb,
-    pub secondary_container: Argb,
-    pub on_secondary_container: Argb,
-    pub secondary_fixed: Argb,
-    pub secondary_fixed_dim: Argb,
-    pub on_secondary_fixed: Argb,
-    pub on_secondary_fixed_variant: Argb,
-    pub tertiary: Argb,
-    pub on_tertiary: Argb,
-    pub tertiary_container: Argb,
-    pub on_tertiary_container: Argb,
-    pub tertiary_fixed: Argb,
-    pub tertiary_fixed_dim: Argb,
-    pub on_tertiary_fixed: Argb,
-    pub on_tertiary_fixed_variant: Argb,
-    pub error: Argb,
-    pub on_error: Argb,
-    pub error_container: Argb,
-    pub on_error_container: Argb,
-    pub surface_dim: Argb,
-    pub surface: Argb,
-    pub surface_tint: Argb,
-    pub surface_bright: Argb,
-    pub surface_container_lowest: Argb,
-    pub surface_container_low: Argb,
-    pub surface_container: Argb,
-    pub surface_container_high: Argb,
-    pub surface_container_highest: Argb,
-    pub on_surface: Argb,
-    pub on_surface_variant: Argb,
-    pub outline: Argb,
-    pub outline_variant: Argb,
-    pub inverse_surface: Argb,
-    pub inverse_on_surface: Argb,
-    pub surface_variant: Argb,
-    pub background: Argb,
-    pub on_background: Argb,
-    pub shadow: Argb,
-    pub scrim: Argb,
+    pub primary: Rgb,
+    pub on_primary: Rgb,
+    pub primary_container: Rgb,
+    pub on_primary_container: Rgb,
+    pub inverse_primary: Rgb,
+    pub primary_fixed: Rgb,
+    pub primary_fixed_dim: Rgb,
+    pub on_primary_fixed: Rgb,
+    pub on_primary_fixed_variant: Rgb,
+    pub secondary: Rgb,
+    pub on_secondary: Rgb,
+    pub secondary_container: Rgb,
+    pub on_secondary_container: Rgb,
+    pub secondary_fixed: Rgb,
+    pub secondary_fixed_dim: Rgb,
+    pub on_secondary_fixed: Rgb,
+    pub on_secondary_fixed_variant: Rgb,
+    pub tertiary: Rgb,
+    pub on_tertiary: Rgb,
+    pub tertiary_container: Rgb,
+    pub on_tertiary_container: Rgb,
+    pub tertiary_fixed: Rgb,
+    pub tertiary_fixed_dim: Rgb,
+    pub on_tertiary_fixed: Rgb,
+    pub on_tertiary_fixed_variant: Rgb,
+    pub error: Rgb,
+    pub on_error: Rgb,
+    pub error_container: Rgb,
+    pub on_error_container: Rgb,
+    pub surface_dim: Rgb,
+    pub surface: Rgb,
+    pub surface_tint: Rgb,
+    pub surface_bright: Rgb,
+    pub surface_container_lowest: Rgb,
+    pub surface_container_low: Rgb,
+    pub surface_container: Rgb,
+    pub surface_container_high: Rgb,
+    pub surface_container_highest: Rgb,
+    pub on_surface: Rgb,
+    pub on_surface_variant: Rgb,
+    pub outline: Rgb,
+    pub outline_variant: Rgb,
+    pub inverse_surface: Rgb,
+    pub inverse_on_surface: Rgb,
+    pub surface_variant: Rgb,
+    pub background: Rgb,
+    pub on_background: Rgb,
+    pub shadow: Rgb,
+    pub scrim: Rgb,
 }
 
 impl fmt::Display for Scheme {
@@ -71,55 +69,55 @@ impl fmt::Display for Scheme {
 
 impl Scheme {
     pub const fn new(
-        primary: Argb,
-        on_primary: Argb,
-        primary_container: Argb,
-        on_primary_container: Argb,
-        inverse_primary: Argb,
-        primary_fixed: Argb,
-        primary_fixed_dim: Argb,
-        on_primary_fixed: Argb,
-        on_primary_fixed_variant: Argb,
-        secondary: Argb,
-        on_secondary: Argb,
-        secondary_container: Argb,
-        on_secondary_container: Argb,
-        secondary_fixed: Argb,
-        secondary_fixed_dim: Argb,
-        on_secondary_fixed: Argb,
-        on_secondary_fixed_variant: Argb,
-        tertiary: Argb,
-        on_tertiary: Argb,
-        tertiary_container: Argb,
-        on_tertiary_container: Argb,
-        tertiary_fixed: Argb,
-        tertiary_fixed_dim: Argb,
-        on_tertiary_fixed: Argb,
-        on_tertiary_fixed_variant: Argb,
-        error: Argb,
-        on_error: Argb,
-        error_container: Argb,
-        on_error_container: Argb,
-        surface_dim: Argb,
-        surface: Argb,
-        surface_tint: Argb,
-        surface_bright: Argb,
-        surface_container_lowest: Argb,
-        surface_container_low: Argb,
-        surface_container: Argb,
-        surface_container_high: Argb,
-        surface_container_highest: Argb,
-        on_surface: Argb,
-        on_surface_variant: Argb,
-        outline: Argb,
-        outline_variant: Argb,
-        inverse_surface: Argb,
-        inverse_on_surface: Argb,
-        surface_variant: Argb,
-        background: Argb,
-        on_background: Argb,
-        shadow: Argb,
-        scrim: Argb,
+        primary: Rgb,
+        on_primary: Rgb,
+        primary_container: Rgb,
+        on_primary_container: Rgb,
+        inverse_primary: Rgb,
+        primary_fixed: Rgb,
+        primary_fixed_dim: Rgb,
+        on_primary_fixed: Rgb,
+        on_primary_fixed_variant: Rgb,
+        secondary: Rgb,
+        on_secondary: Rgb,
+        secondary_container: Rgb,
+        on_secondary_container: Rgb,
+        secondary_fixed: Rgb,
+        secondary_fixed_dim: Rgb,
+        on_secondary_fixed: Rgb,
+        on_secondary_fixed_variant: Rgb,
+        tertiary: Rgb,
+        on_tertiary: Rgb,
+        tertiary_container: Rgb,
+        on_tertiary_container: Rgb,
+        tertiary_fixed: Rgb,
+        tertiary_fixed_dim: Rgb,
+        on_tertiary_fixed: Rgb,
+        on_tertiary_fixed_variant: Rgb,
+        error: Rgb,
+        on_error: Rgb,
+        error_container: Rgb,
+        on_error_container: Rgb,
+        surface_dim: Rgb,
+        surface: Rgb,
+        surface_tint: Rgb,
+        surface_bright: Rgb,
+        surface_container_lowest: Rgb,
+        surface_container_low: Rgb,
+        surface_container: Rgb,
+        surface_container_high: Rgb,
+        surface_container_highest: Rgb,
+        on_surface: Rgb,
+        on_surface_variant: Rgb,
+        outline: Rgb,
+        outline_variant: Rgb,
+        inverse_surface: Rgb,
+        inverse_on_surface: Rgb,
+        surface_variant: Rgb,
+        background: Rgb,
+        on_background: Rgb,
+        shadow: Rgb,
+        scrim: Rgb,
     ) -> Self {
         Self {
             primary,
@@ -232,8 +230,8 @@ impl From<DynamicScheme> for Scheme {
 }
 
 impl IntoIterator for Scheme {
-    type IntoIter = IntoIter<(String, Argb), 49>;
-    type Item = (String, Argb);
+    type IntoIter = IntoIter<(String, Rgb), 49>;
+    type Item = (String, Rgb);
 
     fn into_iter(self) -> Self::IntoIter {
         [
@@ -293,7 +291,7 @@ impl IntoIterator for Scheme {
 
 impl From<Scheme> for Map<String, String> {
     fn from(value: Scheme) -> Self {
-        let map: Map<String, Argb> = Map::from_iter(value);
+        let map: Map<String, Rgb> = Map::from_iter(value);
 
         map.into_iter().map(|(key, value)| (key, value.to_hex_with_pound())).collect()
     }
@@ -306,35 +304,35 @@ impl From<Scheme> for Map<String, String> {
 /// We use this to test scheme generation from a core palette.
 #[derive(PartialEq, Eq, Debug)]
 pub struct SchemeFromPalette {
-    pub primary: Argb,
-    pub on_primary: Argb,
-    pub primary_container: Argb,
-    pub on_primary_container: Argb,
-    pub secondary: Argb,
-    pub on_secondary: Argb,
-    pub secondary_container: Argb,
-    pub on_secondary_container: Argb,
-    pub tertiary: Argb,
-    pub on_tertiary: Argb,
-    pub tertiary_container: Argb,
-    pub on_tertiary_container: Argb,
-    pub error: Argb,
-    pub on_error: Argb,
-    pub error_container: Argb,
-    pub on_error_container: Argb,
-    pub surface: Argb,
-    pub on_surface: Argb,
-    pub surface_variant: Argb,
-    pub on_surface_variant: Argb,
-    pub outline: Argb,
-    pub outline_variant: Argb,
-    pub background: Argb,
-    pub on_background: Argb,
-    pub shadow: Argb,
-    pub scrim: Argb,
-    pub inverse_surface: Argb,
-    pub inverse_on_surface: Argb,
-    pub inverse_primary: Argb,
+    pub primary: Rgb,
+    pub on_primary: Rgb,
+    pub primary_container: Rgb,
+    pub on_primary_container: Rgb,
+    pub secondary: Rgb,
+    pub on_secondary: Rgb,
+    pub secondary_container: Rgb,
+    pub on_secondary_container: Rgb,
+    pub tertiary: Rgb,
+    pub on_tertiary: Rgb,
+    pub tertiary_container: Rgb,
+    pub on_tertiary_container: Rgb,
+    pub error: Rgb,
+    pub on_error: Rgb,
+    pub error_container: Rgb,
+    pub on_error_container: Rgb,
+    pub surface: Rgb,
+    pub on_surface: Rgb,
+    pub surface_variant: Rgb,
+    pub on_surface_variant: Rgb,
+    pub outline: Rgb,
+    pub outline_variant: Rgb,
+    pub background: Rgb,
+    pub on_background: Rgb,
+    pub shadow: Rgb,
+    pub scrim: Rgb,
+    pub inverse_surface: Rgb,
+    pub inverse_on_surface: Rgb,
+    pub inverse_primary: Rgb,
 }
 
 impl SchemeFromPalette {
@@ -410,19 +408,19 @@ impl SchemeFromPalette {
         }
     }
 
-    pub fn light(argb: Argb) -> Self {
+    pub fn light(argb: Rgb) -> Self {
         Self::light_from_palette(&CorePalette::of(argb))
     }
 
-    pub fn light_content(argb: Argb) -> Self {
+    pub fn light_content(argb: Rgb) -> Self {
         Self::light_from_palette(&CorePalette::content_of(argb))
     }
 
-    pub fn dark(argb: Argb) -> Self {
+    pub fn dark(argb: Rgb) -> Self {
         Self::dark_from_palette(&CorePalette::of(argb))
     }
 
-    pub fn dark_content(argb: Argb) -> Self {
+    pub fn dark_content(argb: Rgb) -> Self {
         Self::dark_from_palette(&CorePalette::content_of(argb))
     }
 }
@@ -431,11 +429,11 @@ impl SchemeFromPalette {
 mod tests {
     use float_cmp::assert_approx_eq;
 
-    use crate::{color::Argb, scheme::SchemeFromPalette};
+    use crate::{color::Rgb, scheme::SchemeFromPalette};
 
     #[test]
     fn test_surface_tones() {
-        let c = Argb::from_u32(0xFFFF0000);
+        let c = Rgb::from_u32(0xFF0000);
 
         let light = SchemeFromPalette::light(c);
         let dark = SchemeFromPalette::dark(c);
@@ -446,7 +444,7 @@ mod tests {
 
     #[test]
     fn test_blue_scheme() {
-        let c = Argb::from_u32(0xFF0000FF);
+        let c = Rgb::from_u32(0x0000FF);
 
         let light = SchemeFromPalette::light(c);
         let dark = SchemeFromPalette::dark(c);
@@ -457,40 +455,40 @@ mod tests {
 
     #[test]
     fn test_light_scheme_from_high_chroma_color() {
-        let c = Argb::from_u32(0xFFFA2BEC);
+        let c = Rgb::from_u32(0xFA2BEC);
 
         let scheme = SchemeFromPalette::light(c);
 
         let expected = SchemeFromPalette {
-            primary: Argb::from_u32(0xFFAB00A2),
-            on_primary: Argb::from_u32(0xFFFFFFFF),
-            primary_container: Argb::from_u32(0xFFFFD7F3),
-            on_primary_container: Argb::from_u32(0xFF390035),
-            secondary: Argb::from_u32(0xFF6E5868),
-            on_secondary: Argb::from_u32(0xFFFFFFFF),
-            secondary_container: Argb::from_u32(0xFFF8DAEE),
-            on_secondary_container: Argb::from_u32(0xFF271624),
-            tertiary: Argb::from_u32(0xFF815343),
-            on_tertiary: Argb::from_u32(0xFFFFFFFF),
-            tertiary_container: Argb::from_u32(0xFFFFDBD0),
-            on_tertiary_container: Argb::from_u32(0xFF321207),
-            error: Argb::from_u32(0xFFBA1A1A),
-            on_error: Argb::from_u32(0xFFFFFFFF),
-            error_container: Argb::from_u32(0xFFFFDAD6),
-            on_error_container: Argb::from_u32(0xFF410002),
-            background: Argb::from_u32(0xFFFFFBFF),
-            on_background: Argb::from_u32(0xFF1F1A1D),
-            surface: Argb::from_u32(0xFFFFFBFF),
-            on_surface: Argb::from_u32(0xFF1F1A1D),
-            surface_variant: Argb::from_u32(0xFFEEDEE7),
-            on_surface_variant: Argb::from_u32(0xFF4E444B),
-            outline: Argb::from_u32(0xFF80747B),
-            outline_variant: Argb::from_u32(0xFFD2C2CB),
-            shadow: Argb::from_u32(0xFF000000),
-            scrim: Argb::from_u32(0xFF000000),
-            inverse_surface: Argb::from_u32(0xFF342F32),
-            inverse_on_surface: Argb::from_u32(0xFFF8EEF2),
-            inverse_primary: Argb::from_u32(0xFFFFABEE),
+            primary: Rgb::from_u32(0xAB00A2),
+            on_primary: Rgb::from_u32(0xFFFFFF),
+            primary_container: Rgb::from_u32(0xFFD7F3),
+            on_primary_container: Rgb::from_u32(0x390035),
+            secondary: Rgb::from_u32(0x6E5868),
+            on_secondary: Rgb::from_u32(0xFFFFFF),
+            secondary_container: Rgb::from_u32(0xF8DAEE),
+            on_secondary_container: Rgb::from_u32(0x271624),
+            tertiary: Rgb::from_u32(0x815343),
+            on_tertiary: Rgb::from_u32(0xFFFFFF),
+            tertiary_container: Rgb::from_u32(0xFFDBD0),
+            on_tertiary_container: Rgb::from_u32(0x321207),
+            error: Rgb::from_u32(0xBA1A1A),
+            on_error: Rgb::from_u32(0xFFFFFF),
+            error_container: Rgb::from_u32(0xFFDAD6),
+            on_error_container: Rgb::from_u32(0x410002),
+            background: Rgb::from_u32(0xFFFBFF),
+            on_background: Rgb::from_u32(0x1F1A1D),
+            surface: Rgb::from_u32(0xFFFBFF),
+            on_surface: Rgb::from_u32(0x1F1A1D),
+            surface_variant: Rgb::from_u32(0xEEDEE7),
+            on_surface_variant: Rgb::from_u32(0x4E444B),
+            outline: Rgb::from_u32(0x80747B),
+            outline_variant: Rgb::from_u32(0xD2C2CB),
+            shadow: Rgb::from_u32(0x000000),
+            scrim: Rgb::from_u32(0x000000),
+            inverse_surface: Rgb::from_u32(0x342F32),
+            inverse_on_surface: Rgb::from_u32(0xF8EEF2),
+            inverse_primary: Rgb::from_u32(0xFFABEE),
         };
 
         assert_eq!(scheme, expected);
@@ -498,40 +496,40 @@ mod tests {
 
     #[test]
     fn test_dark_scheme_from_high_chroma_color() {
-        let c = Argb::from_u32(0xFFFA2BEC);
+        let c = Rgb::from_u32(0xFA2BEC);
 
         let scheme = SchemeFromPalette::dark(c);
 
         let expected = SchemeFromPalette {
-            primary: Argb::from_u32(0xFFFFABEE),
-            on_primary: Argb::from_u32(0xFF5C0057),
-            primary_container: Argb::from_u32(0xFF83007B),
-            on_primary_container: Argb::from_u32(0xFFFFD7F3),
-            secondary: Argb::from_u32(0xFFDBBED1),
-            on_secondary: Argb::from_u32(0xFF3E2A39),
-            secondary_container: Argb::from_u32(0xFF554050),
-            on_secondary_container: Argb::from_u32(0xFFF8DAEE),
-            tertiary: Argb::from_u32(0xFFF5B9A5),
-            on_tertiary: Argb::from_u32(0xFF4C2619),
-            tertiary_container: Argb::from_u32(0xFF663C2D),
-            on_tertiary_container: Argb::from_u32(0xFFFFDBD0),
-            error: Argb::from_u32(0xFFFFB4AB),
-            on_error: Argb::from_u32(0xFF690005),
-            error_container: Argb::from_u32(0xFF93000A),
-            on_error_container: Argb::from_u32(0xFFFFB4AB),
-            background: Argb::from_u32(0xFF1F1A1D),
-            on_background: Argb::from_u32(0xFFEAE0E4),
-            surface: Argb::from_u32(0xFF1F1A1D),
-            on_surface: Argb::from_u32(0xFFEAE0E4),
-            surface_variant: Argb::from_u32(0xFF4E444B),
-            on_surface_variant: Argb::from_u32(0xFFD2C2CB),
-            outline: Argb::from_u32(0xFF9A8D95),
-            outline_variant: Argb::from_u32(0xFF4E444B),
-            shadow: Argb::from_u32(0xFF000000),
-            scrim: Argb::from_u32(0xFF000000),
-            inverse_surface: Argb::from_u32(0xFFEAE0E4),
-            inverse_on_surface: Argb::from_u32(0xFF342F32),
-            inverse_primary: Argb::from_u32(0xFFAB00A2),
+            primary: Rgb::from_u32(0xFFABEE),
+            on_primary: Rgb::from_u32(0x5C0057),
+            primary_container: Rgb::from_u32(0x83007B),
+            on_primary_container: Rgb::from_u32(0xFFD7F3),
+            secondary: Rgb::from_u32(0xDBBED1),
+            on_secondary: Rgb::from_u32(0x3E2A39),
+            secondary_container: Rgb::from_u32(0x554050),
+            on_secondary_container: Rgb::from_u32(0xF8DAEE),
+            tertiary: Rgb::from_u32(0xF5B9A5),
+            on_tertiary: Rgb::from_u32(0x4C2619),
+            tertiary_container: Rgb::from_u32(0x663C2D),
+            on_tertiary_container: Rgb::from_u32(0xFFDBD0),
+            error: Rgb::from_u32(0xFFB4AB),
+            on_error: Rgb::from_u32(0x690005),
+            error_container: Rgb::from_u32(0x93000A),
+            on_error_container: Rgb::from_u32(0xFFB4AB),
+            background: Rgb::from_u32(0x1F1A1D),
+            on_background: Rgb::from_u32(0xEAE0E4),
+            surface: Rgb::from_u32(0x1F1A1D),
+            on_surface: Rgb::from_u32(0xEAE0E4),
+            surface_variant: Rgb::from_u32(0x4E444B),
+            on_surface_variant: Rgb::from_u32(0xD2C2CB),
+            outline: Rgb::from_u32(0x9A8D95),
+            outline_variant: Rgb::from_u32(0x4E444B),
+            shadow: Rgb::from_u32(0x000000),
+            scrim: Rgb::from_u32(0x000000),
+            inverse_surface: Rgb::from_u32(0xEAE0E4),
+            inverse_on_surface: Rgb::from_u32(0x342F32),
+            inverse_primary: Rgb::from_u32(0xAB00A2),
         };
 
         assert_eq!(scheme, expected);
@@ -539,40 +537,40 @@ mod tests {
 
     #[test]
     fn test_light_content_scheme_from_high_chroma_color() {
-        let c = Argb::from_u32(0xFFFA2BEC);
+        let c = Rgb::from_u32(0xFA2BEC);
 
         let scheme = SchemeFromPalette::light_content(c);
 
         let expected = SchemeFromPalette {
-            primary: Argb::from_u32(0xFFAB00A2),
-            on_primary: Argb::from_u32(0xFFFFFFFF),
-            primary_container: Argb::from_u32(0xFFFFD7F3),
-            on_primary_container: Argb::from_u32(0xFF390035),
-            secondary: Argb::from_u32(0xFF7F4E75),
-            on_secondary: Argb::from_u32(0xFFFFFFFF),
-            secondary_container: Argb::from_u32(0xFFFFD7F3),
-            on_secondary_container: Argb::from_u32(0xFF330B2F),
-            tertiary: Argb::from_u32(0xFF9C4323),
-            on_tertiary: Argb::from_u32(0xFFFFFFFF),
-            tertiary_container: Argb::from_u32(0xFFFFDBD0),
-            on_tertiary_container: Argb::from_u32(0xFF390C00),
-            error: Argb::from_u32(0xFFBA1A1A),
-            on_error: Argb::from_u32(0xFFFFFFFF),
-            error_container: Argb::from_u32(0xFFFFDAD6),
-            on_error_container: Argb::from_u32(0xFF410002),
-            background: Argb::from_u32(0xFFFFFBFF),
-            on_background: Argb::from_u32(0xFF1F1A1D),
-            surface: Argb::from_u32(0xFFFFFBFF),
-            on_surface: Argb::from_u32(0xFF1F1A1D),
-            surface_variant: Argb::from_u32(0xFFEEDEE7),
-            on_surface_variant: Argb::from_u32(0xFF4E444B),
-            outline: Argb::from_u32(0xFF80747B),
-            outline_variant: Argb::from_u32(0xFFD2C2CB),
-            shadow: Argb::from_u32(0xFF000000),
-            scrim: Argb::from_u32(0xFF000000),
-            inverse_surface: Argb::from_u32(0xFF342F32),
-            inverse_on_surface: Argb::from_u32(0xFFF8EEF2),
-            inverse_primary: Argb::from_u32(0xFFFFABEE),
+            primary: Rgb::from_u32(0xAB00A2),
+            on_primary: Rgb::from_u32(0xFFFFFF),
+            primary_container: Rgb::from_u32(0xFFD7F3),
+            on_primary_container: Rgb::from_u32(0x390035),
+            secondary: Rgb::from_u32(0x7F4E75),
+            on_secondary: Rgb::from_u32(0xFFFFFF),
+            secondary_container: Rgb::from_u32(0xFFD7F3),
+            on_secondary_container: Rgb::from_u32(0x330B2F),
+            tertiary: Rgb::from_u32(0x9C4323),
+            on_tertiary: Rgb::from_u32(0xFFFFFF),
+            tertiary_container: Rgb::from_u32(0xFFDBD0),
+            on_tertiary_container: Rgb::from_u32(0x390C00),
+            error: Rgb::from_u32(0xBA1A1A),
+            on_error: Rgb::from_u32(0xFFFFFF),
+            error_container: Rgb::from_u32(0xFFDAD6),
+            on_error_container: Rgb::from_u32(0x410002),
+            background: Rgb::from_u32(0xFFFBFF),
+            on_background: Rgb::from_u32(0x1F1A1D),
+            surface: Rgb::from_u32(0xFFFBFF),
+            on_surface: Rgb::from_u32(0x1F1A1D),
+            surface_variant: Rgb::from_u32(0xEEDEE7),
+            on_surface_variant: Rgb::from_u32(0x4E444B),
+            outline: Rgb::from_u32(0x80747B),
+            outline_variant: Rgb::from_u32(0xD2C2CB),
+            shadow: Rgb::from_u32(0x000000),
+            scrim: Rgb::from_u32(0x000000),
+            inverse_surface: Rgb::from_u32(0x342F32),
+            inverse_on_surface: Rgb::from_u32(0xF8EEF2),
+            inverse_primary: Rgb::from_u32(0xFFABEE),
         };
 
         assert_eq!(scheme, expected);
@@ -580,40 +578,40 @@ mod tests {
 
     #[test]
     fn test_dark_content_scheme_from_high_chroma_color() {
-        let c = Argb::from_u32(0xFFFA2BEC);
+        let c = Rgb::from_u32(0xFA2BEC);
 
         let scheme = SchemeFromPalette::dark_content(c);
 
         let expected = SchemeFromPalette {
-            primary: Argb::from_u32(0xFFFFABEE),
-            on_primary: Argb::from_u32(0xFF5C0057),
-            primary_container: Argb::from_u32(0xFF83007B),
-            on_primary_container: Argb::from_u32(0xFFFFD7F3),
-            secondary: Argb::from_u32(0xFFF0B4E1),
-            on_secondary: Argb::from_u32(0xFF4B2145),
-            secondary_container: Argb::from_u32(0xFF64375C),
-            on_secondary_container: Argb::from_u32(0xFFFFD7F3),
-            tertiary: Argb::from_u32(0xFFFFB59C),
-            on_tertiary: Argb::from_u32(0xFF5C1900),
-            tertiary_container: Argb::from_u32(0xFF7D2C0D),
-            on_tertiary_container: Argb::from_u32(0xFFFFDBD0),
-            error: Argb::from_u32(0xFFFFB4AB),
-            on_error: Argb::from_u32(0xFF690005),
-            error_container: Argb::from_u32(0xFF93000A),
-            on_error_container: Argb::from_u32(0xFFFFB4AB),
-            background: Argb::from_u32(0xFF1F1A1D),
-            on_background: Argb::from_u32(0xFFEAE0E4),
-            surface: Argb::from_u32(0xFF1F1A1D),
-            on_surface: Argb::from_u32(0xFFEAE0E4),
-            surface_variant: Argb::from_u32(0xFF4E444B),
-            on_surface_variant: Argb::from_u32(0xFFD2C2CB),
-            outline: Argb::from_u32(0xFF9A8D95),
-            outline_variant: Argb::from_u32(0xFF4E444B),
-            shadow: Argb::from_u32(0xFF000000),
-            scrim: Argb::from_u32(0xFF000000),
-            inverse_surface: Argb::from_u32(0xFFEAE0E4),
-            inverse_on_surface: Argb::from_u32(0xFF342F32),
-            inverse_primary: Argb::from_u32(0xFFAB00A2),
+            primary: Rgb::from_u32(0xFFABEE),
+            on_primary: Rgb::from_u32(0x5C0057),
+            primary_container: Rgb::from_u32(0x83007B),
+            on_primary_container: Rgb::from_u32(0xFFD7F3),
+            secondary: Rgb::from_u32(0xF0B4E1),
+            on_secondary: Rgb::from_u32(0x4B2145),
+            secondary_container: Rgb::from_u32(0x64375C),
+            on_secondary_container: Rgb::from_u32(0xFFD7F3),
+            tertiary: Rgb::from_u32(0xFFB59C),
+            on_tertiary: Rgb::from_u32(0x5C1900),
+            tertiary_container: Rgb::from_u32(0x7D2C0D),
+            on_tertiary_container: Rgb::from_u32(0xFFDBD0),
+            error: Rgb::from_u32(0xFFB4AB),
+            on_error: Rgb::from_u32(0x690005),
+            error_container: Rgb::from_u32(0x93000A),
+            on_error_container: Rgb::from_u32(0xFFB4AB),
+            background: Rgb::from_u32(0x1F1A1D),
+            on_background: Rgb::from_u32(0xEAE0E4),
+            surface: Rgb::from_u32(0x1F1A1D),
+            on_surface: Rgb::from_u32(0xEAE0E4),
+            surface_variant: Rgb::from_u32(0x4E444B),
+            on_surface_variant: Rgb::from_u32(0xD2C2CB),
+            outline: Rgb::from_u32(0x9A8D95),
+            outline_variant: Rgb::from_u32(0x4E444B),
+            shadow: Rgb::from_u32(0x000000),
+            scrim: Rgb::from_u32(0x000000),
+            inverse_surface: Rgb::from_u32(0xEAE0E4),
+            inverse_on_surface: Rgb::from_u32(0x342F32),
+            inverse_primary: Rgb::from_u32(0xAB00A2),
         };
 
         assert_eq!(scheme, expected);

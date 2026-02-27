@@ -1,16 +1,7 @@
 #[cfg(not(feature = "std"))]
-use alloc::{
-    format,
-    string::{String, ToString},
-};
+use alloc::{format, string::String};
 use core::{fmt, str::FromStr};
-#[cfg(feature = "std")]
-use std::{
-    format,
-    string::{String, ToString},
-};
-
-#[cfg(feature = "serde")] use serde::Serialize;
+#[cfg(feature = "std")] use std::{format, string::String};
 
 #[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
@@ -27,42 +18,31 @@ pub const XYZ_TO_SRGB: [[f64; 3]; 3] = [
 ];
 pub const WHITE_POINT_D65: [f64; 3] = [95.047, 100.0, 108.883];
 
-#[derive(Debug, Default, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+/// RGB representation of color. Can be created using [`Rgb::new`],
+/// [`Rgb::from_u32`] or [`Rgb::from_str`].
+///
+/// ## Examples:
+/// ```rust
+/// use std::str::FromStr;
+///
+/// use material_colors::color::Rgb;
+///
+/// // from_str can accept any valid HEX color
+/// let color = Rgb::from_str("abc").unwrap();
+/// let color = Rgb::from_str("aabbcc").unwrap();
+/// let color = Rgb::from_str("#abc").unwrap();
+/// let color = Rgb::from_str("#aabbcc").unwrap();
+/// ```
+#[derive(Debug, Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Rgb {
     pub red: u8,
     pub green: u8,
     pub blue: u8,
 }
 
-/// ARGB representation of color. Can be created using [`Argb::new`],
-/// [`Argb::from_u32`] or [`Argb::from_str`].
-///
-/// ## Examples:
-/// ```rust
-/// use std::str::FromStr;
-///
-/// use material_colors::color::Argb;
-///
-/// // from_str can accept any valid HEX color
-/// let color = Argb::from_str("abc").unwrap();
-/// let color = Argb::from_str("aabbcc").unwrap();
-/// let color = Argb::from_str("aabbccdd").unwrap();
-/// let color = Argb::from_str("#abc").unwrap();
-/// let color = Argb::from_str("#aabbcc").unwrap();
-/// let color = Argb::from_str("#aabbccdd").unwrap();
-/// ```
-#[derive(Debug, Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Argb {
-    pub alpha: u8,
-    pub red: u8,
-    pub green: u8,
-    pub blue: u8,
-}
-
 #[derive(Debug, Default, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct LinearRgb {
     pub red: f64,
     pub green: f64,
@@ -70,7 +50,7 @@ pub struct LinearRgb {
 }
 
 #[derive(Debug, Default, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Xyz {
     pub x: f64,
     pub y: f64,
@@ -78,56 +58,49 @@ pub struct Xyz {
 }
 
 #[derive(Debug, Default, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Lab {
     pub l: f64,
     pub a: f64,
     pub b: f64,
 }
 
-/// Converts a color from Rgb components to Argb format.
-impl From<Rgb> for Argb {
-    fn from(Rgb { red, green, blue }: Rgb) -> Self {
-        Self { alpha: 255, red, green, blue }
-    }
-}
-
-/// Converts a color from linear Rgb components to Argb format.
-impl From<LinearRgb> for Argb {
+/// Converts a color from linear Rgb components to Rgb format.
+impl From<LinearRgb> for Rgb {
     fn from(linear: LinearRgb) -> Self {
         let r = delinearized(linear.red);
         let g = delinearized(linear.green);
         let b = delinearized(linear.blue);
 
-        Rgb::new(r, g, b).into()
+        Self::new(r, g, b)
     }
 }
 
-/// Converts a color from Argb to Xyz.
-impl From<Xyz> for Argb {
-    fn from(Xyz { x, y, z }: Xyz) -> Self {
+/// Converts a color from Rgb to Xyz.
+impl From<Xyz> for Rgb {
+    fn from(value: Xyz) -> Self {
         let matrix = XYZ_TO_SRGB;
 
         let (linear_r, linear_g, linear_b) = (
-            matrix[0][2].mul_add(z, matrix[0][0].mul_add(x, matrix[0][1] * y)),
-            matrix[1][2].mul_add(z, matrix[1][0].mul_add(x, matrix[1][1] * y)),
-            matrix[2][2].mul_add(z, matrix[2][0].mul_add(x, matrix[2][1] * y)),
+            matrix[0][2].mul_add(value.z, matrix[0][0].mul_add(value.x, matrix[0][1] * value.y)),
+            matrix[1][2].mul_add(value.z, matrix[1][0].mul_add(value.x, matrix[1][1] * value.y)),
+            matrix[2][2].mul_add(value.z, matrix[2][0].mul_add(value.x, matrix[2][1] * value.y)),
         );
 
         let r = delinearized(linear_r);
         let g = delinearized(linear_g);
         let b = delinearized(linear_b);
 
-        Rgb::new(r, g, b).into()
+        Self::new(r, g, b)
     }
 }
 
-/// Converts a color from Xyz to Argb.
-impl From<Argb> for Xyz {
-    fn from(Argb { alpha: _, red, green, blue }: Argb) -> Self {
-        let r = linearized(red);
-        let g = linearized(green);
-        let b = linearized(blue);
+/// Converts a color from Xyz to Rgb.
+impl From<Rgb> for Xyz {
+    fn from(value: Rgb) -> Self {
+        let r = linearized(value.red);
+        let g = linearized(value.green);
+        let b = linearized(value.blue);
 
         let [x, y, z] = matrix_multiply([r, g, b], SRGB_TO_XYZ);
 
@@ -135,14 +108,14 @@ impl From<Argb> for Xyz {
     }
 }
 
-/// Converts a color represented in Lab color space into an Argb integer.
-impl From<Lab> for Argb {
-    fn from(Lab { l, a, b }: Lab) -> Self {
+/// Converts a color represented in Lab color space into an Rgb integer.
+impl From<Lab> for Rgb {
+    fn from(value: Lab) -> Self {
         let white_point = WHITE_POINT_D65;
 
-        let fy = (l + 16.0) / 116.0;
-        let fx = a / 500.0 + fy;
-        let fz = fy - b / 200.0;
+        let fy = (value.l + 16.0) / 116.0;
+        let fx = value.a / 500.0 + fy;
+        let fz = fy - value.b / 200.0;
 
         let x_normalized = lab_invf(fx);
         let y_normalized = lab_invf(fy);
@@ -156,11 +129,11 @@ impl From<Lab> for Argb {
     }
 }
 
-impl From<Argb> for Lab {
-    fn from(Argb { alpha: _, red, green, blue }: Argb) -> Self {
-        let linear_r = linearized(red);
-        let linear_g = linearized(green);
-        let linear_b = linearized(blue);
+impl From<Rgb> for Lab {
+    fn from(value: Rgb) -> Self {
+        let linear_r = linearized(value.red);
+        let linear_g = linearized(value.green);
+        let linear_b = linearized(value.blue);
 
         let matrix = SRGB_TO_XYZ;
 
@@ -190,32 +163,29 @@ impl From<Argb> for Lab {
 
 const HASH: char = '#';
 
-impl FromStr for Argb {
+impl FromStr for Rgb {
     type Err = Error;
 
     fn from_str(hex: &str) -> Result<Self, Self::Err> {
         let hex = hex.strip_prefix(HASH).unwrap_or(hex);
 
-        if ![3, 6, 8].contains(&hex.len()) {
-            return Err(Error::ParseRGB);
-        }
+        if hex.chars().all(|c| c.is_ascii_hexdigit()) {
+            let value = u32::from_str_radix(hex, 16).map_err(|_| Error::ParseRGB)?;
 
-        let hex_str = if hex.len() == 3 {
-            format!(
-                "FF{a}{a}{b}{b}{c}{c}",
-                a = hex.get(..1).unwrap(),
-                b = hex.get(1..2).unwrap(),
-                c = hex.get(2..3).unwrap()
-            )
-        } else if hex.len() == 6 {
-            format!("FF{hex}")
+            match hex.len() {
+                3 => {
+                    let red = ((value >> 8) & 0xF) as u8;
+                    let green = ((value >> 4) & 0xF) as u8;
+                    let blue = (value & 0xF) as u8;
+
+                    Ok(Self::new(red, green, blue))
+                }
+                6 => Ok(Self::from_u32(value)),
+                _ => Err(Error::ParseRGB),
+            }
         } else {
-            hex.to_string()
-        };
-
-        let hex_digit = u32::from_str_radix(&hex_str, 16).map_err(|_| Error::ParseRGB)?;
-
-        Ok(Self::from_u32(hex_digit))
+            Err(Error::ParseRGB)
+        }
     }
 }
 
@@ -235,38 +205,30 @@ impl Rgb {
     pub const fn new(red: u8, green: u8, blue: u8) -> Self {
         Self { red, green, blue }
     }
-}
-
-impl Argb {
-    pub const fn new(alpha: u8, red: u8, green: u8, blue: u8) -> Self {
-        Self { alpha, red, green, blue }
-    }
 
     pub const fn from_u32(value: u32) -> Self {
         Self {
-            alpha: ((value >> 24) & 0xFF) as u8,
             red: ((value >> 16) & 0xFF) as u8,
             green: ((value >> 8) & 0xFF) as u8,
             blue: ((value) & 0xFF) as u8,
         }
     }
 
-    /// Converts an L* value to an Argb representation.
+    /// Converts an L* value to an Rgb representation.
     ///
     /// - `lstar`: L* in L*a*b*
     ///
-    /// Returns ARGB representation of grayscale color with lightness matching
-    /// L*
+    /// Returns RGB representation of grayscale color with lightness matching L*
     pub fn from_lstar(lstar: f64) -> Self {
         let y = y_from_lstar(lstar);
         let component = delinearized(y);
 
-        Rgb::new(component, component, component).into()
+        Self::new(component, component, component)
     }
 
-    /// Computes the L* value of a color in Argb representation.
+    /// Computes the L* value of a color in Rgb representation.
     ///
-    /// - `argb`: ARGB representation of a color
+    /// - `self`: RGB representation of a color
     ///
     /// returns L*, from L*a*b*, coordinate of the color
     pub fn as_lstar(&self) -> f64 {
@@ -288,9 +250,9 @@ impl Argb {
     }
 }
 
-impl fmt::Display for Argb {
+impl fmt::Display for Rgb {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_hex_with_pound())
+        write!(f, "rgb({}, {}, {})", self.red, self.green, self.blue)
     }
 }
 
@@ -377,7 +339,7 @@ mod tests {
     use float_cmp::assert_approx_eq;
 
     use super::Lab;
-    use crate::color::{Argb, Rgb, Xyz, delinearized, linearized, lstar_from_y, y_from_lstar};
+    use crate::color::{Rgb, Xyz, delinearized, linearized, lstar_from_y, y_from_lstar};
 
     fn range(start: f64, stop: f64, case_count: i64) -> Vec<f64> {
         let step_size = (stop - start) / (case_count as f64 - 1.0);
@@ -403,25 +365,7 @@ mod tests {
     }
 
     #[test]
-    fn test_argb_from_rgb_returns_correct_value_for_black() {
-        assert_eq!(Argb::from(Rgb::new(0, 0, 0)), Argb::from_u32(0xFF000000));
-        assert_eq!(Argb::from(Rgb::new(0, 0, 0)), Argb::from_u32(4278190080));
-    }
-
-    #[test]
-    fn test_argb_from_rgb_returns_correct_value_for_white() {
-        assert_eq!(Argb::from(Rgb::new(255, 255, 255)), Argb::from_u32(0xFFFFFFFF));
-        assert_eq!(Argb::from(Rgb::new(255, 255, 255)), Argb::from_u32(4294967295));
-    }
-
-    #[test]
-    fn test_argb_from_rgb_returns_correct_value_for_random_color() {
-        assert_eq!(Argb::from(Rgb::new(50, 150, 250)), Argb::from_u32(0xFF3296FA));
-        assert_eq!(Argb::from(Rgb::new(50, 150, 250)), Argb::from_u32(4281505530));
-    }
-
-    #[test]
-    fn test_yto_lstar_to_y() {
+    fn test_y_to_lstar_to_y() {
         for y in range(0.0, 100.0, 1001) {
             let result = y_from_lstar(lstar_from_y(y));
 
@@ -430,7 +374,7 @@ mod tests {
     }
 
     #[test]
-    fn test_lstar_to_yto_lstar() {
+    fn test_lstar_to_y_to_lstar() {
         for lstar in range(0.0, 100.0, 1001) {
             let result = lstar_from_y(y_from_lstar(lstar));
 
@@ -515,9 +459,9 @@ mod tests {
         for r in rgb_range() {
             for g in rgb_range() {
                 for b in rgb_range() {
-                    let argb = Argb::new(255, r, g, b);
-                    let xyz = Xyz::from(argb);
-                    let converted = Argb::from(xyz);
+                    let rgb = Rgb::new(r, g, b);
+                    let xyz = Xyz::from(rgb);
+                    let converted = Rgb::from(xyz);
 
                     assert_approx_eq!(f64, f64::from(converted.red), f64::from(r), epsilon = 1.5);
                     assert_approx_eq!(f64, f64::from(converted.green), f64::from(g), epsilon = 1.5);
@@ -532,9 +476,9 @@ mod tests {
         for r in rgb_range() {
             for g in rgb_range() {
                 for b in rgb_range() {
-                    let argb = Argb::new(255, r, g, b);
-                    let lab = Lab::from(argb);
-                    let converted = Argb::from(lab);
+                    let rgb = Rgb::new(r, g, b);
+                    let lab = Lab::from(rgb);
+                    let converted = Rgb::from(lab);
 
                     assert_approx_eq!(f64, f64::from(converted.red), f64::from(r), epsilon = 1.5);
                     assert_approx_eq!(f64, f64::from(converted.green), f64::from(g), epsilon = 1.5);
@@ -549,11 +493,11 @@ mod tests {
         let full_rgb_range = full_rgb_range();
 
         for component in full_rgb_range {
-            let argb = Argb::new(255, component, component, component);
-            let lstar = argb.as_lstar();
-            let converted = Argb::from_lstar(lstar);
+            let rgb = Rgb::new(component, component, component);
+            let lstar = rgb.as_lstar();
+            let converted = Rgb::from_lstar(lstar);
 
-            assert_eq!(converted, argb);
+            assert_eq!(converted, rgb);
         }
     }
 
@@ -562,10 +506,10 @@ mod tests {
         for r in rgb_range() {
             for g in rgb_range() {
                 for b in rgb_range() {
-                    let argb = Argb::new(255, r, g, b);
-                    let lstar = argb.as_lstar();
+                    let rgb = Rgb::new(r, g, b);
+                    let lstar = rgb.as_lstar();
                     let y = y_from_lstar(lstar);
-                    let y2 = Xyz::from(argb).y;
+                    let y2 = Xyz::from(rgb).y;
 
                     assert_approx_eq!(f64, y, y2, epsilon = 1e-5);
                 }
@@ -576,8 +520,8 @@ mod tests {
     #[test]
     fn test_lstar_to_rgb_to_ycommutes() {
         for lstar in range(0.0, 100.0, 1001) {
-            let argb = Argb::from_lstar(lstar);
-            let y = Xyz::from(argb).y;
+            let rgb = Rgb::from_lstar(lstar);
+            let y = Xyz::from(rgb).y;
             let y2 = y_from_lstar(lstar);
 
             assert_approx_eq!(f64, y, y2, epsilon = 1.0);

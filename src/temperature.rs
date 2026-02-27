@@ -7,7 +7,7 @@ use core::cmp::Ordering;
 use crate::utils::no_std::FloatExt;
 use crate::{
     Map,
-    color::{Argb, Lab},
+    color::{Rgb, Lab},
     hct::Hct,
     utils::{FromRef, math::sanitize_degrees_double},
 };
@@ -317,7 +317,7 @@ impl TemperatureCache {
     /// - Upper bound: -0.52 + (chroma ^ 1.07 / 20). L*a*b* chroma is infinite.
     ///   Assuming max of 130 chroma, 8.61.
     pub fn raw_temperature(color: &Hct) -> f64 {
-        let lab = Lab::from(Argb::from_ref(color));
+        let lab = Lab::from(Rgb::from_ref(color));
         let hue = sanitize_degrees_double(lab.b.atan2(lab.a).to_degrees());
 
         let chroma = lab.a.hypot(lab.b);
@@ -331,15 +331,15 @@ mod tests {
     use float_cmp::assert_approx_eq;
 
     use super::TemperatureCache;
-    use crate::{color::Argb, hct::Hct};
+    use crate::{color::Rgb, hct::Hct};
 
     #[test]
     fn test_raw_temperature() {
-        let blue_hct = Hct::new(Argb::from_u32(0xFF0000FF));
-        let red_hct = Hct::new(Argb::from_u32(0xFFFF0000));
-        let green_hct = Hct::new(Argb::from_u32(0xFF00FF00));
-        let white_hct = Hct::new(Argb::from_u32(0xFFFFFFFF));
-        let black_hct = Hct::new(Argb::from_u32(0xFF000000));
+        let blue_hct = Hct::new(Rgb::from_u32(0x0000FF));
+        let red_hct = Hct::new(Rgb::from_u32(0xFF0000));
+        let green_hct = Hct::new(Rgb::from_u32(0x00FF00));
+        let white_hct = Hct::new(Rgb::from_u32(0xFFFFFF));
+        let black_hct = Hct::new(Rgb::from_u32(0x000000));
 
         let blue_temp = TemperatureCache::raw_temperature(&blue_hct);
         let red_temp = TemperatureCache::raw_temperature(&red_hct);
@@ -356,71 +356,71 @@ mod tests {
 
     #[test]
     fn test_complement() {
-        let blue_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_u32(0xFF0000FF))).complement().into();
-        let red_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_u32(0xFFFF0000))).complement().into();
-        let green_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_u32(0xFF00FF00))).complement().into();
-        let white_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_u32(0xFFFFFFFF))).complement().into();
-        let black_complement: Argb = TemperatureCache::new(Hct::new(Argb::from_u32(0xFF000000))).complement().into();
+        let blue_complement: Rgb = TemperatureCache::new(Hct::new(Rgb::from_u32(0x0000FF))).complement().into();
+        let red_complement: Rgb = TemperatureCache::new(Hct::new(Rgb::from_u32(0xFF0000))).complement().into();
+        let green_complement: Rgb = TemperatureCache::new(Hct::new(Rgb::from_u32(0x00FF00))).complement().into();
+        let white_complement: Rgb = TemperatureCache::new(Hct::new(Rgb::from_u32(0xFFFFFF))).complement().into();
+        let black_complement: Rgb = TemperatureCache::new(Hct::new(Rgb::from_u32(0x000000))).complement().into();
 
-        assert_eq!(Argb::from_u32(0xFF9D0002), blue_complement);
-        assert_eq!(Argb::from_u32(0xFF007BFC), red_complement);
-        assert_eq!(Argb::from_u32(0xFFFFD2C9), green_complement);
-        assert_eq!(Argb::from_u32(0xFFFFFFFF), white_complement);
-        assert_eq!(Argb::from_u32(0xFF000000), black_complement);
+        assert_eq!(Rgb::from_u32(0x9D0002), blue_complement);
+        assert_eq!(Rgb::from_u32(0x007BFC), red_complement);
+        assert_eq!(Rgb::from_u32(0xFFD2C9), green_complement);
+        assert_eq!(Rgb::from_u32(0xFFFFFF), white_complement);
+        assert_eq!(Rgb::from_u32(0x000000), black_complement);
     }
 
     #[test]
     fn test_blue_analogous() {
-        let analogous = TemperatureCache::new(Hct::new(Argb::from_u32(0xFF0000FF))).analogous(None, None);
+        let analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(0x0000FF))).analogous(None, None);
 
-        assert_eq!(Argb::from_u32(0xFF00590C), analogous[0].into());
-        assert_eq!(Argb::from_u32(0xFF00564E), analogous[1].into());
-        assert_eq!(Argb::from_u32(0xFF0000FF), analogous[2].into());
-        assert_eq!(Argb::from_u32(0xFF6700CC), analogous[3].into());
-        assert_eq!(Argb::from_u32(0xFF81009F), analogous[4].into());
+        assert_eq!(Rgb::from_u32(0x00590C), analogous[0].into());
+        assert_eq!(Rgb::from_u32(0x00564E), analogous[1].into());
+        assert_eq!(Rgb::from_u32(0x0000FF), analogous[2].into());
+        assert_eq!(Rgb::from_u32(0x6700CC), analogous[3].into());
+        assert_eq!(Rgb::from_u32(0x81009F), analogous[4].into());
     }
 
     #[test]
     fn test_red_analogous() {
-        let analogous = TemperatureCache::new(Hct::new(Argb::from_u32(0xFFFF0000))).analogous(None, None);
+        let analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(0xFF0000))).analogous(None, None);
 
-        assert_eq!(Argb::from_u32(0xFFF60082), analogous[0].into());
-        assert_eq!(Argb::from_u32(0xFFFC004C), analogous[1].into());
-        assert_eq!(Argb::from_u32(0xFFFF0000), analogous[2].into());
-        assert_eq!(Argb::from_u32(0xFFD95500), analogous[3].into());
-        assert_eq!(Argb::from_u32(0xFFAF7200), analogous[4].into());
+        assert_eq!(Rgb::from_u32(0xF60082), analogous[0].into());
+        assert_eq!(Rgb::from_u32(0xFC004C), analogous[1].into());
+        assert_eq!(Rgb::from_u32(0xFF0000), analogous[2].into());
+        assert_eq!(Rgb::from_u32(0xD95500), analogous[3].into());
+        assert_eq!(Rgb::from_u32(0xAF7200), analogous[4].into());
     }
 
     #[test]
     fn test_green_analogous() {
-        let green_analogous = TemperatureCache::new(Hct::new(Argb::from_u32(0xFF00FF00))).analogous(None, None);
+        let green_analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(0x00FF00))).analogous(None, None);
 
-        assert_eq!(Argb::from_u32(0xFFCEE900), green_analogous[0].into());
-        assert_eq!(Argb::from_u32(0xFF92F500), green_analogous[1].into());
-        assert_eq!(Argb::from_u32(0xFF00FF00), green_analogous[2].into());
-        assert_eq!(Argb::from_u32(0xFF00FD6F), green_analogous[3].into());
-        assert_eq!(Argb::from_u32(0xFF00FAB3), green_analogous[4].into());
+        assert_eq!(Rgb::from_u32(0xCEE900), green_analogous[0].into());
+        assert_eq!(Rgb::from_u32(0x92F500), green_analogous[1].into());
+        assert_eq!(Rgb::from_u32(0x00FF00), green_analogous[2].into());
+        assert_eq!(Rgb::from_u32(0x00FD6F), green_analogous[3].into());
+        assert_eq!(Rgb::from_u32(0x00FAB3), green_analogous[4].into());
     }
 
     #[test]
     fn test_white_analogous() {
-        let analogous = TemperatureCache::new(Hct::new(Argb::from_u32(0xFFFFFFFF))).analogous(None, None);
+        let analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(0xFFFFFF))).analogous(None, None);
 
-        assert_eq!(Argb::from_u32(0xFFFFFFFF), analogous[0].into());
-        assert_eq!(Argb::from_u32(0xFFFFFFFF), analogous[1].into());
-        assert_eq!(Argb::from_u32(0xFFFFFFFF), analogous[2].into());
-        assert_eq!(Argb::from_u32(0xFFFFFFFF), analogous[3].into());
-        assert_eq!(Argb::from_u32(0xFFFFFFFF), analogous[4].into());
+        assert_eq!(Rgb::from_u32(0xFFFFFF), analogous[0].into());
+        assert_eq!(Rgb::from_u32(0xFFFFFF), analogous[1].into());
+        assert_eq!(Rgb::from_u32(0xFFFFFF), analogous[2].into());
+        assert_eq!(Rgb::from_u32(0xFFFFFF), analogous[3].into());
+        assert_eq!(Rgb::from_u32(0xFFFFFF), analogous[4].into());
     }
 
     #[test]
     fn test_black_analogous() {
-        let analogous = TemperatureCache::new(Hct::new(Argb::from_u32(0xFF000000))).analogous(None, None);
+        let analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(0x000000))).analogous(None, None);
 
-        assert_eq!(Argb::from_u32(0xFF000000), analogous[0].into());
-        assert_eq!(Argb::from_u32(0xFF000000), analogous[1].into());
-        assert_eq!(Argb::from_u32(0xFF000000), analogous[2].into());
-        assert_eq!(Argb::from_u32(0xFF000000), analogous[3].into());
-        assert_eq!(Argb::from_u32(0xFF000000), analogous[4].into());
+        assert_eq!(Rgb::from_u32(0x000000), analogous[0].into());
+        assert_eq!(Rgb::from_u32(0x000000), analogous[1].into());
+        assert_eq!(Rgb::from_u32(0x000000), analogous[2].into());
+        assert_eq!(Rgb::from_u32(0x000000), analogous[3].into());
+        assert_eq!(Rgb::from_u32(0x000000), analogous[4].into());
     }
 }

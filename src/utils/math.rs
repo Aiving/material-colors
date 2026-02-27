@@ -2,7 +2,7 @@
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 
-pub fn signum(value: f64) -> f64 {
+pub const fn signum(value: f64) -> f64 {
     if value < 0.0 {
         -1.0
     } else if value == 0.0 {
@@ -12,8 +12,8 @@ pub fn signum(value: f64) -> f64 {
     }
 }
 
-pub fn lerp(start: f64, stop: f64, amount: f64) -> f64 {
-    (1.0 - amount).mul_add(start, amount * stop)
+pub const fn lerp(start: f64, stop: f64, amount: f64) -> f64 {
+    (1.0 - amount) * start + amount * stop
 }
 
 pub const fn sanitize_degrees_int(degrees: i32) -> u32 {

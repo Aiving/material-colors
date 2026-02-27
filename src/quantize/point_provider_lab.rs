@@ -1,5 +1,5 @@
 use super::PointProvider;
-use crate::color::{Argb, Lab};
+use crate::color::{Rgb, Lab};
 #[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
@@ -7,11 +7,11 @@ use crate::utils::no_std::FloatExt;
 pub struct PointProviderLab;
 
 impl PointProvider for PointProviderLab {
-    fn lab_from_int(argb: &Argb) -> Lab {
-        (*argb).into()
+    fn lab_from_int(rgb: &Rgb) -> Lab {
+        (*rgb).into()
     }
 
-    fn lab_to_int(lab: &Lab) -> Argb {
+    fn lab_to_int(lab: &Lab) -> Rgb {
         (*lab).into()
     }
 

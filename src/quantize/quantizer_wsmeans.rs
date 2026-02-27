@@ -11,7 +11,7 @@ use std::{
 use super::{PointProvider, PointProviderLab, QuantizerResult};
 use crate::{
     IndexMap,
-    color::{Argb, Lab},
+    color::{Rgb, Lab},
     utils::random::Random,
 };
 
@@ -69,10 +69,10 @@ impl QuantizerWsmeans {
         }
     }
 
-    pub fn quantize(input_pixels: &[Argb], max_colors: usize, starting_clusters: &[Argb]) -> QuantizerResult {
-        let mut pixel_to_count: IndexMap<Argb, u32> = IndexMap::default();
+    pub fn quantize(input_pixels: &[Rgb], max_colors: usize, starting_clusters: &[Rgb]) -> QuantizerResult {
+        let mut pixel_to_count: IndexMap<Rgb, u32> = IndexMap::default();
         let mut points: Vec<Lab> = vec![];
-        let mut pixels: Vec<Argb> = vec![];
+        let mut pixels: Vec<Rgb> = vec![];
 
         for input_pixel in input_pixels {
             let pixel_count = pixel_to_count.get_mut(input_pixel);
@@ -284,7 +284,7 @@ impl QuantizerWsmeans {
             cluster_argbs.len()
         ));
 
-        let mut input_pixel_to_cluster_pixel: IndexMap<Argb, Argb> = IndexMap::default();
+        let mut input_pixel_to_cluster_pixel: IndexMap<Rgb, Rgb> = IndexMap::default();
 
         #[cfg(feature = "std")]
         let start_time = Instant::now();
@@ -304,7 +304,7 @@ impl QuantizerWsmeans {
         #[cfg(feature = "std")]
         Self::debug_log(format!("took {time_elapsed} ms to create input to cluster map"));
 
-        let mut color_to_count: IndexMap<Argb, u32> = IndexMap::default();
+        let mut color_to_count: IndexMap<Rgb, u32> = IndexMap::default();
 
         for i in 0..cluster_argbs.len() {
             let key = cluster_argbs[i];
@@ -336,21 +336,21 @@ mod tests {
     #[cfg(feature = "std")] use std::vec::Vec;
 
     use super::QuantizerWsmeans;
-    use crate::color::Argb;
+    use crate::color::Rgb;
 
-    const RED: Argb = Argb::from_u32(0xFFFF0000);
-    const GREEN: Argb = Argb::from_u32(0xFF00FF00);
-    const BLUE: Argb = Argb::from_u32(0xFF0000FF);
-    // const WHITE: Argb = Argb::from_u32(0xffffffff);
-    // const RANDOM: Argb = Argb::from_u32(0xff426088);
+    const RED: Rgb = Rgb::from_u32(0xFF0000);
+    const GREEN: Rgb = Rgb::from_u32(0x00FF00);
+    const BLUE: Rgb = Rgb::from_u32(0x0000FF);
+    // const WHITE: Rgb = Rgb::from_u32(0xffffffff);
+    // const RANDOM: Rgb = Rgb::from_u32(0xff426088);
     const MAX_COLORS: usize = 256;
 
     #[test]
     fn test_1rando() {
-        let result = QuantizerWsmeans::quantize(&[Argb::from_u32(0xFF141216)], MAX_COLORS, &[]);
+        let result = QuantizerWsmeans::quantize(&[Rgb::from_u32(0x141216)], MAX_COLORS, &[]);
         let colors = result.color_to_count.keys().collect::<Vec<_>>();
 
-        assert_eq!(colors[0], &Argb::from_u32(0xFF141216));
+        assert_eq!(colors[0], &Rgb::from_u32(0x141216));
     }
 
     #[test]

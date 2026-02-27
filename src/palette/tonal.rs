@@ -1,19 +1,13 @@
-#[cfg(not(feature = "std"))] use alloc::vec::Vec;
 use core::{
     cmp::Ordering,
     fmt,
     hash::{Hash, Hasher},
 };
 
-#[cfg(feature = "serde")] use serde::Serialize;
-
 use super::Palette;
-#[cfg(all(not(feature = "std"), feature = "libm"))]
-#[allow(unused_imports)]
-use crate::utils::no_std::FloatExt;
 use crate::{
     Map,
-    color::Argb,
+    color::Rgb,
     dynamic_color::Variant,
     hct::Hct,
     scheme::variant::{
@@ -24,11 +18,11 @@ use crate::{
 /// A convenience class for retrieving colors that are constant in hue and
 /// chroma, but vary in tone.
 #[derive(Clone, Copy, Debug, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TonalPalette {
-    _hue: f64,
-    _chroma: f64,
-    _key_color: Hct,
+    hue: f64,
+    chroma: f64,
+    key_color: Hct,
 }
 
 impl TonalPalette {
@@ -40,19 +34,19 @@ impl TonalPalette {
     }
 
     pub const fn hue(&self) -> f64 {
-        self._hue
+        self.hue
     }
 
     pub const fn chroma(&self) -> f64 {
-        self._chroma
+        self.chroma
     }
 
     pub const fn key_color(&self) -> Hct {
-        self._key_color
+        self.key_color
     }
 
-    const fn new(_hue: f64, _chroma: f64, _key_color: Hct) -> Self {
-        Self { _hue, _chroma, _key_color }
+    const fn new(hue: f64, chroma: f64, key_color: Hct) -> Self {
+        Self { hue, chroma, key_color }
     }
 
     /// Create a Tonal Palette from hue and chroma of `hct`.
@@ -85,13 +79,13 @@ impl TonalPalette {
         Self::from_hue_and_chroma(hue, chroma)
     }
 
-    /// Returns the Argb representation of an HCT color.
+    /// Returns the Rgb representation of an HCT color.
     ///
     /// If the class was instantiated from `_hue` and `_chroma`, will return the
     /// color with corresponding `tone`.
     /// If the class was instantiated from a fixed-size list of color ints,
     /// `tone` must be in `common_mones`.
-    pub fn tone(&self, tone: i32) -> Argb {
+    pub fn tone(&self, tone: i32) -> Rgb {
         Hct::from(self.hue(), self.chroma(), f64::from(tone)).into()
     }
 
@@ -108,7 +102,7 @@ impl Ord for TonalPalette {
 
 impl PartialEq for TonalPalette {
     fn eq(&self, other: &Self) -> bool {
-        self._hue == other._hue && self._chroma == other._chroma
+        self.hue == other.hue && self.chroma == other.chroma
     }
 }
 
@@ -116,9 +110,9 @@ impl Eq for TonalPalette {}
 
 impl Hash for TonalPalette {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self._hue.to_bits().hash(state);
-        self._chroma.to_bits().hash(state);
-        self._key_color.hash(state);
+        self.hue.to_bits().hash(state);
+        self.chroma.to_bits().hash(state);
+        self.key_color.hash(state);
     }
 }
 
@@ -210,7 +204,7 @@ impl KeyColor {
 mod tests {
     use float_cmp::assert_approx_eq;
 
-    use crate::{color::Argb, hct::Hct, palette::TonalPalette};
+    use crate::{color::Rgb, hct::Hct, palette::TonalPalette};
 
     #[test]
     fn test_exact_chroma_available() {
@@ -248,33 +242,33 @@ mod tests {
 
     #[test]
     fn test_of_tones_of_blue() {
-        let hct: Hct = Argb::from_u32(0xFF0000FF).into();
+        let hct: Hct = Rgb::from_u32(0x0000FF).into();
         let tones = TonalPalette::of(hct.get_hue(), hct.get_chroma());
 
-        assert_eq!(tones.tone(0), Argb::from_u32(0xFF000000));
-        assert_eq!(tones.tone(10), Argb::from_u32(0xFF00006E));
-        assert_eq!(tones.tone(20), Argb::from_u32(0xFF0001AC));
-        assert_eq!(tones.tone(30), Argb::from_u32(0xFF0000EF));
-        assert_eq!(tones.tone(40), Argb::from_u32(0xFF343DFF));
-        assert_eq!(tones.tone(50), Argb::from_u32(0xFF5A64FF));
-        assert_eq!(tones.tone(60), Argb::from_u32(0xFF7C84FF));
-        assert_eq!(tones.tone(70), Argb::from_u32(0xFF9DA3FF));
-        assert_eq!(tones.tone(80), Argb::from_u32(0xFFBEC2FF));
-        assert_eq!(tones.tone(90), Argb::from_u32(0xFFE0E0FF));
-        assert_eq!(tones.tone(95), Argb::from_u32(0xFFF1EFFF));
-        assert_eq!(tones.tone(99), Argb::from_u32(0xFFFFFBFF));
-        assert_eq!(tones.tone(100), Argb::from_u32(0xFFFFFFFF));
+        assert_eq!(tones.tone(0), Rgb::from_u32(0x000000));
+        assert_eq!(tones.tone(10), Rgb::from_u32(0x00006E));
+        assert_eq!(tones.tone(20), Rgb::from_u32(0x0001AC));
+        assert_eq!(tones.tone(30), Rgb::from_u32(0x0000EF));
+        assert_eq!(tones.tone(40), Rgb::from_u32(0x343DFF));
+        assert_eq!(tones.tone(50), Rgb::from_u32(0x5A64FF));
+        assert_eq!(tones.tone(60), Rgb::from_u32(0x7C84FF));
+        assert_eq!(tones.tone(70), Rgb::from_u32(0x9DA3FF));
+        assert_eq!(tones.tone(80), Rgb::from_u32(0xBEC2FF));
+        assert_eq!(tones.tone(90), Rgb::from_u32(0xE0E0FF));
+        assert_eq!(tones.tone(95), Rgb::from_u32(0xF1EFFF));
+        assert_eq!(tones.tone(99), Rgb::from_u32(0xFFFBFF));
+        assert_eq!(tones.tone(100), Rgb::from_u32(0xFFFFFF));
 
         // Tone not in [TonalPalette.commonTones]
-        assert_eq!(tones.tone(3), Argb::from_u32(0xFF00003C));
+        assert_eq!(tones.tone(3), Rgb::from_u32(0x00003C));
     }
 
     #[test]
     fn test_of_operator_and_hash() {
-        let hct_ab: Hct = Argb::from_u32(0xFF0000FF).into();
+        let hct_ab: Hct = Rgb::from_u32(0x0000FF).into();
         let tones_a = TonalPalette::of(hct_ab.get_hue(), hct_ab.get_chroma());
         let tones_b = TonalPalette::of(hct_ab.get_hue(), hct_ab.get_chroma());
-        let hct_c: Hct = Argb::from_u32(0xFF123456).into();
+        let hct_c: Hct = Rgb::from_u32(0x123456).into();
         let tones_c = TonalPalette::of(hct_c.get_hue(), hct_c.get_chroma());
 
         assert_eq!(tones_a, tones_b);
