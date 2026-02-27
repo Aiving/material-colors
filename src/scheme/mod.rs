@@ -9,7 +9,7 @@ use crate::{Map, color::Argb, dynamic_color::DynamicScheme, palette::CorePalette
 
 pub mod variant;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Scheme {
     pub primary: Argb,
