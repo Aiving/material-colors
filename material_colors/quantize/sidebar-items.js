@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["point_provider","point_provider_lab","quantizer","quantizer_celebi","quantizer_map","quantizer_wsmeans","quantizer_wu"]};

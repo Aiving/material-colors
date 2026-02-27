@@ -1,0 +1,60 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Material colors"><title>material_colors - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-b7b9f40b.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="material_colors" data-themes="" data-resource-suffix="" data-rustdoc-version="1.95.0-nightly (6a979b3e3 2026-02-26)" data-channel="nightly" data-search-js="search-63369b7b.js" data-stringdex-js="stringdex-b897f86f.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Crate material_colors</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../material_colors/index.html">material_<wbr>colors</a><span class="version">0.4.2</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#material-colors" title="Material colors">Material colors</a><ul><li><a href="#features" title="Features">Features</a></li><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#current-status-of-no-std-support" title="Current status of `no-std` support">Current status of <code>no-std</code> support</a></li><li><a href="#msrv" title="MSRV">MSRV</a></li><li><a href="#license" title="License">License</a></li></ul></li></ul><h3><a href="#reexports">Crate Items</a></h3><ul class="block"><li><a href="#reexports" title="Re-exports">Re-exports</a></li><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#types" title="Type Aliases">Type Aliases</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1>Crate <span>material_<wbr>colors</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/material_colors/lib.rs.html#1-64">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="material-colors"><a class="doc-anchor" href="#material-colors">§</a>Material colors</h2>
+<p><a href="https://crates.io/crates/material-colors"><img src="https://img.shields.io/crates/v/material-colors.svg?style=for-the-badge" alt="crates.io: material-colors" /></a>
+<a href="https://docs.rs/material-colors"><img src="https://img.shields.io/docsrs/material-colors.svg?style=for-the-badge" alt="Documentation" /></a>
+<a href="https://github.com/Aiving/material-colors/actions"><img src="https://img.shields.io/github/actions/workflow/status/Aiving/material-colors/CI.yml.svg?style=for-the-badge" alt="Build Status" /></a>
+<a href="LICENSE-APACHE"><img src="https://img.shields.io/badge/License-MIT_or_Apache_2.0-634f7d.svg?style=for-the-badge" alt="License: MIT or Apache 2.0" /></a></p>
+<p>An unofficial port of the <code>material-color-utilities</code> library for creating Material You themes and color schemes.</p>
+<h3 id="features"><a class="doc-anchor" href="#features">§</a>Features</h3>
+<ul>
+<li><code>std</code>: enabled by default, disabling makes it possible to use the crate in <code>no_std</code> environments, provided there is an allocator available</li>
+<li><code>image</code>: adds support for extracting colors from images, requires <code>std</code> feature enabled</li>
+<li><code>serde</code>: adds support for JSON serialization of themes and color schemes</li>
+<li><code>libm</code>: adds the built-in implementation of <code>FloatExt</code> trait, which is based on <a href="https://github.com/rust-lang/libm"><code>libm</code></a></li>
+</ul>
+<h3 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h3>
+<p>From HEX color:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>material_colors::{color::Rgb, theme::ThemeBuilder};
+
+<span class="kw">let </span>theme = ThemeBuilder::with_source(Rgb::from_u32(<span class="number">0xffaae5a4</span>)).build();
+
+<span class="comment">// Do whatever you want...</span></code></pre></div>
+<p>From image:</p>
+<blockquote>
+<p>⚠️ Before obtaining an array of RGB pixels for the image, <strong>it is recommended</strong> (but not necessary if your image is already small in size or you just don’t mind about execution time) to adjust its dimensions to 128x128 by <code>func:resize</code> from <code>struct:Image</code> provided by <code>struct:ImageReader</code>. The reason is described <a href="https://github.com/material-foundation/material-color-utilities/blob/main/extract_colors.md"><strong>here</strong></a>.</p>
+</blockquote>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>material_colors::{
+    image::{FilterType, ImageReader},
+    theme::ThemeBuilder,
+};
+
+<span class="attr">#[tokio::main(flavor = <span class="string">"current_thread"</span>)]
+</span><span class="kw">async fn </span>main() -&gt; <span class="prelude-ty">Result</span>&lt;(), reqwest::Error&gt; {
+    <span class="kw">let </span>image = reqwest::get(<span class="string">"https://picsum.photos/id/866/1920/1080"</span>)
+        .<span class="kw">await</span><span class="question-mark">?
+        </span>.bytes()
+        .<span class="kw">await</span><span class="question-mark">?
+        </span>.to_vec();
+
+    <span class="kw">let </span><span class="kw-2">mut </span>data = ImageReader::read(image).expect(<span class="string">"failed to read image"</span>);
+
+    <span class="comment">// Lancsoz3 takes a little longer, but provides the best pixels for color extraction.
+    // However, if you don't like the results, you can always try other FilterType values.
+    </span>data.resize(<span class="number">128</span>, <span class="number">128</span>, FilterType::Lanczos3);
+
+    <span class="kw">let </span>theme = ThemeBuilder::with_source(ImageReader::extract_color(<span class="kw-2">&amp;</span>data)).build();
+
+    <span class="comment">// Do whatever you want...
+
+    </span><span class="prelude-val">Ok</span>(())
+}</code></pre></div><h3 id="current-status-of-no-std-support"><a class="doc-anchor" href="#current-status-of-no-std-support">§</a>Current status of <code>no-std</code> support</h3>
+<p>This library <strong>requires</strong> <code>alloc</code> because <code>Quantizer</code> and <code>Score</code> make heavy use of <code>Vec</code>, and <code>DynamicColor</code> requires <code>Box</code> for function storage.</p>
+<p>It also makes heavy use of various floating point functions, which greatly reduces the number of supported platforms. Yes, we have <code>libm</code> as a fallback, but it gives extremely different and inaccurate results, with unexpected consequences, and is also obviously much slower.</p>
+<p>In case you have a platform where there are corresponding instructions for operations on floating point numbers, you will have to fork the repository yourself, as I unfortunately don’t have any way to create an implementation for every platform that has corresponding instructions. If you have any suggestions, however, I’d be happy to hear them.</p>
+<h3 id="msrv"><a class="doc-anchor" href="#msrv">§</a>MSRV</h3>
+<p>The Minimum Supported Rust Version is currently 1.87.0.</p>
+<h3 id="license"><a class="doc-anchor" href="#license">§</a>License</h3>
+<p>Dual-licensed to be compatible with the Rust project.</p>
+<p>Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a> or the <a href="http://opensource.org/licenses/MIT">MIT license</a>, at your option. This project may not be copied, modified, or distributed except according to those terms.</p>
+</div></details><h2 id="reexports" class="section-header">Re-exports<a href="#reexports" class="anchor">§</a></h2><dl class="item-table reexports"><dt id="reexport.Error"><code>pub use error::<a class="enum" href="error/enum.Error.html" title="enum material_colors::error::Error">Error</a>;</code></dt></dl><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="blend/index.html" title="mod material_colors::blend">blend</a></dt><dt><a class="mod" href="color/index.html" title="mod material_colors::color">color</a></dt><dt><a class="mod" href="contrast/index.html" title="mod material_colors::contrast">contrast</a></dt><dt><a class="mod" href="dislike/index.html" title="mod material_colors::dislike">dislike</a></dt><dt><a class="mod" href="dynamic_color/index.html" title="mod material_colors::dynamic_color">dynamic_<wbr>color</a></dt><dt><a class="mod" href="error/index.html" title="mod material_colors::error">error</a></dt><dt><a class="mod" href="hct/index.html" title="mod material_colors::hct">hct</a></dt><dt><a class="mod" href="image/index.html" title="mod material_colors::image">image</a></dt><dt><a class="mod" href="palette/index.html" title="mod material_colors::palette">palette</a></dt><dt><a class="mod" href="quantize/index.html" title="mod material_colors::quantize">quantize</a></dt><dt><a class="mod" href="scheme/index.html" title="mod material_colors::scheme">scheme</a></dt><dt><a class="mod" href="score/index.html" title="mod material_colors::score">score</a></dt><dt><a class="mod" href="temperature/index.html" title="mod material_colors::temperature">temperature</a></dt><dt><a class="mod" href="theme/index.html" title="mod material_colors::theme">theme</a></dt><dt><a class="mod" href="utils/index.html" title="mod material_colors::utils">utils</a></dt></dl><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><dl class="item-table"><dt><a class="type" href="type.IndexMap.html" title="type material_colors::IndexMap">Index<wbr>Map</a><span title="Restricted Visibility">&nbsp;🔒</span> </dt></dl></section></div></main></body></html>

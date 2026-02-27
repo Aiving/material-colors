@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["contrast_curve","dynamic_scheme","material_dynamic_colors","tone_delta_pair","variant"],"struct":["DynamicColor"],"type":["DynamicSchemeFn","DynamicSchemeFnRef"]};

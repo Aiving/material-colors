@@ -1,0 +1,427 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/temperature.rs`."><title>temperature.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-b7b9f40b.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="material_colors" data-themes="" data-resource-suffix="" data-rustdoc-version="1.95.0-nightly (6a979b3e3 2026-02-26)" data-channel="nightly" data-search-js="search-63369b7b.js" data-stringdex-js="stringdex-b897f86f.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">material_colors/</div>temperature.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="attr">#[cfg(not(feature = <span class="string">"std"</span>))] </span><span class="kw">use </span>alloc::{vec, vec::Vec};
+<a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>core::cmp::Ordering;
+<a href=#3 id=3 data-nosnippet>3</a><span class="attr">#[cfg(feature = <span class="string">"std"</span>)] </span><span class="kw">use </span>std::{vec, vec::Vec};
+<a href=#4 id=4 data-nosnippet>4</a>
+<a href=#5 id=5 data-nosnippet>5</a><span class="attr">#[cfg(all(not(feature = <span class="string">"std"</span>), feature = <span class="string">"libm"</span>))]
+<a href=#6 id=6 data-nosnippet>6</a>#[allow(unused_imports)]
+<a href=#7 id=7 data-nosnippet>7</a></span><span class="kw">use </span><span class="kw">crate</span>::utils::no_std::FloatExt;
+<a href=#8 id=8 data-nosnippet>8</a><span class="kw">use </span>crate::{
+<a href=#9 id=9 data-nosnippet>9</a>    Map,
+<a href=#10 id=10 data-nosnippet>10</a>    color::{Lab, Rgb},
+<a href=#11 id=11 data-nosnippet>11</a>    hct::Hct,
+<a href=#12 id=12 data-nosnippet>12</a>    utils::{FromRef, math::sanitize_degrees_double},
+<a href=#13 id=13 data-nosnippet>13</a>};
+<a href=#14 id=14 data-nosnippet>14</a>
+<a href=#15 id=15 data-nosnippet>15</a><span class="doccomment">/// Design utilities using color temperature theory.
+<a href=#16 id=16 data-nosnippet>16</a>///
+<a href=#17 id=17 data-nosnippet>17</a>/// Analogous colors, complementary color, and cache to efficiently, lazily,
+<a href=#18 id=18 data-nosnippet>18</a>/// generate data for calculations when needed.
+<a href=#19 id=19 data-nosnippet>19</a></span><span class="kw">pub struct </span>TemperatureCache {
+<a href=#20 id=20 data-nosnippet>20</a>    input: Hct,
+<a href=#21 id=21 data-nosnippet>21</a>
+<a href=#22 id=22 data-nosnippet>22</a>    <span class="doccomment">/// HCTs for all hues, with the same chroma/tone as the input.
+<a href=#23 id=23 data-nosnippet>23</a>    /// Sorted from coldest first to warmest last.
+<a href=#24 id=24 data-nosnippet>24</a>    </span>hcts_by_temp: [Hct; <span class="number">362</span>],
+<a href=#25 id=25 data-nosnippet>25</a>    <span class="doccomment">/// HCTs for all hues, with the same chroma/tone as the input.
+<a href=#26 id=26 data-nosnippet>26</a>    /// Sorted ascending, hue 0 to 360.
+<a href=#27 id=27 data-nosnippet>27</a>    </span>hcts_by_hue: [Hct; <span class="number">362</span>],
+<a href=#28 id=28 data-nosnippet>28</a>    <span class="doccomment">/// A Map with keys of HCTs in `hcts_by_temp`, values of raw temperature.
+<a href=#29 id=29 data-nosnippet>29</a>    </span>temps_by_hct: Map&lt;Hct, f64&gt;,
+<a href=#30 id=30 data-nosnippet>30</a>    <span class="doccomment">/// Relative temperature of the input color. See [`relative_temperature`].
+<a href=#31 id=31 data-nosnippet>31</a>    ///
+<a href=#32 id=32 data-nosnippet>32</a>    /// [`relative_temperature`]: Self::relative_temperature
+<a href=#33 id=33 data-nosnippet>33</a>    </span>input_relative_temperature: f64,
+<a href=#34 id=34 data-nosnippet>34</a>    _complement: <span class="prelude-ty">Option</span>&lt;Hct&gt;,
+<a href=#35 id=35 data-nosnippet>35</a>}
+<a href=#36 id=36 data-nosnippet>36</a>
+<a href=#37 id=37 data-nosnippet>37</a><span class="kw">impl </span>TemperatureCache {
+<a href=#38 id=38 data-nosnippet>38</a>    <span class="doccomment">/// # Panics
+<a href=#39 id=39 data-nosnippet>39</a>    ///
+<a href=#40 id=40 data-nosnippet>40</a>    /// Will panic if there is no warmest HCT
+<a href=#41 id=41 data-nosnippet>41</a>    </span><span class="kw">pub const fn </span>warmest(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Hct {
+<a href=#42 id=42 data-nosnippet>42</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.hcts_by_temp[<span class="number">361</span>]
+<a href=#43 id=43 data-nosnippet>43</a>    }
+<a href=#44 id=44 data-nosnippet>44</a>
+<a href=#45 id=45 data-nosnippet>45</a>    <span class="doccomment">/// # Panics
+<a href=#46 id=46 data-nosnippet>46</a>    ///
+<a href=#47 id=47 data-nosnippet>47</a>    /// Will panic if there is no coldest HCT
+<a href=#48 id=48 data-nosnippet>48</a>    </span><span class="kw">pub const fn </span>coldest(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Hct {
+<a href=#49 id=49 data-nosnippet>49</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.hcts_by_temp[<span class="number">0</span>]
+<a href=#50 id=50 data-nosnippet>50</a>    }
+<a href=#51 id=51 data-nosnippet>51</a>
+<a href=#52 id=52 data-nosnippet>52</a>    <span class="kw">pub fn </span>new(input: Hct) -&gt; <span class="self">Self </span>{
+<a href=#53 id=53 data-nosnippet>53</a>        <span class="kw">let </span>chroma = input.get_chroma();
+<a href=#54 id=54 data-nosnippet>54</a>        <span class="kw">let </span>tone = input.get_tone();
+<a href=#55 id=55 data-nosnippet>55</a>
+<a href=#56 id=56 data-nosnippet>56</a>        <span class="kw">let </span>hcts_by_hue = core::array::from_fn(|index| {
+<a href=#57 id=57 data-nosnippet>57</a>            <span class="kw">if </span>index == <span class="number">361 </span>{
+<a href=#58 id=58 data-nosnippet>58</a>                input
+<a href=#59 id=59 data-nosnippet>59</a>            } <span class="kw">else </span>{
+<a href=#60 id=60 data-nosnippet>60</a>                Hct::from(f64::from(index <span class="kw">as </span>i32), chroma, tone)
+<a href=#61 id=61 data-nosnippet>61</a>            }
+<a href=#62 id=62 data-nosnippet>62</a>        });
+<a href=#63 id=63 data-nosnippet>63</a>
+<a href=#64 id=64 data-nosnippet>64</a>        <span class="kw">let </span>temps_by_hct = hcts_by_hue.iter().map(|e| (<span class="kw-2">*</span>e, <span class="self">Self</span>::raw_temperature(e))).collect();
+<a href=#65 id=65 data-nosnippet>65</a>
+<a href=#66 id=66 data-nosnippet>66</a>        <span class="kw">let </span><span class="kw-2">mut </span>hcts_by_temp = hcts_by_hue;
+<a href=#67 id=67 data-nosnippet>67</a>
+<a href=#68 id=68 data-nosnippet>68</a>        hcts_by_temp.sort_by(|a, b| <span class="self">Self</span>::sort_by_temp(<span class="kw-2">&amp;</span>temps_by_hct, a, b));
+<a href=#69 id=69 data-nosnippet>69</a>
+<a href=#70 id=70 data-nosnippet>70</a>        <span class="kw">let </span><span class="kw-2">mut </span>cache = <span class="self">Self </span>{
+<a href=#71 id=71 data-nosnippet>71</a>            input,
+<a href=#72 id=72 data-nosnippet>72</a>            hcts_by_temp,
+<a href=#73 id=73 data-nosnippet>73</a>            hcts_by_hue,
+<a href=#74 id=74 data-nosnippet>74</a>            temps_by_hct,
+<a href=#75 id=75 data-nosnippet>75</a>            input_relative_temperature: -<span class="number">1.0</span>,
+<a href=#76 id=76 data-nosnippet>76</a>            _complement: <span class="prelude-val">None</span>,
+<a href=#77 id=77 data-nosnippet>77</a>        };
+<a href=#78 id=78 data-nosnippet>78</a>
+<a href=#79 id=79 data-nosnippet>79</a>        cache.input_relative_temperature = {
+<a href=#80 id=80 data-nosnippet>80</a>            <span class="kw">let </span>coldest = cache.coldest();
+<a href=#81 id=81 data-nosnippet>81</a>            <span class="kw">let </span>warmest = cache.warmest();
+<a href=#82 id=82 data-nosnippet>82</a>            <span class="kw">let </span>input = <span class="kw-2">&amp;</span>cache.input;
+<a href=#83 id=83 data-nosnippet>83</a>
+<a href=#84 id=84 data-nosnippet>84</a>            <span class="kw">let </span>coldest_temp = cache.temps_by_hct[coldest];
+<a href=#85 id=85 data-nosnippet>85</a>
+<a href=#86 id=86 data-nosnippet>86</a>            <span class="kw">let </span>range = cache.temps_by_hct[warmest] - coldest_temp;
+<a href=#87 id=87 data-nosnippet>87</a>            <span class="kw">let </span>difference_from_coldest = cache.temps_by_hct[input] - coldest_temp;
+<a href=#88 id=88 data-nosnippet>88</a>
+<a href=#89 id=89 data-nosnippet>89</a>            <span class="kw">if </span>range == <span class="number">0.0 </span>{ <span class="number">0.5 </span>} <span class="kw">else </span>{ difference_from_coldest / range }
+<a href=#90 id=90 data-nosnippet>90</a>        };
+<a href=#91 id=91 data-nosnippet>91</a>
+<a href=#92 id=92 data-nosnippet>92</a>        cache
+<a href=#93 id=93 data-nosnippet>93</a>    }
+<a href=#94 id=94 data-nosnippet>94</a>
+<a href=#95 id=95 data-nosnippet>95</a>    <span class="doccomment">/// A set of colors with differing hues, equidistant in temperature.
+<a href=#96 id=96 data-nosnippet>96</a>    ///
+<a href=#97 id=97 data-nosnippet>97</a>    /// In art, this is usually described as a set of 5 colors on a color wheel
+<a href=#98 id=98 data-nosnippet>98</a>    /// divided into 12 sections. This method allows provision of either of
+<a href=#99 id=99 data-nosnippet>99</a>    /// those values.
+<a href=#100 id=100 data-nosnippet>100</a>    ///
+<a href=#101 id=101 data-nosnippet>101</a>    /// Behavior is undefined when `count` or `divisions` is 0.
+<a href=#102 id=102 data-nosnippet>102</a>    /// When `divisions` &lt; `count`, colors repeat.
+<a href=#103 id=103 data-nosnippet>103</a>    ///
+<a href=#104 id=104 data-nosnippet>104</a>    /// - `count`: The number of colors to return, includes the input color.
+<a href=#105 id=105 data-nosnippet>105</a>    /// - `divisions`: The number of divisions on the color wheel.
+<a href=#106 id=106 data-nosnippet>106</a>    </span><span class="kw">pub fn </span>analogous(<span class="kw-2">&amp;</span><span class="self">self</span>, count: <span class="prelude-ty">Option</span>&lt;i32&gt;, divisions: <span class="prelude-ty">Option</span>&lt;i32&gt;) -&gt; Vec&lt;Hct&gt; {
+<a href=#107 id=107 data-nosnippet>107</a>        <span class="kw">let </span>count = count.unwrap_or(<span class="number">5</span>);
+<a href=#108 id=108 data-nosnippet>108</a>        <span class="kw">let </span>divisions = divisions.unwrap_or(<span class="number">12</span>);
+<a href=#109 id=109 data-nosnippet>109</a>        <span class="kw">let </span>start_hue = <span class="self">self</span>.input.get_hue().round() <span class="kw">as </span>i32;
+<a href=#110 id=110 data-nosnippet>110</a>
+<a href=#111 id=111 data-nosnippet>111</a>        <span class="kw">let </span>start_hct = <span class="self">self</span>.hcts_by_hue[start_hue <span class="kw">as </span>usize];
+<a href=#112 id=112 data-nosnippet>112</a>        <span class="kw">let </span><span class="kw-2">mut </span>last_temp = <span class="self">self</span>.relative_temperature(<span class="kw-2">&amp;</span>start_hct);
+<a href=#113 id=113 data-nosnippet>113</a>        <span class="kw">let </span><span class="kw-2">mut </span>all_colors = <span class="macro">vec!</span>[start_hct];
+<a href=#114 id=114 data-nosnippet>114</a>
+<a href=#115 id=115 data-nosnippet>115</a>        <span class="kw">let </span><span class="kw-2">mut </span>absolute_total_temp_delta = <span class="number">0.0</span>;
+<a href=#116 id=116 data-nosnippet>116</a>
+<a href=#117 id=117 data-nosnippet>117</a>        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">360 </span>{
+<a href=#118 id=118 data-nosnippet>118</a>            <span class="kw">let </span>hue = sanitize_degrees_double((start_hue + i).into());
+<a href=#119 id=119 data-nosnippet>119</a>            <span class="kw">let </span>hct = <span class="self">self</span>.hcts_by_hue[hue <span class="kw">as </span>usize];
+<a href=#120 id=120 data-nosnippet>120</a>            <span class="kw">let </span>temp = <span class="self">self</span>.relative_temperature(<span class="kw-2">&amp;</span>hct);
+<a href=#121 id=121 data-nosnippet>121</a>            <span class="kw">let </span>temp_delta = (temp - last_temp).abs();
+<a href=#122 id=122 data-nosnippet>122</a>
+<a href=#123 id=123 data-nosnippet>123</a>            last_temp = temp;
+<a href=#124 id=124 data-nosnippet>124</a>            absolute_total_temp_delta += temp_delta;
+<a href=#125 id=125 data-nosnippet>125</a>        }
+<a href=#126 id=126 data-nosnippet>126</a>
+<a href=#127 id=127 data-nosnippet>127</a>        <span class="kw">let </span><span class="kw-2">mut </span>hue_addend = <span class="number">1</span>;
+<a href=#128 id=128 data-nosnippet>128</a>        <span class="kw">let </span>temp_step = absolute_total_temp_delta / f64::from(divisions);
+<a href=#129 id=129 data-nosnippet>129</a>
+<a href=#130 id=130 data-nosnippet>130</a>        <span class="kw">let </span><span class="kw-2">mut </span>total_temp_delta = <span class="number">0.0</span>;
+<a href=#131 id=131 data-nosnippet>131</a>
+<a href=#132 id=132 data-nosnippet>132</a>        last_temp = <span class="self">self</span>.relative_temperature(<span class="kw-2">&amp;</span>start_hct);
+<a href=#133 id=133 data-nosnippet>133</a>
+<a href=#134 id=134 data-nosnippet>134</a>        <span class="kw">while </span>all_colors.len() &lt; divisions <span class="kw">as </span>usize {
+<a href=#135 id=135 data-nosnippet>135</a>            <span class="kw">let </span>hue = sanitize_degrees_double((start_hue + hue_addend).into());
+<a href=#136 id=136 data-nosnippet>136</a>            <span class="kw">let </span>hct = <span class="self">self</span>.hcts_by_hue[hue <span class="kw">as </span>usize];
+<a href=#137 id=137 data-nosnippet>137</a>            <span class="kw">let </span>temp = <span class="self">self</span>.relative_temperature(<span class="kw-2">&amp;</span>hct);
+<a href=#138 id=138 data-nosnippet>138</a>            <span class="kw">let </span>temp_delta = (temp - last_temp).abs();
+<a href=#139 id=139 data-nosnippet>139</a>
+<a href=#140 id=140 data-nosnippet>140</a>            total_temp_delta += temp_delta;
+<a href=#141 id=141 data-nosnippet>141</a>
+<a href=#142 id=142 data-nosnippet>142</a>            <span class="kw">let </span>desired_total_temp_delta_for_index = all_colors.len() <span class="kw">as </span>f64 * temp_step;
+<a href=#143 id=143 data-nosnippet>143</a>
+<a href=#144 id=144 data-nosnippet>144</a>            <span class="kw">let </span><span class="kw-2">mut </span>index_satisfied = total_temp_delta &gt;= desired_total_temp_delta_for_index;
+<a href=#145 id=145 data-nosnippet>145</a>            <span class="kw">let </span><span class="kw-2">mut </span>index_addend = <span class="number">1</span>;
+<a href=#146 id=146 data-nosnippet>146</a>
+<a href=#147 id=147 data-nosnippet>147</a>            <span class="comment">// Keep adding this hue to the answers until its temperature is
+<a href=#148 id=148 data-nosnippet>148</a>            // insufficient. This ensures consistent behavior when there aren't
+<a href=#149 id=149 data-nosnippet>149</a>            // [divisions] discrete steps between 0 and 360 in hue with [tempStep]
+<a href=#150 id=150 data-nosnippet>150</a>            // delta in temperature between them.
+<a href=#151 id=151 data-nosnippet>151</a>            //
+<a href=#152 id=152 data-nosnippet>152</a>            // For example, white and black have no analogues: there are no other
+<a href=#153 id=153 data-nosnippet>153</a>            // colors at T100/T0. Therefore, they should just be added to the array
+<a href=#154 id=154 data-nosnippet>154</a>            // as answers.
+<a href=#155 id=155 data-nosnippet>155</a>            </span><span class="kw">while </span>index_satisfied &amp;&amp; all_colors.len() &lt; divisions <span class="kw">as </span>usize {
+<a href=#156 id=156 data-nosnippet>156</a>                all_colors.push(hct);
+<a href=#157 id=157 data-nosnippet>157</a>
+<a href=#158 id=158 data-nosnippet>158</a>                <span class="kw">let </span>desired_total_temp_delta_for_index = (all_colors.len() + index_addend) <span class="kw">as </span>f64 * temp_step;
+<a href=#159 id=159 data-nosnippet>159</a>
+<a href=#160 id=160 data-nosnippet>160</a>                index_satisfied = total_temp_delta &gt;= desired_total_temp_delta_for_index;
+<a href=#161 id=161 data-nosnippet>161</a>                index_addend += <span class="number">1</span>;
+<a href=#162 id=162 data-nosnippet>162</a>            }
+<a href=#163 id=163 data-nosnippet>163</a>
+<a href=#164 id=164 data-nosnippet>164</a>            last_temp = temp;
+<a href=#165 id=165 data-nosnippet>165</a>            hue_addend += <span class="number">1</span>;
+<a href=#166 id=166 data-nosnippet>166</a>
+<a href=#167 id=167 data-nosnippet>167</a>            <span class="kw">if </span>hue_addend &gt; <span class="number">360 </span>{
+<a href=#168 id=168 data-nosnippet>168</a>                <span class="kw">while </span>all_colors.len() &lt; divisions <span class="kw">as </span>usize {
+<a href=#169 id=169 data-nosnippet>169</a>                    all_colors.push(hct);
+<a href=#170 id=170 data-nosnippet>170</a>                }
+<a href=#171 id=171 data-nosnippet>171</a>
+<a href=#172 id=172 data-nosnippet>172</a>                <span class="kw">break</span>;
+<a href=#173 id=173 data-nosnippet>173</a>            }
+<a href=#174 id=174 data-nosnippet>174</a>        }
+<a href=#175 id=175 data-nosnippet>175</a>
+<a href=#176 id=176 data-nosnippet>176</a>        <span class="kw">let </span><span class="kw-2">mut </span>answers = <span class="macro">vec!</span>[<span class="self">self</span>.input];
+<a href=#177 id=177 data-nosnippet>177</a>
+<a href=#178 id=178 data-nosnippet>178</a>        <span class="comment">// First, generate analogues from rotating counter-clockwise.
+<a href=#179 id=179 data-nosnippet>179</a>        </span><span class="kw">let </span>increase_hue_count = ((f64::from(count) - <span class="number">1.0</span>) / <span class="number">2.0</span>).floor() <span class="kw">as </span>isize;
+<a href=#180 id=180 data-nosnippet>180</a>
+<a href=#181 id=181 data-nosnippet>181</a>        <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..=increase_hue_count {
+<a href=#182 id=182 data-nosnippet>182</a>            <span class="kw">let </span><span class="kw-2">mut </span>index = <span class="number">0_isize </span>- i;
+<a href=#183 id=183 data-nosnippet>183</a>
+<a href=#184 id=184 data-nosnippet>184</a>            <span class="kw">while </span>index &lt; <span class="number">0 </span>{
+<a href=#185 id=185 data-nosnippet>185</a>                index += all_colors.len() <span class="kw">as </span>isize;
+<a href=#186 id=186 data-nosnippet>186</a>            }
+<a href=#187 id=187 data-nosnippet>187</a>
+<a href=#188 id=188 data-nosnippet>188</a>            <span class="kw">if </span>index &gt;= all_colors.len() <span class="kw">as </span>isize {
+<a href=#189 id=189 data-nosnippet>189</a>                index %= all_colors.len() <span class="kw">as </span>isize;
+<a href=#190 id=190 data-nosnippet>190</a>            }
+<a href=#191 id=191 data-nosnippet>191</a>
+<a href=#192 id=192 data-nosnippet>192</a>            answers.insert(<span class="number">0</span>, all_colors[index <span class="kw">as </span>usize]);
+<a href=#193 id=193 data-nosnippet>193</a>        }
+<a href=#194 id=194 data-nosnippet>194</a>
+<a href=#195 id=195 data-nosnippet>195</a>        <span class="comment">// Second, generate analogues from rotating clockwise.
+<a href=#196 id=196 data-nosnippet>196</a>        </span><span class="kw">let </span>decrease_hue_count = (count - (increase_hue_count <span class="kw">as </span>i32) - <span class="number">1</span>) <span class="kw">as </span>isize;
+<a href=#197 id=197 data-nosnippet>197</a>
+<a href=#198 id=198 data-nosnippet>198</a>        <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..=decrease_hue_count {
+<a href=#199 id=199 data-nosnippet>199</a>            <span class="kw">let </span><span class="kw-2">mut </span>index = i;
+<a href=#200 id=200 data-nosnippet>200</a>
+<a href=#201 id=201 data-nosnippet>201</a>            <span class="kw">while </span>index &lt; <span class="number">0 </span>{
+<a href=#202 id=202 data-nosnippet>202</a>                index += all_colors.len() <span class="kw">as </span>isize;
+<a href=#203 id=203 data-nosnippet>203</a>            }
+<a href=#204 id=204 data-nosnippet>204</a>
+<a href=#205 id=205 data-nosnippet>205</a>            <span class="kw">if </span>index &gt;= all_colors.len() <span class="kw">as </span>isize {
+<a href=#206 id=206 data-nosnippet>206</a>                index %= all_colors.len() <span class="kw">as </span>isize;
+<a href=#207 id=207 data-nosnippet>207</a>            }
+<a href=#208 id=208 data-nosnippet>208</a>
+<a href=#209 id=209 data-nosnippet>209</a>            answers.push(all_colors[index <span class="kw">as </span>usize]);
+<a href=#210 id=210 data-nosnippet>210</a>        }
+<a href=#211 id=211 data-nosnippet>211</a>
+<a href=#212 id=212 data-nosnippet>212</a>        answers
+<a href=#213 id=213 data-nosnippet>213</a>    }
+<a href=#214 id=214 data-nosnippet>214</a>
+<a href=#215 id=215 data-nosnippet>215</a>    <span class="doccomment">/// A color that complements the input color aesthetically.
+<a href=#216 id=216 data-nosnippet>216</a>    ///
+<a href=#217 id=217 data-nosnippet>217</a>    /// In art, this is usually described as being across the color wheel.
+<a href=#218 id=218 data-nosnippet>218</a>    /// History of this shows intent as a color that is just as cool-warm as the
+<a href=#219 id=219 data-nosnippet>219</a>    /// input color is warm-cool.
+<a href=#220 id=220 data-nosnippet>220</a>    ///
+<a href=#221 id=221 data-nosnippet>221</a>    /// # Panics
+<a href=#222 id=222 data-nosnippet>222</a>    ///
+<a href=#223 id=223 data-nosnippet>223</a>    /// Will panic if there is no coldest or warmest HCT
+<a href=#224 id=224 data-nosnippet>224</a>    </span><span class="kw">pub fn </span>complement(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Hct {
+<a href=#225 id=225 data-nosnippet>225</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(complement) = <span class="self">self</span>._complement {
+<a href=#226 id=226 data-nosnippet>226</a>            <span class="kw">return </span>complement;
+<a href=#227 id=227 data-nosnippet>227</a>        }
+<a href=#228 id=228 data-nosnippet>228</a>
+<a href=#229 id=229 data-nosnippet>229</a>        <span class="kw">let </span>coldest_hct = <span class="self">self</span>.coldest();
+<a href=#230 id=230 data-nosnippet>230</a>        <span class="kw">let </span>warmest_hct = <span class="self">self</span>.warmest();
+<a href=#231 id=231 data-nosnippet>231</a>
+<a href=#232 id=232 data-nosnippet>232</a>        <span class="kw">let </span>coldest_hue = coldest_hct.get_hue();
+<a href=#233 id=233 data-nosnippet>233</a>        <span class="kw">let </span>coldest_temp = <span class="self">self</span>.temps_by_hct[coldest_hct];
+<a href=#234 id=234 data-nosnippet>234</a>
+<a href=#235 id=235 data-nosnippet>235</a>        <span class="kw">let </span>warmest_hue = warmest_hct.get_hue();
+<a href=#236 id=236 data-nosnippet>236</a>        <span class="kw">let </span>warmest_temp = <span class="self">self</span>.temps_by_hct[warmest_hct];
+<a href=#237 id=237 data-nosnippet>237</a>
+<a href=#238 id=238 data-nosnippet>238</a>        <span class="kw">let </span>range = warmest_temp - coldest_temp;
+<a href=#239 id=239 data-nosnippet>239</a>        <span class="kw">let </span>start_hue_is_coldest_to_warmest = <span class="self">Self</span>::is_between(<span class="self">self</span>.input.get_hue(), coldest_hue, warmest_hue);
+<a href=#240 id=240 data-nosnippet>240</a>
+<a href=#241 id=241 data-nosnippet>241</a>        <span class="kw">let </span>start_hue = <span class="kw">if </span>start_hue_is_coldest_to_warmest { warmest_hue } <span class="kw">else </span>{ coldest_hue };
+<a href=#242 id=242 data-nosnippet>242</a>
+<a href=#243 id=243 data-nosnippet>243</a>        <span class="kw">let </span>end_hue = <span class="kw">if </span>start_hue_is_coldest_to_warmest { coldest_hue } <span class="kw">else </span>{ warmest_hue };
+<a href=#244 id=244 data-nosnippet>244</a>
+<a href=#245 id=245 data-nosnippet>245</a>        <span class="kw">let </span>direction_of_rotation = <span class="number">1.0_f64</span>;
+<a href=#246 id=246 data-nosnippet>246</a>        <span class="kw">let </span><span class="kw-2">mut </span>smallest_error = <span class="number">1000.0</span>;
+<a href=#247 id=247 data-nosnippet>247</a>        <span class="kw">let </span>hue = <span class="self">self</span>.input.get_hue().round();
+<a href=#248 id=248 data-nosnippet>248</a>        <span class="kw">let </span><span class="kw-2">mut </span>answer = <span class="self">self</span>.hcts_by_hue[hue <span class="kw">as </span>usize];
+<a href=#249 id=249 data-nosnippet>249</a>
+<a href=#250 id=250 data-nosnippet>250</a>        <span class="kw">let </span>complement_relative_temp = <span class="number">1.0 </span>- <span class="self">self</span>.input_relative_temperature;
+<a href=#251 id=251 data-nosnippet>251</a>
+<a href=#252 id=252 data-nosnippet>252</a>        <span class="comment">// Find the color in the other section, closest to the inverse percentile
+<a href=#253 id=253 data-nosnippet>253</a>        // of the input color. This is the complement.
+<a href=#254 id=254 data-nosnippet>254</a>        </span><span class="kw">for </span>hue_addend <span class="kw">in </span><span class="number">0</span>..=<span class="number">360 </span>{
+<a href=#255 id=255 data-nosnippet>255</a>            <span class="kw">let </span>hue = sanitize_degrees_double(direction_of_rotation.mul_add(f64::from(hue_addend), start_hue));
+<a href=#256 id=256 data-nosnippet>256</a>
+<a href=#257 id=257 data-nosnippet>257</a>            <span class="kw">if </span>!<span class="self">Self</span>::is_between(hue, start_hue, end_hue) {
+<a href=#258 id=258 data-nosnippet>258</a>                <span class="kw">continue</span>;
+<a href=#259 id=259 data-nosnippet>259</a>            }
+<a href=#260 id=260 data-nosnippet>260</a>
+<a href=#261 id=261 data-nosnippet>261</a>            <span class="kw">let </span>possible_answer = <span class="kw-2">&amp;</span><span class="self">self</span>.hcts_by_hue[hue.round() <span class="kw">as </span>usize];
+<a href=#262 id=262 data-nosnippet>262</a>            <span class="kw">let </span>relative_temp = (<span class="self">self</span>.temps_by_hct[possible_answer] - coldest_temp) / range;
+<a href=#263 id=263 data-nosnippet>263</a>            <span class="kw">let </span>error = (complement_relative_temp - relative_temp).abs();
+<a href=#264 id=264 data-nosnippet>264</a>
+<a href=#265 id=265 data-nosnippet>265</a>            <span class="kw">if </span>error &lt; smallest_error {
+<a href=#266 id=266 data-nosnippet>266</a>                smallest_error = error;
+<a href=#267 id=267 data-nosnippet>267</a>                answer = <span class="kw-2">*</span>possible_answer;
+<a href=#268 id=268 data-nosnippet>268</a>            }
+<a href=#269 id=269 data-nosnippet>269</a>        }
+<a href=#270 id=270 data-nosnippet>270</a>
+<a href=#271 id=271 data-nosnippet>271</a>        <span class="self">self</span>._complement = <span class="prelude-val">Some</span>(answer);
+<a href=#272 id=272 data-nosnippet>272</a>
+<a href=#273 id=273 data-nosnippet>273</a>        answer
+<a href=#274 id=274 data-nosnippet>274</a>    }
+<a href=#275 id=275 data-nosnippet>275</a>
+<a href=#276 id=276 data-nosnippet>276</a>    <span class="doccomment">/// Temperature relative to all colors with the same chroma and tone.
+<a href=#277 id=277 data-nosnippet>277</a>    /// Value on a scale from 0 to 1.
+<a href=#278 id=278 data-nosnippet>278</a>    </span><span class="kw">pub fn </span>relative_temperature(<span class="kw-2">&amp;</span><span class="self">self</span>, hct: <span class="kw-2">&amp;</span>Hct) -&gt; f64 {
+<a href=#279 id=279 data-nosnippet>279</a>        <span class="kw">let </span>coldest = <span class="self">self</span>.coldest();
+<a href=#280 id=280 data-nosnippet>280</a>        <span class="kw">let </span>warmest = <span class="self">self</span>.warmest();
+<a href=#281 id=281 data-nosnippet>281</a>
+<a href=#282 id=282 data-nosnippet>282</a>        <span class="kw">let </span>range = <span class="self">self</span>.temps_by_hct[warmest] - <span class="self">self</span>.temps_by_hct[coldest];
+<a href=#283 id=283 data-nosnippet>283</a>        <span class="kw">let </span>difference_from_coldest = <span class="self">self</span>.temps_by_hct[hct] - <span class="self">self</span>.temps_by_hct[coldest];
+<a href=#284 id=284 data-nosnippet>284</a>
+<a href=#285 id=285 data-nosnippet>285</a>        <span class="comment">// Handle when there's no difference in temperature between warmest and
+<a href=#286 id=286 data-nosnippet>286</a>        // coldest: for example, at T100, only one color is available, white.
+<a href=#287 id=287 data-nosnippet>287</a>        </span><span class="kw">if </span>range == <span class="number">0.0 </span>{ <span class="number">0.5 </span>} <span class="kw">else </span>{ difference_from_coldest / range }
+<a href=#288 id=288 data-nosnippet>288</a>    }
+<a href=#289 id=289 data-nosnippet>289</a>
+<a href=#290 id=290 data-nosnippet>290</a>    <span class="kw">fn </span>sort_by_temp(temps_by_hct: <span class="kw-2">&amp;</span>Map&lt;Hct, f64&gt;, this: <span class="kw-2">&amp;</span>Hct, that: <span class="kw-2">&amp;</span>Hct) -&gt; Ordering {
+<a href=#291 id=291 data-nosnippet>291</a>        <span class="kw">let </span>a = <span class="kw-2">&amp;</span>temps_by_hct[this];
+<a href=#292 id=292 data-nosnippet>292</a>        <span class="kw">let </span>b = <span class="kw-2">&amp;</span>temps_by_hct[that];
+<a href=#293 id=293 data-nosnippet>293</a>
+<a href=#294 id=294 data-nosnippet>294</a>        a.partial_cmp(b).unwrap()
+<a href=#295 id=295 data-nosnippet>295</a>    }
+<a href=#296 id=296 data-nosnippet>296</a>
+<a href=#297 id=297 data-nosnippet>297</a>    <span class="doccomment">/// Determines if an angle is between two other angles, rotating clockwise.
+<a href=#298 id=298 data-nosnippet>298</a>    </span><span class="kw">pub fn </span>is_between(angle: f64, a: f64, b: f64) -&gt; bool {
+<a href=#299 id=299 data-nosnippet>299</a>        <span class="kw">if </span>a &lt; b { a &lt;= angle &amp;&amp; angle &lt;= b } <span class="kw">else </span>{ a &lt;= angle || angle &lt;= b }
+<a href=#300 id=300 data-nosnippet>300</a>    }
+<a href=#301 id=301 data-nosnippet>301</a>
+<a href=#302 id=302 data-nosnippet>302</a>    <span class="doccomment">/// Value representing cool-warm factor of a color.
+<a href=#303 id=303 data-nosnippet>303</a>    /// Values below 0 are considered cool, above, warm.
+<a href=#304 id=304 data-nosnippet>304</a>    ///
+<a href=#305 id=305 data-nosnippet>305</a>    /// Color science has researched emotion and harmony, which art uses to
+<a href=#306 id=306 data-nosnippet>306</a>    /// select colors. Warm-cool is the foundation of analogous and
+<a href=#307 id=307 data-nosnippet>307</a>    /// complementary colors. See:
+<a href=#308 id=308 data-nosnippet>308</a>    /// - Li-Chen Ou's Chapter 19 in Handbook of Color Psychology (2015).
+<a href=#309 id=309 data-nosnippet>309</a>    /// - Josef Albers' Interaction of Color chapters 19 and 21.
+<a href=#310 id=310 data-nosnippet>310</a>    ///
+<a href=#311 id=311 data-nosnippet>311</a>    /// Implementation of Ou, Woodcock and Wright's algorithm, which uses
+<a href=#312 id=312 data-nosnippet>312</a>    /// L*a*b*/LCH color space.
+<a href=#313 id=313 data-nosnippet>313</a>    /// Return value has these properties:
+<a href=#314 id=314 data-nosnippet>314</a>    /// - Values below 0 are cool, above 0 are warm.
+<a href=#315 id=315 data-nosnippet>315</a>    /// - Lower bound: -0.52 - (chroma ^ 1.07 / 20). L*a*b* chroma is infinite.
+<a href=#316 id=316 data-nosnippet>316</a>    ///   Assuming max of 130 chroma, -9.66.
+<a href=#317 id=317 data-nosnippet>317</a>    /// - Upper bound: -0.52 + (chroma ^ 1.07 / 20). L*a*b* chroma is infinite.
+<a href=#318 id=318 data-nosnippet>318</a>    ///   Assuming max of 130 chroma, 8.61.
+<a href=#319 id=319 data-nosnippet>319</a>    </span><span class="kw">pub fn </span>raw_temperature(color: <span class="kw-2">&amp;</span>Hct) -&gt; f64 {
+<a href=#320 id=320 data-nosnippet>320</a>        <span class="kw">let </span>lab = Lab::from(Rgb::from_ref(color));
+<a href=#321 id=321 data-nosnippet>321</a>        <span class="kw">let </span>hue = sanitize_degrees_double(lab.b.atan2(lab.a).to_degrees());
+<a href=#322 id=322 data-nosnippet>322</a>
+<a href=#323 id=323 data-nosnippet>323</a>        <span class="kw">let </span>chroma = lab.a.hypot(lab.b);
+<a href=#324 id=324 data-nosnippet>324</a>
+<a href=#325 id=325 data-nosnippet>325</a>        (<span class="number">0.02 </span>* chroma.powf(<span class="number">1.07</span>)).mul_add((sanitize_degrees_double(hue - <span class="number">50.0</span>).to_radians()).cos(), -<span class="number">0.5</span>)
+<a href=#326 id=326 data-nosnippet>326</a>    }
+<a href=#327 id=327 data-nosnippet>327</a>}
+<a href=#328 id=328 data-nosnippet>328</a>
+<a href=#329 id=329 data-nosnippet>329</a><span class="attr">#[cfg(test)]
+<a href=#330 id=330 data-nosnippet>330</a></span><span class="kw">mod </span>tests {
+<a href=#331 id=331 data-nosnippet>331</a>    <span class="kw">use </span>float_cmp::assert_approx_eq;
+<a href=#332 id=332 data-nosnippet>332</a>
+<a href=#333 id=333 data-nosnippet>333</a>    <span class="kw">use </span><span class="kw">super</span>::TemperatureCache;
+<a href=#334 id=334 data-nosnippet>334</a>    <span class="kw">use </span>crate::{color::Rgb, hct::Hct};
+<a href=#335 id=335 data-nosnippet>335</a>
+<a href=#336 id=336 data-nosnippet>336</a>    <span class="attr">#[test]
+<a href=#337 id=337 data-nosnippet>337</a>    </span><span class="kw">fn </span>test_raw_temperature() {
+<a href=#338 id=338 data-nosnippet>338</a>        <span class="kw">let </span>blue_hct = Hct::new(Rgb::from_u32(<span class="number">0x0000FF</span>));
+<a href=#339 id=339 data-nosnippet>339</a>        <span class="kw">let </span>red_hct = Hct::new(Rgb::from_u32(<span class="number">0xFF0000</span>));
+<a href=#340 id=340 data-nosnippet>340</a>        <span class="kw">let </span>green_hct = Hct::new(Rgb::from_u32(<span class="number">0x00FF00</span>));
+<a href=#341 id=341 data-nosnippet>341</a>        <span class="kw">let </span>white_hct = Hct::new(Rgb::from_u32(<span class="number">0xFFFFFF</span>));
+<a href=#342 id=342 data-nosnippet>342</a>        <span class="kw">let </span>black_hct = Hct::new(Rgb::from_u32(<span class="number">0x000000</span>));
+<a href=#343 id=343 data-nosnippet>343</a>
+<a href=#344 id=344 data-nosnippet>344</a>        <span class="kw">let </span>blue_temp = TemperatureCache::raw_temperature(<span class="kw-2">&amp;</span>blue_hct);
+<a href=#345 id=345 data-nosnippet>345</a>        <span class="kw">let </span>red_temp = TemperatureCache::raw_temperature(<span class="kw-2">&amp;</span>red_hct);
+<a href=#346 id=346 data-nosnippet>346</a>        <span class="kw">let </span>green_temp = TemperatureCache::raw_temperature(<span class="kw-2">&amp;</span>green_hct);
+<a href=#347 id=347 data-nosnippet>347</a>        <span class="kw">let </span>white_temp = TemperatureCache::raw_temperature(<span class="kw-2">&amp;</span>white_hct);
+<a href=#348 id=348 data-nosnippet>348</a>        <span class="kw">let </span>black_temp = TemperatureCache::raw_temperature(<span class="kw-2">&amp;</span>black_hct);
+<a href=#349 id=349 data-nosnippet>349</a>
+<a href=#350 id=350 data-nosnippet>350</a>        <span class="macro">assert_approx_eq!</span>(f64, -<span class="number">1.393</span>, blue_temp, epsilon = <span class="number">0.001</span>);
+<a href=#351 id=351 data-nosnippet>351</a>        <span class="macro">assert_approx_eq!</span>(f64, <span class="number">2.351</span>, red_temp, epsilon = <span class="number">0.001</span>);
+<a href=#352 id=352 data-nosnippet>352</a>        <span class="macro">assert_approx_eq!</span>(f64, -<span class="number">0.267</span>, green_temp, epsilon = <span class="number">0.001</span>);
+<a href=#353 id=353 data-nosnippet>353</a>        <span class="macro">assert_approx_eq!</span>(f64, -<span class="number">0.5</span>, white_temp, epsilon = <span class="number">0.001</span>);
+<a href=#354 id=354 data-nosnippet>354</a>        <span class="macro">assert_approx_eq!</span>(f64, -<span class="number">0.5</span>, black_temp, epsilon = <span class="number">0.001</span>);
+<a href=#355 id=355 data-nosnippet>355</a>    }
+<a href=#356 id=356 data-nosnippet>356</a>
+<a href=#357 id=357 data-nosnippet>357</a>    <span class="attr">#[test]
+<a href=#358 id=358 data-nosnippet>358</a>    </span><span class="kw">fn </span>test_complement() {
+<a href=#359 id=359 data-nosnippet>359</a>        <span class="kw">let </span>blue_complement: Rgb = TemperatureCache::new(Hct::new(Rgb::from_u32(<span class="number">0x0000FF</span>))).complement().into();
+<a href=#360 id=360 data-nosnippet>360</a>        <span class="kw">let </span>red_complement: Rgb = TemperatureCache::new(Hct::new(Rgb::from_u32(<span class="number">0xFF0000</span>))).complement().into();
+<a href=#361 id=361 data-nosnippet>361</a>        <span class="kw">let </span>green_complement: Rgb = TemperatureCache::new(Hct::new(Rgb::from_u32(<span class="number">0x00FF00</span>))).complement().into();
+<a href=#362 id=362 data-nosnippet>362</a>        <span class="kw">let </span>white_complement: Rgb = TemperatureCache::new(Hct::new(Rgb::from_u32(<span class="number">0xFFFFFF</span>))).complement().into();
+<a href=#363 id=363 data-nosnippet>363</a>        <span class="kw">let </span>black_complement: Rgb = TemperatureCache::new(Hct::new(Rgb::from_u32(<span class="number">0x000000</span>))).complement().into();
+<a href=#364 id=364 data-nosnippet>364</a>
+<a href=#365 id=365 data-nosnippet>365</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x9D0002</span>), blue_complement);
+<a href=#366 id=366 data-nosnippet>366</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x007BFC</span>), red_complement);
+<a href=#367 id=367 data-nosnippet>367</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0xFFD2C9</span>), green_complement);
+<a href=#368 id=368 data-nosnippet>368</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0xFFFFFF</span>), white_complement);
+<a href=#369 id=369 data-nosnippet>369</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x000000</span>), black_complement);
+<a href=#370 id=370 data-nosnippet>370</a>    }
+<a href=#371 id=371 data-nosnippet>371</a>
+<a href=#372 id=372 data-nosnippet>372</a>    <span class="attr">#[test]
+<a href=#373 id=373 data-nosnippet>373</a>    </span><span class="kw">fn </span>test_blue_analogous() {
+<a href=#374 id=374 data-nosnippet>374</a>        <span class="kw">let </span>analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(<span class="number">0x0000FF</span>))).analogous(<span class="prelude-val">None</span>, <span class="prelude-val">None</span>);
+<a href=#375 id=375 data-nosnippet>375</a>
+<a href=#376 id=376 data-nosnippet>376</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x00590C</span>), analogous[<span class="number">0</span>].into());
+<a href=#377 id=377 data-nosnippet>377</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x00564E</span>), analogous[<span class="number">1</span>].into());
+<a href=#378 id=378 data-nosnippet>378</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x0000FF</span>), analogous[<span class="number">2</span>].into());
+<a href=#379 id=379 data-nosnippet>379</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x6700CC</span>), analogous[<span class="number">3</span>].into());
+<a href=#380 id=380 data-nosnippet>380</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x81009F</span>), analogous[<span class="number">4</span>].into());
+<a href=#381 id=381 data-nosnippet>381</a>    }
+<a href=#382 id=382 data-nosnippet>382</a>
+<a href=#383 id=383 data-nosnippet>383</a>    <span class="attr">#[test]
+<a href=#384 id=384 data-nosnippet>384</a>    </span><span class="kw">fn </span>test_red_analogous() {
+<a href=#385 id=385 data-nosnippet>385</a>        <span class="kw">let </span>analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(<span class="number">0xFF0000</span>))).analogous(<span class="prelude-val">None</span>, <span class="prelude-val">None</span>);
+<a href=#386 id=386 data-nosnippet>386</a>
+<a href=#387 id=387 data-nosnippet>387</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0xF60082</span>), analogous[<span class="number">0</span>].into());
+<a href=#388 id=388 data-nosnippet>388</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0xFC004C</span>), analogous[<span class="number">1</span>].into());
+<a href=#389 id=389 data-nosnippet>389</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0xFF0000</span>), analogous[<span class="number">2</span>].into());
+<a href=#390 id=390 data-nosnippet>390</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0xD95500</span>), analogous[<span class="number">3</span>].into());
+<a href=#391 id=391 data-nosnippet>391</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0xAF7200</span>), analogous[<span class="number">4</span>].into());
+<a href=#392 id=392 data-nosnippet>392</a>    }
+<a href=#393 id=393 data-nosnippet>393</a>
+<a href=#394 id=394 data-nosnippet>394</a>    <span class="attr">#[test]
+<a href=#395 id=395 data-nosnippet>395</a>    </span><span class="kw">fn </span>test_green_analogous() {
+<a href=#396 id=396 data-nosnippet>396</a>        <span class="kw">let </span>green_analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(<span class="number">0x00FF00</span>))).analogous(<span class="prelude-val">None</span>, <span class="prelude-val">None</span>);
+<a href=#397 id=397 data-nosnippet>397</a>
+<a href=#398 id=398 data-nosnippet>398</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0xCEE900</span>), green_analogous[<span class="number">0</span>].into());
+<a href=#399 id=399 data-nosnippet>399</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x92F500</span>), green_analogous[<span class="number">1</span>].into());
+<a href=#400 id=400 data-nosnippet>400</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x00FF00</span>), green_analogous[<span class="number">2</span>].into());
+<a href=#401 id=401 data-nosnippet>401</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x00FD6F</span>), green_analogous[<span class="number">3</span>].into());
+<a href=#402 id=402 data-nosnippet>402</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x00FAB3</span>), green_analogous[<span class="number">4</span>].into());
+<a href=#403 id=403 data-nosnippet>403</a>    }
+<a href=#404 id=404 data-nosnippet>404</a>
+<a href=#405 id=405 data-nosnippet>405</a>    <span class="attr">#[test]
+<a href=#406 id=406 data-nosnippet>406</a>    </span><span class="kw">fn </span>test_white_analogous() {
+<a href=#407 id=407 data-nosnippet>407</a>        <span class="kw">let </span>analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(<span class="number">0xFFFFFF</span>))).analogous(<span class="prelude-val">None</span>, <span class="prelude-val">None</span>);
+<a href=#408 id=408 data-nosnippet>408</a>
+<a href=#409 id=409 data-nosnippet>409</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0xFFFFFF</span>), analogous[<span class="number">0</span>].into());
+<a href=#410 id=410 data-nosnippet>410</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0xFFFFFF</span>), analogous[<span class="number">1</span>].into());
+<a href=#411 id=411 data-nosnippet>411</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0xFFFFFF</span>), analogous[<span class="number">2</span>].into());
+<a href=#412 id=412 data-nosnippet>412</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0xFFFFFF</span>), analogous[<span class="number">3</span>].into());
+<a href=#413 id=413 data-nosnippet>413</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0xFFFFFF</span>), analogous[<span class="number">4</span>].into());
+<a href=#414 id=414 data-nosnippet>414</a>    }
+<a href=#415 id=415 data-nosnippet>415</a>
+<a href=#416 id=416 data-nosnippet>416</a>    <span class="attr">#[test]
+<a href=#417 id=417 data-nosnippet>417</a>    </span><span class="kw">fn </span>test_black_analogous() {
+<a href=#418 id=418 data-nosnippet>418</a>        <span class="kw">let </span>analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(<span class="number">0x000000</span>))).analogous(<span class="prelude-val">None</span>, <span class="prelude-val">None</span>);
+<a href=#419 id=419 data-nosnippet>419</a>
+<a href=#420 id=420 data-nosnippet>420</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x000000</span>), analogous[<span class="number">0</span>].into());
+<a href=#421 id=421 data-nosnippet>421</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x000000</span>), analogous[<span class="number">1</span>].into());
+<a href=#422 id=422 data-nosnippet>422</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x000000</span>), analogous[<span class="number">2</span>].into());
+<a href=#423 id=423 data-nosnippet>423</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x000000</span>), analogous[<span class="number">3</span>].into());
+<a href=#424 id=424 data-nosnippet>424</a>        <span class="macro">assert_eq!</span>(Rgb::from_u32(<span class="number">0x000000</span>), analogous[<span class="number">4</span>].into());
+<a href=#425 id=425 data-nosnippet>425</a>    }
+<a href=#426 id=426 data-nosnippet>426</a>}
+</code></pre></div></section></main></body></html>
