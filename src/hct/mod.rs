@@ -22,7 +22,7 @@ pub mod solver;
 pub mod viewing_conditions;
 
 #[derive(Default, Clone, Copy, Debug, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Hct {
     _hue: f64,
     _chroma: f64,
