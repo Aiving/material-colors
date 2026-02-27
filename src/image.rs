@@ -5,7 +5,7 @@ use std::{
 };
 
 pub use images::imageops::FilterType;
-use images::{ImageReader as Reader, RgbaImage, imageops::resize};
+use images::{ImageReader as Reader, RgbImage, imageops::resize};
 
 use crate::{
     color::Rgb,
@@ -14,11 +14,11 @@ use crate::{
 };
 
 pub struct Image {
-    image: RgbaImage,
+    image: RgbImage,
 }
 
 impl Image {
-    pub const fn new(image: RgbaImage) -> Self {
+    pub const fn new(image: RgbImage) -> Self {
         Self { image }
     }
 
@@ -35,14 +35,7 @@ pub trait AsPixels {
 
 impl AsPixels for Image {
     fn as_pixels(&self) -> Vec<Rgb> {
-        self.image
-            .pixels()
-            .map(|pixel| {
-                let [_, r, g, b] = u32::from_be_bytes(pixel.0).rotate_right(8).to_be_bytes();
-
-                Rgb::new(r, g, b)
-            })
-            .collect()
+        self.image.pixels().map(|&images::Rgb([r, g, b])| Rgb::new(r, g, b)).collect()
     }
 }
 
@@ -57,7 +50,7 @@ impl ImageReader {
             .with_guessed_format()?
             .decode()
             .expect("failed to decode image")
-            .into_rgba8();
+            .into_rgb8();
 
         Ok(Image::new(data))
     }
@@ -66,11 +59,7 @@ impl ImageReader {
     where
         P: AsRef<Path>,
     {
-        let data = Reader::open(path)?
-            .with_guessed_format()?
-            .decode()
-            .expect("failed to decode image")
-            .into_rgba8();
+        let data = Reader::open(path)?.with_guessed_format()?.decode().expect("failed to decode image").into_rgb8();
 
         Ok(Image::new(data))
     }

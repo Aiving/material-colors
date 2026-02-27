@@ -7,7 +7,7 @@ use core::cmp::Ordering;
 use crate::utils::no_std::FloatExt;
 use crate::{
     Map,
-    color::{Rgb, Lab},
+    color::{Lab, Rgb},
     hct::Hct,
     utils::{FromRef, math::sanitize_degrees_double},
 };

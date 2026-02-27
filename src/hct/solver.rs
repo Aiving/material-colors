@@ -5,7 +5,7 @@ use super::{Cam16, ViewingConditions};
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 use crate::{
-    color::{Rgb, LinearRgb, y_from_lstar},
+    color::{LinearRgb, Rgb, y_from_lstar},
     utils::math::{matrix_multiply, sanitize_degrees_double, signum},
 };
 

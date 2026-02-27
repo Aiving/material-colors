@@ -408,20 +408,20 @@ impl SchemeFromPalette {
         }
     }
 
-    pub fn light(argb: Rgb) -> Self {
-        Self::light_from_palette(&CorePalette::of(argb))
+    pub fn light(rgb: Rgb) -> Self {
+        Self::light_from_palette(&CorePalette::of(rgb))
     }
 
-    pub fn light_content(argb: Rgb) -> Self {
-        Self::light_from_palette(&CorePalette::content_of(argb))
+    pub fn light_content(rgb: Rgb) -> Self {
+        Self::light_from_palette(&CorePalette::content_of(rgb))
     }
 
-    pub fn dark(argb: Rgb) -> Self {
-        Self::dark_from_palette(&CorePalette::of(argb))
+    pub fn dark(rgb: Rgb) -> Self {
+        Self::dark_from_palette(&CorePalette::of(rgb))
     }
 
-    pub fn dark_content(argb: Rgb) -> Self {
-        Self::dark_from_palette(&CorePalette::content_of(argb))
+    pub fn dark_content(rgb: Rgb) -> Self {
+        Self::dark_from_palette(&CorePalette::content_of(rgb))
     }
 }
 

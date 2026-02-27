@@ -11,7 +11,7 @@ use std::{
 use super::{PointProvider, PointProviderLab, QuantizerResult};
 use crate::{
     IndexMap,
-    color::{Rgb, Lab},
+    color::{Lab, Rgb},
     utils::random::Random,
 };
 
@@ -257,7 +257,7 @@ impl QuantizerWsmeans {
             }
         }
 
-        let mut cluster_argbs = vec![];
+        let mut cluster_rgbs = vec![];
         let mut cluster_populations = vec![];
 
         for i in 0..cluster_count {
@@ -269,11 +269,11 @@ impl QuantizerWsmeans {
 
             let possible_new_cluster = PointProviderLab::lab_to_int(&clusters[i]);
 
-            if cluster_argbs.contains(&possible_new_cluster) {
+            if cluster_rgbs.contains(&possible_new_cluster) {
                 continue;
             }
 
-            cluster_argbs.push(possible_new_cluster);
+            cluster_rgbs.push(possible_new_cluster);
 
             cluster_populations.push(count);
         }
@@ -281,7 +281,7 @@ impl QuantizerWsmeans {
         #[cfg(feature = "std")]
         Self::debug_log(format!(
             "kmeans finished and generated {} clusters; {cluster_count} were requested",
-            cluster_argbs.len()
+            cluster_rgbs.len()
         ));
 
         let mut input_pixel_to_cluster_pixel: IndexMap<Rgb, Rgb> = IndexMap::default();
@@ -306,8 +306,8 @@ impl QuantizerWsmeans {
 
         let mut color_to_count: IndexMap<Rgb, u32> = IndexMap::default();
 
-        for i in 0..cluster_argbs.len() {
-            let key = cluster_argbs[i];
+        for i in 0..cluster_rgbs.len() {
+            let key = cluster_rgbs[i];
             let value = cluster_populations[i];
 
             color_to_count.insert(key, value);

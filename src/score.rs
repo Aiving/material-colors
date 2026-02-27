@@ -167,11 +167,8 @@ mod tests {
 
     #[test]
     fn test_prioritizes_chroma() {
-        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
-            (Rgb::from_u32(0x000000), 1),
-            (Rgb::from_u32(0xFFFFFF), 1),
-            (Rgb::from_u32(0x0000FF), 1),
-        ]);
+        let rgb_to_population: IndexMap<Rgb, u32> =
+            IndexMap::from_iter([(Rgb::from_u32(0x000000), 1), (Rgb::from_u32(0xFFFFFF), 1), (Rgb::from_u32(0x0000FF), 1)]);
 
         let ranked = Score::score(&rgb_to_population, None, None, None);
 
@@ -181,11 +178,8 @@ mod tests {
 
     #[test]
     fn test_prioritizes_chroma_when_proportions_equal() {
-        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
-            (Rgb::from_u32(0xFF0000), 1),
-            (Rgb::from_u32(0x00FF00), 1),
-            (Rgb::from_u32(0x0000FF), 1),
-        ]);
+        let rgb_to_population: IndexMap<Rgb, u32> =
+            IndexMap::from_iter([(Rgb::from_u32(0xFF0000), 1), (Rgb::from_u32(0x00FF00), 1), (Rgb::from_u32(0x0000FF), 1)]);
 
         let ranked = Score::score(&rgb_to_population, None, None, None);
 
@@ -217,11 +211,8 @@ mod tests {
 
     #[test]
     fn test_maximizes_hue_distance() {
-        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
-            (Rgb::from_u32(0x008772), 1),
-            (Rgb::from_u32(0x008587), 1),
-            (Rgb::from_u32(0x007EBC), 1),
-        ]);
+        let rgb_to_population: IndexMap<Rgb, u32> =
+            IndexMap::from_iter([(Rgb::from_u32(0x008772), 1), (Rgb::from_u32(0x008587), 1), (Rgb::from_u32(0x007EBC), 1)]);
 
         let ranked = Score::score(&rgb_to_population, Some(2), None, None);
 
@@ -232,11 +223,8 @@ mod tests {
 
     #[test]
     fn test_generated_scenario_one() {
-        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
-            (Rgb::from_u32(0x7EA16D), 67),
-            (Rgb::from_u32(0xD8CCAE), 67),
-            (Rgb::from_u32(0x835C0D), 49),
-        ]);
+        let rgb_to_population: IndexMap<Rgb, u32> =
+            IndexMap::from_iter([(Rgb::from_u32(0x7EA16D), 67), (Rgb::from_u32(0xD8CCAE), 67), (Rgb::from_u32(0x835C0D), 49)]);
 
         let ranked = Score::score(&rgb_to_population, Some(3), Some(Rgb::from_u32(0x8D3819)), Some(false));
 
