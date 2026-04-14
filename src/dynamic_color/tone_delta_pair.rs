@@ -4,11 +4,18 @@ use super::DynamicColor;
 /// the tones at standard contrast are examined and the polarity of those is
 /// attempted to be maintained.
 #[derive(PartialEq, Eq)]
+pub enum DeltaConstraint {
+    Exact,
+    Nearer,
+    Farther,
+}
+
+#[derive(PartialEq, Eq)]
 pub enum TonePolarity {
     Darker,
     Lighter,
-    Nearer,
-    Farther,
+    RelativeDarker,
+    RelativeLighter,
 }
 
 /// Documents a constraint between two `DynamicColor`s, in which their tones
@@ -18,11 +25,12 @@ pub enum TonePolarity {
 /// designers want tonal distance, literally contrast, between two colors that
 /// don't have a background / foreground relationship or a contrast guarantee.
 pub struct ToneDeltaPair {
-    pub subject: DynamicColor,
-    pub basis: DynamicColor,
+    pub subject: &'static DynamicColor,
+    pub basis: &'static DynamicColor,
     pub delta: f64,
     pub polarity: TonePolarity,
     pub stay_together: bool,
+    pub constraint: DeltaConstraint,
 }
 
 impl ToneDeltaPair {
@@ -49,13 +57,21 @@ impl ToneDeltaPair {
     /// * `stayTogether`: Whether these two roles should stay on the same side
     ///   of the "awkward zone" (T50-59). This is necessary for certain cases
     ///   where one role has two backgrounds.
-    pub const fn new(subject: DynamicColor, basis: DynamicColor, delta: f64, polarity: TonePolarity, stay_together: bool) -> Self {
+    pub const fn new(
+        subject: &'static DynamicColor,
+        basis: &'static DynamicColor,
+        delta: f64,
+        polarity: TonePolarity,
+        stay_together: bool,
+        constraint: DeltaConstraint,
+    ) -> Self {
         Self {
             subject,
             basis,
             delta,
             polarity,
             stay_together,
+            constraint,
         }
     }
 }

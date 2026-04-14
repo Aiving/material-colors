@@ -4,9 +4,10 @@ use core::{
     hash::{Hash, Hasher},
 };
 
-use super::{MaterialDynamicColors, Variant};
+use super::Variant;
 use crate::{
     color::Rgb,
+    dynamic_color::{color_spec::SpecVersion, color_spec_2021::ColorSpec2021, color_spec_2025::ColorSpec2025},
     hct::Hct,
     palette::TonalPalette,
     scheme::variant::{
@@ -14,6 +15,15 @@ use crate::{
     },
     utils::math::sanitize_degrees_double,
 };
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Platform {
+    Phone,
+    Watch,
+}
+
+pub const DEFAULT_PLATFORM: Platform = Platform::Phone;
+pub const DEFAULT_SPEC_VERSION: SpecVersion = SpecVersion::Spec2021;
 
 /// Constructed by a set of values representing the current UI state and
 /// provides a set of [`TonalPalette`]s that can create colors that fit in with
@@ -24,46 +34,27 @@ use crate::{
 /// [`DynamicColor`]: super::DynamicColor
 #[derive(Clone, PartialOrd)]
 pub struct DynamicScheme {
-    /// The source color of the theme in HCT.
+    /// The source color of the scheme in HCT format.
     pub source_color_hct: Hct,
 
-    /// The variant, or style, of the theme.
+    /// The variant of the scheme.
     pub variant: Variant,
 
-    /// Whether or not the scheme is in 'dark mode' or 'light mode'.
+    /// Whether or not the scheme is dark mode.
     pub is_dark: bool,
 
     /// Value from -1 to 1. -1 represents minimum contrast, 0 represents
     /// standard (i.e. the design as spec'd), and 1 represents maximum contrast.
     pub contrast_level: f64,
 
-    /// Given a tone, produces a color. Hue and chroma of the color are
-    /// specified in the design specification of the variant. Usually
-    /// colorful.
+    pub platform: Platform,
+    pub spec_version: SpecVersion,
+
     pub primary_palette: TonalPalette,
-
-    /// Given a tone, produces a color. Hue and chroma of the color are
-    /// specified in the design specification of the variant. Usually less
-    /// colorful.
     pub secondary_palette: TonalPalette,
-
-    /// Given a tone, produces a color. Hue and chroma of the color are
-    /// specified in the design specification of the variant. Usually a
-    /// different hue from primary and colorful.
     pub tertiary_palette: TonalPalette,
-
-    /// Given a tone, produces a color. Hue and chroma of the color are
-    /// specified in the design specification of the variant. Usually not
-    /// colorful at all, intended for background & surface colors.
     pub neutral_palette: TonalPalette,
-
-    /// Given a tone, produces a color. Hue and chroma of the color are
-    /// specified in the design specification of the variant. Usually not
-    /// colorful, but slightly more colorful than Neutral. Intended for
-    /// backgrounds & surfaces.
     pub neutral_variant_palette: TonalPalette,
-
-    /// Given a tone, produces a reddish, colorful, color.
     pub error_palette: TonalPalette,
 }
 
@@ -85,6 +76,8 @@ impl DynamicScheme {
             variant,
             is_dark,
             contrast_level: contrast_level.unwrap_or(0.0),
+            platform: DEFAULT_PLATFORM,
+            spec_version: DEFAULT_SPEC_VERSION,
             primary_palette,
             secondary_palette,
             tertiary_palette,
@@ -92,6 +85,13 @@ impl DynamicScheme {
             neutral_variant_palette,
             error_palette: error_palette.unwrap_or_else(|| TonalPalette::of(25.0, 84.0)),
         }
+    }
+
+    #[must_use]
+    pub const fn with_spec_version(mut self, version: SpecVersion) -> Self {
+        self.spec_version = version;
+
+        self
     }
 
     pub fn by_variant(source: Rgb, variant: &Variant, is_dark: bool, contrast_level: Option<f64>) -> Self {
@@ -110,253 +110,520 @@ impl DynamicScheme {
         }
     }
 
-    /// # Panics
-    ///
-    /// Will panic if the count of hues does not equal the count of rotations
-    pub fn get_rotated_hue(source_hue: f64, hues: &[f64], rotations: &[f64]) -> f64 {
-        assert!(hues.len() == rotations.len());
+    fn get_piecewise_value(source_hue: f64, hue_breakpoints: &[f64], hues: &[f64]) -> f64 {
+        let size = hue_breakpoints.len().cast_signed().min(hues.len().cast_signed() - 1);
 
-        if rotations.len() == 1 {
-            return sanitize_degrees_double(source_hue + rotations[0]);
-        }
+        for i in 0..size {
+            let i = i.cast_unsigned();
 
-        if hues.is_empty() || rotations.is_empty() {
-            return source_hue;
-        }
-
-        let size = hues.len();
-        let mut i = 0;
-
-        while i <= (size - 2) {
-            let this_hue = hues[i];
-            let next_hue = hues[i + 1];
-
-            if this_hue < source_hue && source_hue < next_hue {
-                return sanitize_degrees_double(source_hue + rotations[i]);
+            if source_hue >= hue_breakpoints[i] && source_hue < hue_breakpoints[i + 1] {
+                return sanitize_degrees_double(hues[i]);
             }
-
-            i += 1;
         }
 
-        // If this statement executes, something is wrong, there should have been a
-        // rotation found using the arrays.
+        // No condition matched, return the source value.
         source_hue
     }
 
+    /// # Panics
+    ///
+    /// Will panic if the count of hues does not equal the count of rotations
+    pub fn get_rotated_hue(source_hue: f64, hue_breakpoints: &[f64], rotations: &[f64]) -> f64 {
+        sanitize_degrees_double(
+            source_hue
+                + if rotations.len().cast_signed().min(hue_breakpoints.len().cast_signed() - 1) <= 0 {
+                    // No condition matched, return the source hue.
+                    0.0
+                } else {
+                    Self::get_piecewise_value(source_hue, hue_breakpoints, rotations)
+                },
+        )
+    }
+
     pub fn primary_palette_key_color(&self) -> Rgb {
-        MaterialDynamicColors::primary_palette_key_color().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::primary_palette_key_color(),
+            SpecVersion::Spec2025 => ColorSpec2025::primary_palette_key_color(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn secondary_palette_key_color(&self) -> Rgb {
-        MaterialDynamicColors::secondary_palette_key_color().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::secondary_palette_key_color(),
+            SpecVersion::Spec2025 => ColorSpec2025::secondary_palette_key_color(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn tertiary_palette_key_color(&self) -> Rgb {
-        MaterialDynamicColors::tertiary_palette_key_color().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::tertiary_palette_key_color(),
+            SpecVersion::Spec2025 => ColorSpec2025::tertiary_palette_key_color(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn neutral_palette_key_color(&self) -> Rgb {
-        MaterialDynamicColors::neutral_palette_key_color().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::neutral_palette_key_color(),
+            SpecVersion::Spec2025 => ColorSpec2025::neutral_palette_key_color(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn neutral_variant_palette_key_color(&self) -> Rgb {
-        MaterialDynamicColors::neutral_palette_key_color().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::neutral_palette_key_color(),
+            SpecVersion::Spec2025 => ColorSpec2025::neutral_palette_key_color(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn background(&self) -> Rgb {
-        MaterialDynamicColors::background().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::background(),
+            SpecVersion::Spec2025 => ColorSpec2025::background(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_background(&self) -> Rgb {
-        MaterialDynamicColors::on_background().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_background(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_background(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn surface(&self) -> Rgb {
-        MaterialDynamicColors::surface().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::surface(),
+            SpecVersion::Spec2025 => ColorSpec2025::surface(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn surface_dim(&self) -> Rgb {
-        MaterialDynamicColors::surface_dim().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::surface_dim(),
+            SpecVersion::Spec2025 => ColorSpec2025::surface_dim(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn surface_bright(&self) -> Rgb {
-        MaterialDynamicColors::surface_bright().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::surface_bright(),
+            SpecVersion::Spec2025 => ColorSpec2025::surface_bright(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn surface_container_lowest(&self) -> Rgb {
-        MaterialDynamicColors::surface_container_lowest().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::surface_container_lowest(),
+            SpecVersion::Spec2025 => ColorSpec2025::surface_container_lowest(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn surface_container_low(&self) -> Rgb {
-        MaterialDynamicColors::surface_container_low().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::surface_container_low(),
+            SpecVersion::Spec2025 => ColorSpec2025::surface_container_low(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn surface_container(&self) -> Rgb {
-        MaterialDynamicColors::surface_container().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::surface_container(),
+            SpecVersion::Spec2025 => ColorSpec2025::surface_container(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn surface_container_high(&self) -> Rgb {
-        MaterialDynamicColors::surface_container_high().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::surface_container_high(),
+            SpecVersion::Spec2025 => ColorSpec2025::surface_container_high(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn surface_container_highest(&self) -> Rgb {
-        MaterialDynamicColors::surface_container_highest().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::surface_container_highest(),
+            SpecVersion::Spec2025 => ColorSpec2025::surface_container_highest(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_surface(&self) -> Rgb {
-        MaterialDynamicColors::on_surface().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_surface(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_surface(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn surface_variant(&self) -> Rgb {
-        MaterialDynamicColors::surface_variant().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::surface_variant(),
+            SpecVersion::Spec2025 => ColorSpec2025::surface_variant(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_surface_variant(&self) -> Rgb {
-        MaterialDynamicColors::on_surface_variant().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_surface_variant(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_surface_variant(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn inverse_surface(&self) -> Rgb {
-        MaterialDynamicColors::inverse_surface().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::inverse_surface(),
+            SpecVersion::Spec2025 => ColorSpec2025::inverse_surface(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn inverse_on_surface(&self) -> Rgb {
-        MaterialDynamicColors::inverse_on_surface().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::inverse_on_surface(),
+            SpecVersion::Spec2025 => ColorSpec2025::inverse_on_surface(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn outline(&self) -> Rgb {
-        MaterialDynamicColors::outline().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::outline(),
+            SpecVersion::Spec2025 => ColorSpec2025::outline(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn outline_variant(&self) -> Rgb {
-        MaterialDynamicColors::outline_variant().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::outline_variant(),
+            SpecVersion::Spec2025 => ColorSpec2025::outline_variant(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn shadow(&self) -> Rgb {
-        MaterialDynamicColors::shadow().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::shadow(),
+            SpecVersion::Spec2025 => ColorSpec2025::shadow(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn scrim(&self) -> Rgb {
-        MaterialDynamicColors::scrim().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::scrim(),
+            SpecVersion::Spec2025 => ColorSpec2025::scrim(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn surface_tint(&self) -> Rgb {
-        MaterialDynamicColors::surface_tint().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::surface_tint(),
+            SpecVersion::Spec2025 => ColorSpec2025::surface_tint(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn primary(&self) -> Rgb {
-        MaterialDynamicColors::primary().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::primary(),
+            SpecVersion::Spec2025 => ColorSpec2025::primary(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_primary(&self) -> Rgb {
-        MaterialDynamicColors::on_primary().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_primary(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_primary(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn primary_container(&self) -> Rgb {
-        MaterialDynamicColors::primary_container().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::primary_container(),
+            SpecVersion::Spec2025 => ColorSpec2025::primary_container(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_primary_container(&self) -> Rgb {
-        MaterialDynamicColors::on_primary_container().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_primary_container(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_primary_container(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn inverse_primary(&self) -> Rgb {
-        MaterialDynamicColors::inverse_primary().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::inverse_primary(),
+            SpecVersion::Spec2025 => ColorSpec2025::inverse_primary(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn secondary(&self) -> Rgb {
-        MaterialDynamicColors::secondary().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::secondary(),
+            SpecVersion::Spec2025 => ColorSpec2025::secondary(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_secondary(&self) -> Rgb {
-        MaterialDynamicColors::on_secondary().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_secondary(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_secondary(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn secondary_container(&self) -> Rgb {
-        MaterialDynamicColors::secondary_container().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::secondary_container(),
+            SpecVersion::Spec2025 => ColorSpec2025::secondary_container(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_secondary_container(&self) -> Rgb {
-        MaterialDynamicColors::on_secondary_container().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_secondary_container(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_secondary_container(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn tertiary(&self) -> Rgb {
-        MaterialDynamicColors::tertiary().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::tertiary(),
+            SpecVersion::Spec2025 => ColorSpec2025::tertiary(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_tertiary(&self) -> Rgb {
-        MaterialDynamicColors::on_tertiary().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_tertiary(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_tertiary(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn tertiary_container(&self) -> Rgb {
-        MaterialDynamicColors::tertiary_container().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::tertiary_container(),
+            SpecVersion::Spec2025 => ColorSpec2025::tertiary_container(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_tertiary_container(&self) -> Rgb {
-        MaterialDynamicColors::on_tertiary_container().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_tertiary_container(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_tertiary_container(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn error(&self) -> Rgb {
-        MaterialDynamicColors::error().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::error(),
+            SpecVersion::Spec2025 => ColorSpec2025::error(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_error(&self) -> Rgb {
-        MaterialDynamicColors::on_error().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_error(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_error(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn error_container(&self) -> Rgb {
-        MaterialDynamicColors::error_container().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::error_container(),
+            SpecVersion::Spec2025 => ColorSpec2025::error_container(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_error_container(&self) -> Rgb {
-        MaterialDynamicColors::on_error_container().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_error_container(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_error_container(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn primary_fixed(&self) -> Rgb {
-        MaterialDynamicColors::primary_fixed().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::primary_fixed(),
+            SpecVersion::Spec2025 => ColorSpec2025::primary_fixed(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn primary_fixed_dim(&self) -> Rgb {
-        MaterialDynamicColors::primary_fixed_dim().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::primary_fixed_dim(),
+            SpecVersion::Spec2025 => ColorSpec2025::primary_fixed_dim(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_primary_fixed(&self) -> Rgb {
-        MaterialDynamicColors::on_primary_fixed().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_primary_fixed(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_primary_fixed(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_primary_fixed_variant(&self) -> Rgb {
-        MaterialDynamicColors::on_primary_fixed_variant().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_primary_fixed_variant(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_primary_fixed_variant(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn secondary_fixed(&self) -> Rgb {
-        MaterialDynamicColors::secondary_fixed().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::secondary_fixed(),
+            SpecVersion::Spec2025 => ColorSpec2025::secondary_fixed(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn secondary_fixed_dim(&self) -> Rgb {
-        MaterialDynamicColors::secondary_fixed_dim().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::secondary_fixed_dim(),
+            SpecVersion::Spec2025 => ColorSpec2025::secondary_fixed_dim(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_secondary_fixed(&self) -> Rgb {
-        MaterialDynamicColors::on_secondary_fixed().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_secondary_fixed(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_secondary_fixed(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_secondary_fixed_variant(&self) -> Rgb {
-        MaterialDynamicColors::on_secondary_fixed_variant().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_secondary_fixed_variant(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_secondary_fixed_variant(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn tertiary_fixed(&self) -> Rgb {
-        MaterialDynamicColors::tertiary_fixed().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::tertiary_fixed(),
+            SpecVersion::Spec2025 => ColorSpec2025::tertiary_fixed(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn tertiary_fixed_dim(&self) -> Rgb {
-        MaterialDynamicColors::tertiary_fixed_dim().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::tertiary_fixed_dim(),
+            SpecVersion::Spec2025 => ColorSpec2025::tertiary_fixed_dim(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_tertiary_fixed(&self) -> Rgb {
-        MaterialDynamicColors::on_tertiary_fixed().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_tertiary_fixed(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_tertiary_fixed(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 
     pub fn on_tertiary_fixed_variant(&self) -> Rgb {
-        MaterialDynamicColors::on_tertiary_fixed_variant().get_rgb(self)
+        match self.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021::on_tertiary_fixed_variant(),
+            SpecVersion::Spec2025 => ColorSpec2025::on_tertiary_fixed_variant(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+        .get_rgb(self)
     }
 }
 

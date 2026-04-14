@@ -30,6 +30,18 @@ pub struct Hct {
 }
 
 impl Hct {
+    pub const fn is_blue(hue: f64) -> bool {
+        hue >= 250.0 && hue < 270.0
+    }
+
+    pub const fn is_yellow(hue: f64) -> bool {
+        hue >= 105.0 && hue < 125.0
+    }
+
+    pub const fn is_cyan(hue: f64) -> bool {
+        hue >= 170.0 && hue < 207.0
+    }
+
     /// A number, in degrees, representing ex. red, orange, yellow, etc.
     /// Ranges from 0 <= `hue` < 360
     ///

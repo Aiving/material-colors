@@ -41,7 +41,7 @@ mod tests {
     use float_cmp::assert_approx_eq;
 
     use super::SchemeMonochrome;
-    use crate::{color::Rgb, dynamic_color::MaterialDynamicColors};
+    use crate::{color::Rgb, dynamic_color::material_dynamic_colors::MaterialDynamicColors};
 
     #[test]
     fn test_key_colors() {

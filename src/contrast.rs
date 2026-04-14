@@ -28,29 +28,34 @@ fn ratio_of_ys(y1: f64, y2: f64) -> f64 {
 ///   values will result in -1 being returned.
 /// - `ratio`: Contrast ratio of return value and `tone`. Range is 1 to 21,
 ///   invalid values have undefined behavior.
-pub fn lighter(tone: f64, ratio: f64) -> f64 {
-    if !(0.0..=100.0).contains(&tone) {
-        return -1.0;
+pub fn lighter(tone: f64, ratio: f64) -> Option<f64> {
+    if !(0.0..=100.0).contains(&tone)  {
+        return None;
     }
 
     let dark_y = y_from_lstar(tone);
     let light_y = ratio.mul_add(dark_y + 5.0, -5.0);
+
+    if !(0.0..=100.0).contains(&light_y)  {
+        return None;
+    }
+
     let real_contrast = ratio_of_ys(light_y, dark_y);
     let delta = (real_contrast - ratio).abs();
 
     if real_contrast < ratio && delta > 0.04 {
-        return -1.0;
+        return None;
     }
 
     // Ensure gamut mapping, which requires a 'range' on tone, will still result
     // the correct ratio by darkening slightly.
     let return_value = lstar_from_y(light_y) + 0.4;
 
-    if !(0.0..=100.0).contains(&return_value) {
-        return -1.0;
+    if (0.0..=100.0).contains(&return_value)  {
+        Some(return_value)
+    } else {
+        None
     }
-
-    return_value
 }
 
 /// Returns a tone <= `tone` that ensures `ratio`. Return value is between 0 and
@@ -60,30 +65,35 @@ pub fn lighter(tone: f64, ratio: f64) -> f64 {
 ///   values will result in -1 being returned.
 /// - `ratio`: Contrast ratio of return value and `tone`. Range is 1 to 21,
 ///   invalid values have undefined behavior.
-pub fn darker(tone: f64, ratio: f64) -> f64 {
+pub fn darker(tone: f64, ratio: f64) -> Option<f64> {
     if !(0.0..=100.0).contains(&tone) {
-        return -1.0;
+        return None;
     }
 
     let light_y = y_from_lstar(tone);
     let dark_y = ((light_y + 5.0) / ratio) - 5.0;
+
+    if !(0.0..=100.0).contains(&dark_y)  {
+        return None;
+    }
+
     let real_contrast = ratio_of_ys(light_y, dark_y);
 
     let delta = (real_contrast - ratio).abs();
 
     if real_contrast < ratio && delta > 0.04 {
-        return -1.0;
+        return None;
     }
 
     // Ensure gamut mapping, which requires a 'range' on tone, will still result
     // the correct ratio by darkening slightly.
     let return_value = lstar_from_y(dark_y) - 0.4;
 
-    if !(0.0..=100.0).contains(&return_value) {
-        return -1.0;
+    if (0.0..=100.0).contains(&return_value)  {
+        Some(return_value)
+    } else {
+        None
     }
-
-    return_value
 }
 
 /// Returns a tone >= `tone` that ensures `ratio`. Return value is between 0 and
@@ -98,9 +108,7 @@ pub fn darker(tone: f64, ratio: f64) -> f64 {
 /// - `ratio`: Desired contrast ratio of return value and tone parameter. Range
 ///   is 1 to 21, invalid values have undefined behavior.
 pub fn lighter_unsafe(tone: f64, ratio: f64) -> f64 {
-    let lighter_safe = lighter(tone, ratio);
-
-    if lighter_safe < 0.0 { 100.0 } else { lighter_safe }
+    lighter(tone, ratio).unwrap_or(100.0)
 }
 
 /// Returns a tone <= `tone` that ensures `ratio`. Return value is between 0 and
@@ -115,9 +123,7 @@ pub fn lighter_unsafe(tone: f64, ratio: f64) -> f64 {
 /// - `ratio`: Desired contrast ratio of return value and tone parameter. Range
 ///   is 1 to 21, invalid values have undefined behavior.
 pub fn darker_unsafe(tone: f64, ratio: f64) -> f64 {
-    let darker_safe = darker(tone, ratio);
-
-    if darker_safe < 0.0 { 0.0 } else { darker_safe }
+    darker(tone, ratio).unwrap_or(0.0)
 }
 
 #[cfg(test)]
@@ -134,17 +140,17 @@ mod tests {
 
     #[test]
     fn test_lighter_impossible_ratio_errors() {
-        assert_approx_eq!(f64, -1.0, lighter(90.0, 10.0), epsilon = 0.001);
+        assert!(lighter(90.0, 10.0).is_none());
     }
 
     #[test]
     fn test_lighter_out_of_bounds_input_above_errors() {
-        assert_approx_eq!(f64, -1.0, lighter(110.0, 2.0), epsilon = 0.001);
+        assert!(lighter(110.0, 2.0).is_none());
     }
 
     #[test]
     fn test_lighter_out_of_bounds_input_below_errors() {
-        assert_approx_eq!(f64, -1.0, lighter(-10.0, 2.0), epsilon = 0.001);
+        assert!(lighter(-10.0, 2.0).is_none());
     }
 
     #[test]
@@ -154,17 +160,17 @@ mod tests {
 
     #[test]
     fn test_darker_impossible_ratio_errors() {
-        assert_approx_eq!(f64, -1.0, darker(10.0, 20.0), epsilon = 0.001);
+        assert!(darker(10.0, 20.0).is_none());
     }
 
     #[test]
     fn test_darker_out_of_bounds_input_above_errors() {
-        assert_approx_eq!(f64, -1.0, darker(110.0, 2.0), epsilon = 0.001);
+        assert!(darker(110.0, 2.0).is_none());
     }
 
     #[test]
     fn test_darker_out_of_bounds_input_below_errors() {
-        assert_approx_eq!(f64, -1.0, darker(-10.0, 2.0), epsilon = 0.001);
+        assert!(darker(-10.0, 2.0).is_none());
     }
 
     #[test]

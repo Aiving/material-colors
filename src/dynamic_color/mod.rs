@@ -1,11 +1,9 @@
 #![allow(clippy::too_many_arguments)]
 
 #[cfg(not(feature = "std"))] use alloc::{vec, vec::Vec};
-#[cfg(feature = "std")] use std::{vec, vec::Vec};
 
 pub use contrast_curve::ContrastCurve;
 pub use dynamic_scheme::DynamicScheme;
-pub use material_dynamic_colors::MaterialDynamicColors;
 pub use tone_delta_pair::{ToneDeltaPair, TonePolarity};
 pub use variant::Variant;
 
@@ -14,19 +12,31 @@ pub use variant::Variant;
 use crate::utils::no_std::FloatExt;
 use crate::{
     color::Rgb,
-    contrast::{darker, darker_unsafe, lighter, lighter_unsafe, ratio_of_tones},
+    contrast::{darker_unsafe, lighter_unsafe, ratio_of_tones},
+    dynamic_color::{color_spec::SpecVersion, color_spec_2021::ColorSpec2021, color_spec_2025::ColorSpec2025},
     hct::Hct,
     palette::TonalPalette,
 };
 
+pub mod color_spec;
+pub mod color_spec_2021;
+pub mod color_spec_2025;
+pub mod color_spec_2026;
 pub mod contrast_curve;
 pub mod dynamic_scheme;
 pub mod material_dynamic_colors;
 pub mod tone_delta_pair;
 pub mod variant;
 
-type DynamicSchemeFn<T> = fn(&DynamicScheme) -> T;
-type DynamicSchemeFnRef<T> = fn(&DynamicScheme) -> &T;
+type DynamicSchemeFn<T> = fn(Option<ExtendedColorData>, &DynamicScheme) -> T;
+type DynamicSchemeFnRef<T> = for<'a> fn(Option<ExtendedColorData>, &'a DynamicScheme) -> &'a T;
+
+#[derive(Clone, Copy)]
+pub struct ExtendedColorData {
+    pub spec_version: SpecVersion,
+    pub it: &'static DynamicColor,
+    pub extended_color: &'static DynamicColor,
+}
 
 /// A color that adjusts itself based on UI state provided by `DynamicScheme`.
 ///
@@ -47,15 +57,19 @@ type DynamicSchemeFnRef<T> = fn(&DynamicScheme) -> &T;
 /// `DynamicScheme` and returns a value. This ensures ultimate flexibility, any
 /// desired behavior of a color for any design system, but it usually
 /// unnecessary. See the default constructor for more information.
+#[derive(Clone, Copy)]
 pub struct DynamicColor {
+    extended_data: Option<ExtendedColorData>,
     pub name: &'static str,
-    palette: DynamicSchemeFnRef<TonalPalette>,
-    tone: DynamicSchemeFn<f64>,
+    palette_: DynamicSchemeFnRef<TonalPalette>,
+    tone_: DynamicSchemeFn<f64>,
     is_background: bool,
-    background: Option<DynamicSchemeFn<Self>>,
-    second_background: Option<DynamicSchemeFn<Self>>,
-    contrast_curve: Option<ContrastCurve>,
-    tone_delta_pair: Option<DynamicSchemeFn<ToneDeltaPair>>,
+    chroma_multiplier_: DynamicSchemeFn<Option<f64>>,
+    background_: DynamicSchemeFn<Option<&'static Self>>,
+    second_background_: DynamicSchemeFn<Option<&'static Self>>,
+    contrast_curve_: DynamicSchemeFn<Option<ContrastCurve>>,
+    tone_delta_pair_: DynamicSchemeFn<Option<ToneDeltaPair>>,
+    opacity_: DynamicSchemeFn<Option<f64>>,
 }
 
 impl DynamicColor {
@@ -98,260 +112,131 @@ impl DynamicColor {
     /// don't want to have a formal relationship or a principled value for their
     /// tone distance based on common contrast / tone delta values, yet, want
     /// tone distance.
-    pub const fn foreground(name: &'static str, palette: DynamicSchemeFnRef<TonalPalette>, tone: DynamicSchemeFn<f64>) -> Self {
+    pub const fn foreground_color(name: &'static str, palette: DynamicSchemeFnRef<TonalPalette>, tone: DynamicSchemeFn<f64>) -> Self {
         Self {
+            extended_data: None,
             name,
-            palette,
-            tone,
+            palette_: palette,
+            tone_: tone,
             is_background: false,
-            background: None,
-            second_background: None,
-            contrast_curve: None,
-            tone_delta_pair: None,
+            chroma_multiplier_: |_, _| None,
+            background_: |_, _| None,
+            second_background_: |_, _| None,
+            contrast_curve_: |_, _| None,
+            tone_delta_pair_: |_, _| None,
+            opacity_: |_, _| None,
         }
     }
 
-    pub const fn background(name: &'static str, palette: DynamicSchemeFnRef<TonalPalette>, tone: DynamicSchemeFn<f64>) -> Self {
+    pub const fn background_color(name: &'static str, palette: DynamicSchemeFnRef<TonalPalette>, tone: DynamicSchemeFn<f64>) -> Self {
         Self {
+            extended_data: None,
             name,
-            palette,
-            tone,
+            palette_: palette,
+            tone_: tone,
             is_background: true,
-            background: None,
-            second_background: None,
-            contrast_curve: None,
-            tone_delta_pair: None,
+            chroma_multiplier_: |_, _| None,
+            background_: |_, _| None,
+            second_background_: |_, _| None,
+            contrast_curve_: |_, _| None,
+            tone_delta_pair_: |_, _| None,
+            opacity_: |_, _| None,
         }
     }
 
+    pub fn tone(&self, scheme: &DynamicScheme) -> f64 {
+        (self.tone_)(self.extended_data, scheme)
+    }
+
+    pub fn palette<'a>(&self, scheme: &'a DynamicScheme) -> &'a TonalPalette {
+        (self.palette_)(self.extended_data, scheme)
+    }
+
+    pub fn background(&self, scheme: &DynamicScheme) -> Option<&'static Self> {
+        (self.background_)(self.extended_data, scheme)
+    }
+
+    pub fn second_background(&self, scheme: &DynamicScheme) -> Option<&'static Self> {
+        (self.second_background_)(self.extended_data, scheme)
+    }
+
+    pub fn contrast_curve(&self, scheme: &DynamicScheme) -> Option<ContrastCurve> {
+        (self.contrast_curve_)(self.extended_data, scheme)
+    }
+
+    pub fn tone_delta_pair(&self, scheme: &DynamicScheme) -> Option<ToneDeltaPair> {
+        (self.tone_delta_pair_)(self.extended_data, scheme)
+    }
+
+    pub fn chroma_multiplier(&self, scheme: &DynamicScheme) -> Option<f64> {
+        (self.chroma_multiplier_)(self.extended_data, scheme)
+    }
+
+    pub fn opacity(&self, scheme: &DynamicScheme) -> Option<f64> {
+        (self.opacity_)(self.extended_data, scheme)
+    }
+
     #[must_use]
-    pub const fn with_background(mut self, func: DynamicSchemeFn<Self>) -> Self {
-        self.background = Some(func);
+    pub const fn with_name(mut self, name: &'static str) -> Self {
+        self.name = name;
 
         self
     }
 
     #[must_use]
-    pub const fn with_second_background(mut self, func: DynamicSchemeFn<Self>) -> Self {
-        self.second_background = Some(func);
+    pub const fn with_tone(mut self, func: DynamicSchemeFn<f64>) -> Self {
+        self.tone_ = func;
 
         self
     }
 
     #[must_use]
-    pub const fn with_contrast_curve(mut self, curve: ContrastCurve) -> Self {
-        self.contrast_curve = Some(curve);
+    pub const fn with_palette(mut self, func: DynamicSchemeFnRef<TonalPalette>) -> Self {
+        self.palette_ = func;
 
         self
     }
 
     #[must_use]
-    pub const fn with_tone_delta_pair(mut self, func: DynamicSchemeFn<ToneDeltaPair>) -> Self {
-        self.tone_delta_pair = Some(func);
+    pub const fn with_background(mut self, func: DynamicSchemeFn<Option<&'static Self>>) -> Self {
+        self.background_ = func;
 
         self
     }
 
-    /// Return a Rgb integer (i.e. a hex code).
-    ///
-    /// - Parameter scheme: Defines the conditions of the user interface, for
-    ///   example, whether or not it is dark mode or light mode, and what the
-    ///   desired contrast level is.
-    /// - Returns: The color as an integer (Rgb).
-    pub fn get_rgb(&self, scheme: &DynamicScheme) -> Rgb {
-        self.get_hct(scheme).into()
+    #[must_use]
+    pub const fn with_second_background(mut self, func: DynamicSchemeFn<Option<&'static Self>>) -> Self {
+        self.second_background_ = func;
+
+        self
     }
 
-    /// - Parameter scheme: Defines the conditions of the user interface, for
-    ///   example, whether or not it is dark mode or light mode, and what the
-    ///   desired contrast level is.
-    /// - Returns: a color, expressed in the HCT color space, that this
-    ///   `DynamicColor` is under the conditions in `scheme`.
-    pub fn get_hct(&self, scheme: &DynamicScheme) -> Hct {
-        (self.palette)(scheme).get_hct(self.get_tone(scheme))
+    #[must_use]
+    pub const fn with_contrast_curve(mut self, curve: DynamicSchemeFn<Option<ContrastCurve>>) -> Self {
+        self.contrast_curve_ = curve;
+
+        self
     }
 
-    /// - Parameter scheme: Defines the conditions of the user interface, for
-    ///   example, whether or not it is dark mode or light mode, and what the
-    ///   desired contrast level is.
-    /// - Returns: a tone, T in the HCT color space, that this `DynamicColor` is
-    ///   under the conditions in `scheme`.
-    pub fn get_tone(&self, scheme: &DynamicScheme) -> f64 {
-        let decreasing_contrast = scheme.contrast_level < 0.0;
+    #[must_use]
+    pub const fn with_tone_delta_pair(mut self, func: DynamicSchemeFn<Option<ToneDeltaPair>>) -> Self {
+        self.tone_delta_pair_ = func;
 
-        // Case 1: dual foreground, pair of colors with delta constraint.
-        if let Some(tone_delta_pair) = &self.tone_delta_pair {
-            let pair = (tone_delta_pair)(scheme);
-            let role_a = pair.subject;
-            let role_b = pair.basis;
-            let delta = pair.delta;
-            let polarity = pair.polarity;
-            let stay_together = pair.stay_together;
+        self
+    }
 
-            let bg = self.background.as_ref().unwrap()(scheme);
-            let bg_tone = bg.get_tone(scheme);
+    #[must_use]
+    pub const fn with_chroma_multiplier(mut self, func: DynamicSchemeFn<Option<f64>>) -> Self {
+        self.chroma_multiplier_ = func;
 
-            let a_is_nearer = polarity == TonePolarity::Nearer
-                || (polarity == TonePolarity::Lighter && !scheme.is_dark)
-                || (polarity == TonePolarity::Darker && scheme.is_dark);
-            let nearer = if a_is_nearer { &role_a } else { &role_b };
-            let farther = if a_is_nearer { &role_b } else { &role_a };
-            let am_nearer = self.name == nearer.name;
-            let expansion_dir = if scheme.is_dark { 1.0 } else { -1.0 };
+        self
+    }
 
-            // 1st round: solve to min, each
-            let n_contrast = nearer.contrast_curve.as_ref().unwrap().get(scheme.contrast_level);
-            let f_contrast = farther.contrast_curve.as_ref().unwrap().get(scheme.contrast_level);
+    #[must_use]
+    pub const fn with_opacity(mut self, func: DynamicSchemeFn<Option<f64>>) -> Self {
+        self.opacity_ = func;
 
-            // If a color is good enough, it is not adjusted.
-            // Initial and adjusted tones for `nearer`
-            let n_initial_tone = (nearer.tone)(scheme);
-            let mut n_tone = if decreasing_contrast {
-                Self::foreground_tone(bg_tone, n_contrast)
-            } else if ratio_of_tones(bg_tone, n_initial_tone) >= n_contrast {
-                n_initial_tone
-            } else {
-                Self::foreground_tone(bg_tone, n_contrast)
-            };
-            // Initial and adjusted tones for `farther`
-            let f_initial_tone = (farther.tone)(scheme);
-            let mut f_tone = if decreasing_contrast {
-                Self::foreground_tone(bg_tone, f_contrast)
-            } else if ratio_of_tones(bg_tone, f_initial_tone) >= f_contrast {
-                f_initial_tone
-            } else {
-                Self::foreground_tone(bg_tone, f_contrast)
-            };
-
-            if (f_tone - n_tone) * expansion_dir >= delta {
-                // Good! Tones satisfy the constraint; no change needed.
-            } else {
-                // 2nd round: expand farther to match delta.
-                f_tone = delta.mul_add(expansion_dir, n_tone).clamp(0.0, 100.0);
-
-                if (f_tone - n_tone) * expansion_dir >= delta {
-                    // Good! Tones now satisfy the constraint; no change needed.
-                } else {
-                    // 3rd round: contract nearer to match delta.
-                    n_tone = delta.mul_add(-expansion_dir, f_tone).clamp(0.0, 100.0);
-                }
-            }
-
-            // Avoids the 50-59 awkward zone.
-            if (50.0..60.0).contains(&n_tone) {
-                // If `nearer` is in the awkward zone, move it away, together with
-                // `farther`.
-                if expansion_dir > 0.0 {
-                    n_tone = 60.0;
-
-                    f_tone = f_tone.max(delta.mul_add(expansion_dir, n_tone));
-                } else {
-                    n_tone = 49.0;
-
-                    f_tone = f_tone.min(delta.mul_add(expansion_dir, n_tone));
-                }
-            } else if (50.0..60.0).contains(&f_tone) {
-                if stay_together {
-                    // Fixes both, to avoid two colors on opposite sides of the "awkward
-                    // zone".
-                    if expansion_dir > 0.0 {
-                        n_tone = 60.0;
-
-                        f_tone = f_tone.max(delta.mul_add(expansion_dir, n_tone));
-                    } else {
-                        n_tone = 49.0;
-
-                        f_tone = f_tone.min(delta.mul_add(expansion_dir, n_tone));
-                    }
-                } else {
-                    // Not required to stay together; fixes just one.
-                    if expansion_dir > 0.0 {
-                        f_tone = 60.0;
-                    } else {
-                        f_tone = 49.0;
-                    }
-                }
-            }
-
-            // Returns `nTone` if this color is `nearer`, otherwise `fTone`.
-            if am_nearer { n_tone } else { f_tone }
-        } else {
-            // Case 2: No contrast pair; just solve for itself.
-            let mut answer = (self.tone)(scheme);
-
-            if let Some(background) = &self.background {
-                let bg_tone = background(scheme).get_tone(scheme);
-
-                let desired_ratio = self.contrast_curve.as_ref().unwrap().get(scheme.contrast_level);
-
-                if ratio_of_tones(bg_tone, answer) >= desired_ratio {
-                    // Don't "improve" what's good enough.
-                } else {
-                    // Rough improvement.
-                    answer = Self::foreground_tone(bg_tone, desired_ratio);
-                }
-
-                if decreasing_contrast {
-                    answer = Self::foreground_tone(bg_tone, desired_ratio);
-                }
-
-                if self.is_background && (50.0..60.0).contains(&answer) {
-                    // Must adjust
-                    if ratio_of_tones(49.0, bg_tone) >= desired_ratio {
-                        answer = 49.0;
-                    } else {
-                        answer = 60.0;
-                    }
-                }
-
-                if let Some(second_background) = &self.second_background {
-                    // Case 3: Adjust for dual backgrounds.
-
-                    let bg_tone1 = self.background.as_ref().unwrap()(scheme).get_tone(scheme);
-                    let bg_tone2 = second_background(scheme).get_tone(scheme);
-
-                    let upper = bg_tone1.max(bg_tone2);
-                    let lower = bg_tone1.min(bg_tone2);
-
-                    if ratio_of_tones(upper, answer) >= desired_ratio && ratio_of_tones(lower, answer) >= desired_ratio {
-                        return answer;
-                    }
-
-                    // The darkest light tone that satisfies the desired ratio,
-                    // or -1 if such ratio cannot be reached.
-                    let light_option = lighter(upper, desired_ratio);
-
-                    // The lightest dark tone that satisfies the desired ratio,
-                    // or -1 if such ratio cannot be reached.
-                    let dark_option = darker(lower, desired_ratio);
-
-                    // Tones suitable for the foreground.
-                    let mut availables: Vec<f64> = vec![];
-
-                    if (light_option - -1.0).abs() > f64::EPSILON {
-                        availables.push(light_option);
-                    }
-
-                    if (dark_option - -1.0).abs() > f64::EPSILON {
-                        availables.push(dark_option);
-                    }
-
-                    let prefers_light = Self::tone_prefers_light_foreground(bg_tone1) || Self::tone_prefers_light_foreground(bg_tone2);
-
-                    if prefers_light {
-                        return if light_option < 0.0 { 100.0 } else { light_option };
-                    }
-
-                    if availables.len() == 1 {
-                        return availables[0];
-                    }
-
-                    return if dark_option < 0.0 { 0.0 } else { dark_option };
-                }
-            }
-
-            answer
-        }
+        self
     }
 
     /// Given a background tone, find a foreground tone, while ensuring they
@@ -369,9 +254,9 @@ impl DynamicColor {
         let darker_tone = darker_unsafe(bg_tone, ratio);
         let lighter_ratio = ratio_of_tones(lighter_tone, bg_tone);
         let darker_ratio = ratio_of_tones(darker_tone, bg_tone);
-        let prefer_ligher = Self::tone_prefers_light_foreground(bg_tone);
+        let prefer_lighter = Self::tone_prefers_light_foreground(bg_tone);
 
-        if prefer_ligher {
+        if prefer_lighter {
             // This handles an edge case where the initial contrast ratio is high
             // (ex. 13.0), and the ratio passed to the function is that high ratio,
             // and both the lighter and darker ratio fails to pass that ratio.
@@ -391,6 +276,144 @@ impl DynamicColor {
             darker_tone
         } else {
             lighter_tone
+        }
+    }
+
+    pub fn get_rgb(&self, scheme: &DynamicScheme) -> Rgb {
+        match scheme.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021.get_hct(scheme, self).into(),
+            SpecVersion::Spec2025 => ColorSpec2025.get_hct(scheme, self).into(),
+            SpecVersion::Spec2026 => todo!(),
+        }
+    }
+
+    pub fn get_hct(&self, scheme: &DynamicScheme) -> Hct {
+        match scheme.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021.get_hct(scheme, self),
+            SpecVersion::Spec2025 => ColorSpec2025.get_hct(scheme, self),
+            SpecVersion::Spec2026 => todo!(),
+        }
+    }
+
+    pub fn get_tone(&self, scheme: &DynamicScheme) -> f64 {
+        match scheme.spec_version {
+            SpecVersion::Spec2021 => ColorSpec2021.get_tone(scheme, self),
+            SpecVersion::Spec2025 => ColorSpec2025.get_tone(scheme, self),
+            SpecVersion::Spec2026 => todo!(),
+        }
+    }
+
+    const fn validate_extended_color(&self, _: SpecVersion, extended_color: &'static Self) {
+        const fn eq_str(left: &str, right: &str) -> bool {
+            let left = left.as_bytes();
+            let right = right.as_bytes();
+
+            if left.len() != right.len() {
+                return false;
+            }
+
+            let mut i = 0;
+
+            while i != left.len() {
+                if left[i] != right[i] {
+                    return false;
+                }
+
+                i += 1;
+            }
+
+            true
+        }
+
+        debug_assert!(eq_str(self.name, extended_color.name));
+        debug_assert!(self.is_background == extended_color.is_background);
+    }
+
+    #[must_use]
+    pub const fn extend_spec_version(&'static self, spec_version: SpecVersion, extended_color: &'static Self) -> Self {
+        self.validate_extended_color(spec_version, extended_color);
+
+        Self {
+            extended_data: Some(ExtendedColorData {
+                spec_version,
+                it: self,
+                extended_color,
+            }),
+            name: self.name,
+            palette_: |data, scheme| {
+                let data = unsafe { data.unwrap_unchecked() };
+
+                if scheme.spec_version >= data.spec_version {
+                    data.extended_color.palette(scheme)
+                } else {
+                    data.it.palette(scheme)
+                }
+            },
+            tone_: |data, scheme| {
+                let data = unsafe { data.unwrap_unchecked() };
+
+                if scheme.spec_version >= data.spec_version {
+                    data.extended_color.tone(scheme)
+                } else {
+                    data.it.tone(scheme)
+                }
+            },
+            is_background: self.is_background,
+            chroma_multiplier_: |data, scheme| {
+                let data = unsafe { data.unwrap_unchecked() };
+
+                if scheme.spec_version >= data.spec_version {
+                    data.extended_color.chroma_multiplier(scheme)
+                } else {
+                    data.it.chroma_multiplier(scheme)
+                }
+                .or(Some(1.0))
+            },
+            background_: |data, scheme| {
+                let data = unsafe { data.unwrap_unchecked() };
+
+                if scheme.spec_version >= data.spec_version {
+                    data.extended_color.background(scheme)
+                } else {
+                    data.it.background(scheme)
+                }
+            },
+            second_background_: |data, scheme| {
+                let data = unsafe { data.unwrap_unchecked() };
+
+                if scheme.spec_version >= data.spec_version {
+                    data.extended_color.second_background(scheme)
+                } else {
+                    data.it.second_background(scheme)
+                }
+            },
+            contrast_curve_: |data, scheme| {
+                let data = unsafe { data.unwrap_unchecked() };
+
+                if scheme.spec_version >= data.spec_version {
+                    data.extended_color.contrast_curve(scheme)
+                } else {
+                    data.it.contrast_curve(scheme)
+                }
+            },
+            tone_delta_pair_: |data, scheme| {
+                let data = unsafe { data.unwrap_unchecked() };
+
+                if scheme.spec_version >= data.spec_version {
+                    data.extended_color.tone_delta_pair(scheme)
+                } else {
+                    data.it.tone_delta_pair(scheme)
+                }
+            },
+            opacity_: |data, scheme| {
+                let data = unsafe { data.unwrap_unchecked() };
+
+                if scheme.spec_version >= data.spec_version {
+                    data.extended_color.opacity(scheme)
+                } else {
+                    data.it.opacity(scheme)
+                }
+            },
         }
     }
 
@@ -437,7 +460,7 @@ impl DynamicColor {
 mod tests {
     use float_cmp::assert_approx_eq;
 
-    use super::{DynamicColor, MaterialDynamicColors};
+    use super::{DynamicColor, material_dynamic_colors::MaterialDynamicColors};
     use crate::{
         Map,
         color::Rgb,
@@ -457,7 +480,7 @@ mod tests {
 
         let contrast_levels = [-1.0, -0.5, 0.0, 0.5, 1.0];
 
-        let mut _colors: Map<&str, DynamicColor> = Map::from_iter([
+        let mut _colors: Map<&str, &'static DynamicColor> = Map::from_iter([
             ("background", MaterialDynamicColors::background()),
             ("onBackground", MaterialDynamicColors::on_background()),
             ("surface", MaterialDynamicColors::surface()),
