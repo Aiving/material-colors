@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["color_spec","color_spec_2021","color_spec_2025","color_spec_2026","contrast_curve","dynamic_scheme","material_dynamic_colors","tone_delta_pair","variant"],"struct":["DynamicColor","ExtendedColorData"],"type":["DynamicSchemeFn","DynamicSchemeFnRef"]};
