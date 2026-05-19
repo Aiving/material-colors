@@ -1,14 +1,8 @@
-#[cfg(not(feature = "std"))] use alloc::{vec, vec::Vec};
-#[cfg(feature = "std")] use std::vec;
-
 use super::{DynamicColor, DynamicScheme, Variant, dynamic_scheme::Platform};
 use crate::{
     contrast::{darker, lighter, ratio_of_tones},
     dynamic_color::{
-        ContrastCurve, ExtendedColorData, ToneDeltaPair, TonePolarity,
-        color_spec::{ColorSpec, SpecVersion},
-        color_spec_2021::ColorSpec2021,
-        tone_delta_pair::DeltaConstraint,
+        ContrastCurve, ExtendedColorData, ToneDeltaPair, TonePolarity, color_spec::ColorSpec, color_spec_2021::ColorSpec2021, tone_delta_pair::DeltaConstraint,
     },
     hct::Hct,
     palette::TonalPalette,
@@ -95,6 +89,7 @@ fn find_best_tone_for_chroma(hue: f64, chroma: f64, tone: f64, by_decreasing_ton
     answer
 }
 
+#[allow(clippy::unnecessary_wraps)]
 fn get_contrast_curve(default_contrast: f64) -> Option<ContrastCurve> {
     Some(match default_contrast {
         1.5 => ContrastCurve {
@@ -159,62 +154,55 @@ pub struct ColorSpec2025;
 impl ColorSpec2025 {
     pub const CONTENT_ACCENT_TONE_DELTA: f64 = 15.0;
 
-    pub const fn highest_surface(_: Option<ExtendedColorData>, scheme: &DynamicScheme) -> Option<&'static DynamicColor> {
+    pub const fn highest_surface(_: Option<ExtendedColorData>, scheme: &DynamicScheme) -> Option<DynamicColor> {
         Some(if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() })
     }
 }
 
 impl ColorSpec2025 {
-    pub const fn primary_palette_key_color() -> &'static DynamicColor {
+    pub const fn primary_palette_key_color() -> DynamicColor {
         ColorSpec2021::primary_palette_key_color()
     }
 
-    pub const fn secondary_palette_key_color() -> &'static DynamicColor {
+    pub const fn secondary_palette_key_color() -> DynamicColor {
         ColorSpec2021::secondary_palette_key_color()
     }
 
-    pub const fn tertiary_palette_key_color() -> &'static DynamicColor {
+    pub const fn tertiary_palette_key_color() -> DynamicColor {
         ColorSpec2021::tertiary_palette_key_color()
     }
 
-    pub const fn neutral_palette_key_color() -> &'static DynamicColor {
+    pub const fn neutral_palette_key_color() -> DynamicColor {
         ColorSpec2021::neutral_palette_key_color()
     }
 
-    pub const fn neutral_variant_palette_key_color() -> &'static DynamicColor {
+    pub const fn neutral_variant_palette_key_color() -> DynamicColor {
         ColorSpec2021::neutral_variant_palette_key_color()
     }
 
-    pub const fn error_palette_key_color() -> &'static DynamicColor {
+    pub const fn error_palette_key_color() -> DynamicColor {
         ColorSpec2021::error_palette_key_color()
     }
 
-    pub const fn background() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = ColorSpec2025::surface().with_name("background");
-        static COLOR: DynamicColor = ColorSpec2021::background().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+    pub const fn background() -> DynamicColor {
+        Self::surface().with_name("background")
     }
 
-    pub const fn on_background() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = ColorSpec2025::on_surface().with_name("on_background").with_tone(|_, scheme| {
+    pub const fn on_background() -> DynamicColor {
+        Self::on_surface().with_name("on_background").with_tone(|scheme| {
             if scheme.platform == Platform::Watch {
                 100.0
             } else {
-                ColorSpec2025::on_surface().get_tone(scheme)
+                Self::on_surface().get_tone(scheme)
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::on_background().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn surface() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn surface() -> DynamicColor {
+        DynamicColor::background_color(
             "surface",
-            |_, scheme| &scheme.neutral_palette,
-            |_, scheme| {
+            |scheme| &scheme.neutral_palette,
+            |scheme| {
                 if scheme.platform == Platform::Phone {
                     if scheme.is_dark {
                         4.0
@@ -229,18 +217,14 @@ impl ColorSpec2025 {
                     0.0
                 }
             },
-        );
-
-        static COLOR: DynamicColor = ColorSpec2021::surface().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        )
     }
 
-    pub const fn surface_dim() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn surface_dim() -> DynamicColor {
+        DynamicColor::background_color(
             "surface_dim",
-            |_, scheme| &scheme.neutral_palette,
-            |_, scheme| {
+            |scheme| &scheme.neutral_palette,
+            |scheme| {
                 if scheme.is_dark {
                     4.0
                 } else if Hct::is_yellow(scheme.neutral_palette.hue()) {
@@ -252,7 +236,7 @@ impl ColorSpec2025 {
                 }
             },
         )
-        .with_chroma_multiplier(|_, scheme| {
+        .with_chroma_multiplier(|scheme| {
             Some(if scheme.is_dark {
                 1.0
             } else {
@@ -270,18 +254,14 @@ impl ColorSpec2025 {
                     _ => 1.0,
                 }
             })
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::surface_dim().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn surface_bright() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn surface_bright() -> DynamicColor {
+        DynamicColor::background_color(
             "surface_bright",
-            |_, scheme| &scheme.neutral_palette,
-            |_, scheme| {
+            |scheme| &scheme.neutral_palette,
+            |scheme| {
                 if scheme.is_dark {
                     18.0
                 } else if Hct::is_yellow(scheme.neutral_palette.hue()) {
@@ -293,7 +273,7 @@ impl ColorSpec2025 {
                 }
             },
         )
-        .with_chroma_multiplier(|_, scheme| {
+        .with_chroma_multiplier(|scheme| {
             Some(if scheme.is_dark {
                 match scheme.variant {
                     Variant::Neutral => 2.5,
@@ -311,32 +291,24 @@ impl ColorSpec2025 {
             } else {
                 1.0
             })
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::surface_bright().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn surface_container_lowest() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn surface_container_lowest() -> DynamicColor {
+        DynamicColor::background_color(
             "surface_container_lowest",
-            |_, scheme| &scheme.neutral_palette,
-            |_, scheme| {
+            |scheme| &scheme.neutral_palette,
+            |scheme| {
                 if scheme.is_dark { 0.0 } else { 100.0 }
             },
-        );
-
-        static COLOR: DynamicColor = ColorSpec2021::surface_container_lowest().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        )
     }
 
-    pub const fn surface_container_low() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn surface_container_low() -> DynamicColor {
+        DynamicColor::background_color(
             "surface_container_low",
-            |_, scheme| &scheme.neutral_palette,
-            |_, scheme| {
+            |scheme| &scheme.neutral_palette,
+            |scheme| {
                 if scheme.platform == Platform::Phone {
                     if scheme.is_dark {
                         6.0
@@ -352,7 +324,7 @@ impl ColorSpec2025 {
                 }
             },
         )
-        .with_chroma_multiplier(|_, scheme| {
+        .with_chroma_multiplier(|scheme| {
             Some(if scheme.platform == Platform::Phone {
                 match scheme.variant {
                     Variant::Neutral => 1.3,
@@ -370,18 +342,14 @@ impl ColorSpec2025 {
             } else {
                 1.0
             })
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::surface_container_low().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn surface_container() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn surface_container() -> DynamicColor {
+        DynamicColor::background_color(
             "surface_container",
-            |_, scheme| &scheme.neutral_palette,
-            |_, scheme| {
+            |scheme| &scheme.neutral_palette,
+            |scheme| {
                 if scheme.platform == Platform::Phone {
                     if scheme.is_dark {
                         9.0
@@ -397,7 +365,7 @@ impl ColorSpec2025 {
                 }
             },
         )
-        .with_chroma_multiplier(|_, scheme| {
+        .with_chroma_multiplier(|scheme| {
             Some(if scheme.platform == Platform::Phone {
                 match scheme.variant {
                     Variant::Neutral => 1.6,
@@ -415,18 +383,14 @@ impl ColorSpec2025 {
             } else {
                 1.0
             })
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::surface_container().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn surface_container_high() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn surface_container_high() -> DynamicColor {
+        DynamicColor::background_color(
             "surface_container_high",
-            |_, scheme| &scheme.neutral_palette,
-            |_, scheme| {
+            |scheme| &scheme.neutral_palette,
+            |scheme| {
                 if scheme.platform == Platform::Phone {
                     if scheme.is_dark {
                         12.0
@@ -442,7 +406,7 @@ impl ColorSpec2025 {
                 }
             },
         )
-        .with_chroma_multiplier(|_, scheme| {
+        .with_chroma_multiplier(|scheme| {
             Some(if scheme.platform == Platform::Phone {
                 match scheme.variant {
                     Variant::Neutral => 1.9,
@@ -460,18 +424,14 @@ impl ColorSpec2025 {
             } else {
                 1.0
             })
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::surface_container_high().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn surface_container_highest() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn surface_container_highest() -> DynamicColor {
+        DynamicColor::background_color(
             "surface_container_highest",
-            |_, scheme| &scheme.neutral_palette,
-            |_, scheme| {
+            |scheme| &scheme.neutral_palette,
+            |scheme| {
                 if scheme.is_dark {
                     15.0
                 } else if Hct::is_yellow(scheme.neutral_palette.hue()) {
@@ -483,7 +443,7 @@ impl ColorSpec2025 {
                 }
             },
         )
-        .with_chroma_multiplier(|_, scheme| {
+        .with_chroma_multiplier(|scheme| {
             Some(match scheme.variant {
                 Variant::Neutral => 2.2,
                 Variant::TonalSpot => 1.7,
@@ -497,35 +457,27 @@ impl ColorSpec2025 {
                 Variant::Vibrant => 1.29,
                 _ => 1.0,
             })
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::surface_container_highest().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn on_surface() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn on_surface() -> DynamicColor {
+        DynamicColor::foreground_color(
             "on_surface",
-            |_, scheme| &scheme.neutral_palette,
-            |_, scheme| {
+            |scheme| &scheme.neutral_palette,
+            |scheme| {
                 if scheme.variant == Variant::Vibrant {
                     t_max_c(&scheme.neutral_palette, 0.0, 100.0, 1.1)
                 } else {
                     if scheme.platform == Platform::Phone {
-                        if scheme.is_dark {
-                            ColorSpec2025::surface_bright()
-                        } else {
-                            ColorSpec2025::surface_dim()
-                        }
+                        if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() }
                     } else {
-                        ColorSpec2025::surface_container_high()
+                        Self::surface_container_high()
                     }
                     .get_tone(scheme)
                 }
             },
         )
-        .with_chroma_multiplier(|_, scheme| {
+        .with_chroma_multiplier(|scheme| {
             Some(if scheme.platform == Platform::Phone {
                 match scheme.variant {
                     Variant::Neutral => 2.2,
@@ -543,55 +495,40 @@ impl ColorSpec2025 {
                 1.0
             })
         })
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             Some(if scheme.platform == Platform::Phone {
-                if scheme.is_dark {
-                    ColorSpec2025::surface_bright()
-                } else {
-                    ColorSpec2025::surface_dim()
-                }
+                if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() }
             } else {
-                ColorSpec2025::surface_container_high()
+                Self::surface_container_high()
             })
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.is_dark && scheme.platform == Platform::Phone {
                 get_contrast_curve(11.0)
             } else {
                 get_contrast_curve(9.0)
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::on_surface().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn surface_variant() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = ColorSpec2025::surface_container_highest().with_name("surface_variant");
-        static COLOR: DynamicColor = ColorSpec2021::surface_variant().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+    pub const fn surface_variant() -> DynamicColor {
+        Self::surface_container_highest().with_name("surface_variant")
     }
 
-    pub const fn on_surface_variant() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn on_surface_variant() -> DynamicColor {
+        DynamicColor::foreground_color(
             "on_surface_variant",
-            |_, scheme| &scheme.neutral_variant_palette,
-            |_, scheme| {
+            |scheme| &scheme.neutral_variant_palette,
+            |scheme| {
                 if scheme.platform == Platform::Phone {
-                    if scheme.is_dark {
-                        ColorSpec2025::surface_bright()
-                    } else {
-                        ColorSpec2025::surface_dim()
-                    }
+                    if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() }
                 } else {
-                    ColorSpec2025::surface_container_high()
+                    Self::surface_container_high()
                 }
                 .get_tone(scheme)
             },
         )
-        .with_chroma_multiplier(|_, scheme| {
+        .with_chroma_multiplier(|scheme| {
             Some(if scheme.platform == Platform::Phone {
                 match scheme.variant {
                     Variant::Neutral => 2.2,
@@ -609,74 +546,54 @@ impl ColorSpec2025 {
                 1.0
             })
         })
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             Some(if scheme.platform == Platform::Phone {
-                if scheme.is_dark {
-                    ColorSpec2025::surface_bright()
-                } else {
-                    ColorSpec2025::surface_dim()
-                }
+                if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() }
             } else {
-                ColorSpec2025::surface_container_high()
+                Self::surface_container_high()
             })
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone {
                 if scheme.is_dark { get_contrast_curve(6.0) } else { get_contrast_curve(4.5) }
             } else {
                 get_contrast_curve(7.0)
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::on_surface_variant().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn inverse_surface() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn inverse_surface() -> DynamicColor {
+        DynamicColor::background_color(
             "inverse_surface",
-            |_, scheme| &scheme.neutral_palette,
-            |_, scheme| if scheme.is_dark { 98.0 } else { 4.0 },
-        );
-
-        static COLOR: DynamicColor = ColorSpec2021::inverse_surface().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
-    }
-
-    pub const fn inverse_on_surface() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
-            "inverse_on_surface",
-            |_, scheme| &scheme.neutral_palette,
-            |_, scheme| ColorSpec2025::inverse_surface().get_tone(scheme),
+            |scheme| &scheme.neutral_palette,
+            |scheme| if scheme.is_dark { 98.0 } else { 4.0 },
         )
-        .with_background(|_, _| Some(ColorSpec2025::inverse_surface()))
-        .with_contrast_curve(|_, _| get_contrast_curve(7.0));
-
-        static COLOR: DynamicColor = ColorSpec2021::inverse_on_surface().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
     }
 
-    pub const fn outline() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn inverse_on_surface() -> DynamicColor {
+        DynamicColor::foreground_color(
+            "inverse_on_surface",
+            |scheme| &scheme.neutral_palette,
+            |scheme| Self::inverse_surface().get_tone(scheme),
+        )
+        .with_background(|_| Some(Self::inverse_surface()))
+        .with_contrast_curve(|_| get_contrast_curve(7.0))
+    }
+
+    pub const fn outline() -> DynamicColor {
+        DynamicColor::foreground_color(
             "outline",
-            |_, scheme| &scheme.neutral_variant_palette,
-            |_, scheme| {
+            |scheme| &scheme.neutral_variant_palette,
+            |scheme| {
                 if scheme.platform == Platform::Phone {
-                    if scheme.is_dark {
-                        ColorSpec2025::surface_bright()
-                    } else {
-                        ColorSpec2025::surface_dim()
-                    }
+                    if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() }
                 } else {
-                    ColorSpec2025::surface_container_high()
+                    Self::surface_container_high()
                 }
                 .get_tone(scheme)
             },
         )
-        .with_chroma_multiplier(|_, scheme| {
+        .with_chroma_multiplier(|scheme| {
             Some(if scheme.platform == Platform::Phone {
                 match scheme.variant {
                     Variant::Neutral => 2.2,
@@ -694,48 +611,36 @@ impl ColorSpec2025 {
                 1.0
             })
         })
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             Some(if scheme.platform == Platform::Phone {
-                if scheme.is_dark {
-                    ColorSpec2025::surface_bright()
-                } else {
-                    ColorSpec2025::surface_dim()
-                }
+                if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() }
             } else {
-                ColorSpec2025::surface_container_high()
+                Self::surface_container_high()
             })
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone {
                 get_contrast_curve(3.0)
             } else {
                 get_contrast_curve(4.5)
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::outline().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn outline_variant() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn outline_variant() -> DynamicColor {
+        DynamicColor::foreground_color(
             "outline_variant",
-            |_, scheme| &scheme.neutral_variant_palette,
-            |_, scheme| {
+            |scheme| &scheme.neutral_variant_palette,
+            |scheme| {
                 if scheme.platform == Platform::Phone {
-                    if scheme.is_dark {
-                        ColorSpec2025::surface_bright()
-                    } else {
-                        ColorSpec2025::surface_dim()
-                    }
+                    if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() }
                 } else {
-                    ColorSpec2025::surface_container_high()
+                    Self::surface_container_high()
                 }
                 .get_tone(scheme)
             },
         )
-        .with_chroma_multiplier(|_, scheme| {
+        .with_chroma_multiplier(|scheme| {
             Some(if scheme.platform == Platform::Phone {
                 match scheme.variant {
                     Variant::Neutral => 2.2,
@@ -753,50 +658,39 @@ impl ColorSpec2025 {
                 1.0
             })
         })
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             Some(if scheme.platform == Platform::Phone {
-                if scheme.is_dark {
-                    ColorSpec2025::surface_bright()
-                } else {
-                    ColorSpec2025::surface_dim()
-                }
+                if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() }
             } else {
-                ColorSpec2025::surface_container_high()
+                Self::surface_container_high()
             })
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone {
                 get_contrast_curve(1.5)
             } else {
                 get_contrast_curve(3.0)
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::outline_variant().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn shadow() -> &'static DynamicColor {
+    pub const fn shadow() -> DynamicColor {
         ColorSpec2021::shadow()
     }
 
-    pub const fn scrim() -> &'static DynamicColor {
+    pub const fn scrim() -> DynamicColor {
         ColorSpec2021::scrim()
     }
 
-    pub const fn surface_tint() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = ColorSpec2025::primary().with_name("surface_tint");
-        static COLOR: DynamicColor = ColorSpec2021::surface_tint().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+    pub const fn surface_tint() -> DynamicColor {
+        Self::primary().with_name("surface_tint")
     }
 
-    pub const fn primary() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn primary() -> DynamicColor {
+        DynamicColor::background_color(
             "primary",
-            |_, scheme| &scheme.primary_palette,
-            |_, scheme| {
+            |scheme| &scheme.primary_palette,
+            |scheme| {
                 match scheme.variant {
                     Variant::Neutral => {
                         if scheme.platform == Platform::Phone {
@@ -852,29 +746,25 @@ impl ColorSpec2025 {
                 }
             },
         )
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             Some(if scheme.platform == Platform::Phone {
-                if scheme.is_dark {
-                    ColorSpec2025::surface_bright()
-                } else {
-                    ColorSpec2025::surface_dim()
-                }
+                if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() }
             } else {
-                ColorSpec2025::surface_container_high()
+                Self::surface_container_high()
             })
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone {
                 get_contrast_curve(4.5)
             } else {
                 get_contrast_curve(7.0)
             }
         })
-        .with_tone_delta_pair(|_, scheme| {
+        .with_tone_delta_pair(|scheme| {
             if scheme.platform == Platform::Phone {
                 Some(ToneDeltaPair::new(
-                    ColorSpec2025::primary_container(),
-                    ColorSpec2025::primary(),
+                    Self::primary_container(),
+                    Self::primary(),
                     5.0,
                     TonePolarity::RelativeLighter,
                     true,
@@ -883,77 +773,69 @@ impl ColorSpec2025 {
             } else {
                 None
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::primary().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn primary_dim() -> Option<&'static DynamicColor> {
-        static COLOR: DynamicColor = DynamicColor::background_color(
-            "primary_dim",
-            |_, scheme| &scheme.primary_palette,
-            |_, scheme| match scheme.variant {
-                Variant::Neutral => 85.0,
-                Variant::TonalSpot => t_max_c(&scheme.primary_palette, 0.0, 90.0, 1.0),
-                _ => t_max_c(&scheme.primary_palette, 0.0, 100.0, 1.0),
-            },
+    pub const fn primary_dim() -> Option<DynamicColor> {
+        Some(
+            DynamicColor::background_color(
+                "primary_dim",
+                |scheme| &scheme.primary_palette,
+                |scheme| match scheme.variant {
+                    Variant::Neutral => 85.0,
+                    Variant::TonalSpot => t_max_c(&scheme.primary_palette, 0.0, 90.0, 1.0),
+                    _ => t_max_c(&scheme.primary_palette, 0.0, 100.0, 1.0),
+                },
+            )
+            .with_background(|_| Some(Self::surface_container_high()))
+            .with_contrast_curve(|_| get_contrast_curve(4.5))
+            .with_tone_delta_pair(|_| {
+                Some(ToneDeltaPair::new(
+                    unsafe { Self::primary_dim().unwrap_unchecked() },
+                    Self::primary(),
+                    5.0,
+                    TonePolarity::Darker,
+                    true,
+                    DeltaConstraint::Farther,
+                ))
+            }),
         )
-        .with_background(|_, _| Some(ColorSpec2025::surface_container_high()))
-        .with_contrast_curve(|_, _| get_contrast_curve(4.5))
-        .with_tone_delta_pair(|_, _| {
-            Some(ToneDeltaPair::new(
-                unsafe { ColorSpec2025::primary_dim().unwrap_unchecked() },
-                ColorSpec2025::primary(),
-                5.0,
-                TonePolarity::Darker,
-                true,
-                DeltaConstraint::Farther,
-            ))
-        });
-
-        Some(&COLOR)
     }
 
-    pub const fn on_primary() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn on_primary() -> DynamicColor {
+        DynamicColor::foreground_color(
             "on_primary",
-            |_, scheme| &scheme.primary_palette,
-            |_, scheme| {
+            |scheme| &scheme.primary_palette,
+            |scheme| {
                 if scheme.platform == Platform::Phone {
-                    ColorSpec2025::primary()
+                    Self::primary()
                 } else {
-                    unsafe { ColorSpec2025::primary_dim().unwrap_unchecked() }
+                    unsafe { Self::primary_dim().unwrap_unchecked() }
                 }
                 .get_tone(scheme)
             },
         )
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             Some(if scheme.platform == Platform::Phone {
-                ColorSpec2025::primary()
+                Self::primary()
             } else {
-                unsafe { ColorSpec2025::primary_dim().unwrap_unchecked() }
+                unsafe { Self::primary_dim().unwrap_unchecked() }
             })
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone {
                 get_contrast_curve(6.0)
             } else {
                 get_contrast_curve(7.0)
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::on_primary().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn primary_container() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn primary_container() -> DynamicColor {
+        DynamicColor::background_color(
             "primary_container",
-            |_, scheme| &scheme.primary_palette,
-            |_, scheme| {
+            |scheme| &scheme.primary_palette,
+            |scheme| {
                 if scheme.platform == Platform::Watch {
                     30.0
                 } else {
@@ -1001,29 +883,25 @@ impl ColorSpec2025 {
                 }
             },
         )
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             if scheme.platform == Platform::Phone {
-                Some(if scheme.is_dark {
-                    ColorSpec2025::surface_bright()
-                } else {
-                    ColorSpec2025::surface_dim()
-                })
+                Some(if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() })
             } else {
                 None
             }
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone && scheme.contrast_level > 0.0 {
                 get_contrast_curve(1.5)
             } else {
                 None
             }
         })
-        .with_tone_delta_pair(|_, scheme| {
+        .with_tone_delta_pair(|scheme| {
             if scheme.platform == Platform::Watch {
                 Some(ToneDeltaPair::new(
-                    ColorSpec2025::primary_container(),
-                    unsafe { ColorSpec2025::primary_dim().unwrap_unchecked() },
+                    Self::primary_container(),
+                    unsafe { Self::primary_dim().unwrap_unchecked() },
                     10.0,
                     TonePolarity::Darker,
                     true,
@@ -1032,58 +910,46 @@ impl ColorSpec2025 {
             } else {
                 None
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::primary_container().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn on_primary_container() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn on_primary_container() -> DynamicColor {
+        DynamicColor::foreground_color(
             "on_primary_container",
-            |_, scheme| &scheme.primary_palette,
-            |_, scheme| ColorSpec2025::primary_container().get_tone(scheme),
+            |scheme| &scheme.primary_palette,
+            |scheme| Self::primary_container().get_tone(scheme),
         )
-        .with_background(|_, _| Some(ColorSpec2025::primary_container()))
-        .with_contrast_curve(|_, scheme| {
+        .with_background(|_| Some(Self::primary_container()))
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone {
                 get_contrast_curve(6.0)
             } else {
                 get_contrast_curve(7.0)
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::on_primary_container().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn inverse_primary() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn inverse_primary() -> DynamicColor {
+        DynamicColor::foreground_color(
             "inverse_primary",
-            |_, scheme| &scheme.primary_palette,
-            |_, scheme| t_max_c(&scheme.primary_palette, 0.0, 100.0, 1.0),
+            |scheme| &scheme.primary_palette,
+            |scheme| t_max_c(&scheme.primary_palette, 0.0, 100.0, 1.0),
         )
-        .with_background(|_, _| Some(ColorSpec2025::inverse_surface()))
-        .with_contrast_curve(|_, scheme| {
+        .with_background(|_| Some(Self::inverse_surface()))
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone {
                 get_contrast_curve(6.0)
             } else {
                 get_contrast_curve(7.0)
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::inverse_primary().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn secondary() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn secondary() -> DynamicColor {
+        DynamicColor::background_color(
             "secondary",
-            |_, scheme| &scheme.secondary_palette,
-            |_, scheme| {
+            |scheme| &scheme.secondary_palette,
+            |scheme| {
                 if scheme.platform == Platform::Watch {
                     if scheme.variant == Variant::Neutral {
                         90.0
@@ -1112,29 +978,25 @@ impl ColorSpec2025 {
                 }
             },
         )
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             Some(if scheme.platform == Platform::Phone {
-                if scheme.is_dark {
-                    ColorSpec2025::surface_bright()
-                } else {
-                    ColorSpec2025::surface_dim()
-                }
+                if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() }
             } else {
-                ColorSpec2025::surface_container_high()
+                Self::surface_container_high()
             })
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone {
                 get_contrast_curve(4.5)
             } else {
                 get_contrast_curve(7.0)
             }
         })
-        .with_tone_delta_pair(|_, scheme| {
+        .with_tone_delta_pair(|scheme| {
             if scheme.platform == Platform::Phone {
                 Some(ToneDeltaPair::new(
-                    ColorSpec2025::secondary_container(),
-                    ColorSpec2025::secondary(),
+                    Self::secondary_container(),
+                    Self::secondary(),
                     5.0,
                     TonePolarity::RelativeLighter,
                     true,
@@ -1143,79 +1005,71 @@ impl ColorSpec2025 {
             } else {
                 None
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::secondary().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn secondary_dim() -> Option<&'static DynamicColor> {
-        static COLOR: DynamicColor = DynamicColor::background_color(
-            "secondary_dim",
-            |_, scheme| &scheme.secondary_palette,
-            |_, scheme| {
-                if scheme.variant == Variant::Neutral {
-                    85.0
-                } else {
-                    t_max_c(&scheme.secondary_palette, 0.0, 90.0, 1.0)
-                }
-            },
+    pub const fn secondary_dim() -> Option<DynamicColor> {
+        Some(
+            DynamicColor::background_color(
+                "secondary_dim",
+                |scheme| &scheme.secondary_palette,
+                |scheme| {
+                    if scheme.variant == Variant::Neutral {
+                        85.0
+                    } else {
+                        t_max_c(&scheme.secondary_palette, 0.0, 90.0, 1.0)
+                    }
+                },
+            )
+            .with_background(|_| Some(Self::surface_container_high()))
+            .with_contrast_curve(|_| get_contrast_curve(4.5))
+            .with_tone_delta_pair(|_| {
+                Some(ToneDeltaPair::new(
+                    unsafe { Self::secondary_dim().unwrap_unchecked() },
+                    Self::secondary(),
+                    5.0,
+                    TonePolarity::Darker,
+                    true,
+                    DeltaConstraint::Farther,
+                ))
+            }),
         )
-        .with_background(|_, _| Some(ColorSpec2025::surface_container_high()))
-        .with_contrast_curve(|_, _| get_contrast_curve(4.5))
-        .with_tone_delta_pair(|_, _| {
-            Some(ToneDeltaPair::new(
-                unsafe { ColorSpec2025::secondary_dim().unwrap_unchecked() },
-                ColorSpec2025::secondary(),
-                5.0,
-                TonePolarity::Darker,
-                true,
-                DeltaConstraint::Farther,
-            ))
-        });
-
-        Some(&COLOR)
     }
 
-    pub const fn on_secondary() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn on_secondary() -> DynamicColor {
+        DynamicColor::foreground_color(
             "on_secondary",
-            |_, scheme| &scheme.secondary_palette,
-            |_, scheme| {
+            |scheme| &scheme.secondary_palette,
+            |scheme| {
                 if scheme.platform == Platform::Phone {
-                    ColorSpec2025::secondary()
+                    Self::secondary()
                 } else {
-                    unsafe { ColorSpec2025::secondary_dim().unwrap_unchecked() }
+                    unsafe { Self::secondary_dim().unwrap_unchecked() }
                 }
                 .get_tone(scheme)
             },
         )
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             Some(if scheme.platform == Platform::Phone {
-                ColorSpec2025::secondary()
+                Self::secondary()
             } else {
-                unsafe { ColorSpec2025::secondary_dim().unwrap_unchecked() }
+                unsafe { Self::secondary_dim().unwrap_unchecked() }
             })
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone {
                 get_contrast_curve(6.0)
             } else {
                 get_contrast_curve(7.0)
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::on_secondary().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn secondary_container() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn secondary_container() -> DynamicColor {
+        DynamicColor::background_color(
             "secondary_container",
-            |_, scheme| &scheme.secondary_palette,
-            |_, scheme| {
+            |scheme| &scheme.secondary_palette,
+            |scheme| {
                 if scheme.platform == Platform::Watch {
                     30.0
                 } else {
@@ -1245,29 +1099,25 @@ impl ColorSpec2025 {
                 }
             },
         )
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             if scheme.platform == Platform::Phone {
-                Some(if scheme.is_dark {
-                    ColorSpec2025::surface_bright()
-                } else {
-                    ColorSpec2025::surface_dim()
-                })
+                Some(if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() })
             } else {
                 None
             }
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone && scheme.contrast_level > 0.0 {
                 get_contrast_curve(1.5)
             } else {
                 None
             }
         })
-        .with_tone_delta_pair(|_, scheme| {
+        .with_tone_delta_pair(|scheme| {
             if scheme.platform == Platform::Watch {
                 Some(ToneDeltaPair::new(
-                    ColorSpec2025::secondary_container(),
-                    unsafe { ColorSpec2025::secondary_dim().unwrap_unchecked() },
+                    Self::secondary_container(),
+                    unsafe { Self::secondary_dim().unwrap_unchecked() },
                     10.0,
                     TonePolarity::Darker,
                     true,
@@ -1276,38 +1126,30 @@ impl ColorSpec2025 {
             } else {
                 None
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::secondary_container().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn on_secondary_container() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn on_secondary_container() -> DynamicColor {
+        DynamicColor::foreground_color(
             "on_secondary_container",
-            |_, scheme| &scheme.secondary_palette,
-            |_, scheme| ColorSpec2025::secondary_container().get_tone(scheme),
+            |scheme| &scheme.secondary_palette,
+            |scheme| Self::secondary_container().get_tone(scheme),
         )
-        .with_background(|_, _| Some(ColorSpec2025::secondary_container()))
-        .with_contrast_curve(|_, scheme| {
+        .with_background(|_| Some(Self::secondary_container()))
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone {
                 get_contrast_curve(6.0)
             } else {
                 get_contrast_curve(7.0)
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::on_secondary_container().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn tertiary() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn tertiary() -> DynamicColor {
+        DynamicColor::background_color(
             "tertiary",
-            |_, scheme| &scheme.tertiary_palette,
-            |_, scheme| {
+            |scheme| &scheme.tertiary_palette,
+            |scheme| {
                 if scheme.platform == Platform::Watch {
                     if scheme.variant == Variant::TonalSpot {
                         t_max_c(&scheme.tertiary_palette, 0.0, 90.0, 1.0)
@@ -1340,29 +1182,25 @@ impl ColorSpec2025 {
                 }
             },
         )
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             Some(if scheme.platform == Platform::Phone {
-                if scheme.is_dark {
-                    ColorSpec2025::surface_bright()
-                } else {
-                    ColorSpec2025::surface_dim()
-                }
+                if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() }
             } else {
-                ColorSpec2025::surface_container_high()
+                Self::surface_container_high()
             })
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone {
                 get_contrast_curve(4.5)
             } else {
                 get_contrast_curve(7.0)
             }
         })
-        .with_tone_delta_pair(|_, scheme| {
+        .with_tone_delta_pair(|scheme| {
             if scheme.platform == Platform::Phone {
                 Some(ToneDeltaPair::new(
-                    ColorSpec2025::tertiary_container(),
-                    ColorSpec2025::tertiary(),
+                    Self::tertiary_container(),
+                    Self::tertiary(),
                     5.0,
                     TonePolarity::RelativeLighter,
                     true,
@@ -1371,79 +1209,71 @@ impl ColorSpec2025 {
             } else {
                 None
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::tertiary().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn tertiary_dim() -> Option<&'static DynamicColor> {
-        static COLOR: DynamicColor = DynamicColor::background_color(
-            "tertiary_dim",
-            |_, scheme| &scheme.tertiary_palette,
-            |_, scheme| {
-                if scheme.variant == Variant::TonalSpot {
-                    t_max_c(&scheme.tertiary_palette, 0.0, 90.0, 1.0)
-                } else {
-                    t_max_c(&scheme.tertiary_palette, 0.0, 100.0, 1.0)
-                }
-            },
+    pub const fn tertiary_dim() -> Option<DynamicColor> {
+        Some(
+            DynamicColor::background_color(
+                "tertiary_dim",
+                |scheme| &scheme.tertiary_palette,
+                |scheme| {
+                    if scheme.variant == Variant::TonalSpot {
+                        t_max_c(&scheme.tertiary_palette, 0.0, 90.0, 1.0)
+                    } else {
+                        t_max_c(&scheme.tertiary_palette, 0.0, 100.0, 1.0)
+                    }
+                },
+            )
+            .with_background(|_| Some(Self::surface_container_high()))
+            .with_contrast_curve(|_| get_contrast_curve(4.5))
+            .with_tone_delta_pair(|_| {
+                Some(ToneDeltaPair::new(
+                    unsafe { Self::tertiary_dim().unwrap_unchecked() },
+                    Self::tertiary(),
+                    5.0,
+                    TonePolarity::Darker,
+                    true,
+                    DeltaConstraint::Farther,
+                ))
+            }),
         )
-        .with_background(|_, _| Some(ColorSpec2025::surface_container_high()))
-        .with_contrast_curve(|_, _| get_contrast_curve(4.5))
-        .with_tone_delta_pair(|_, _| {
-            Some(ToneDeltaPair::new(
-                unsafe { ColorSpec2025::tertiary_dim().unwrap_unchecked() },
-                ColorSpec2025::tertiary(),
-                5.0,
-                TonePolarity::Darker,
-                true,
-                DeltaConstraint::Farther,
-            ))
-        });
-
-        Some(&COLOR)
     }
 
-    pub const fn on_tertiary() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn on_tertiary() -> DynamicColor {
+        DynamicColor::foreground_color(
             "on_tertiary",
-            |_, scheme| &scheme.tertiary_palette,
-            |_, scheme| {
+            |scheme| &scheme.tertiary_palette,
+            |scheme| {
                 if scheme.platform == Platform::Phone {
-                    ColorSpec2025::tertiary()
+                    Self::tertiary()
                 } else {
-                    unsafe { ColorSpec2025::tertiary_dim().unwrap_unchecked() }
+                    unsafe { Self::tertiary_dim().unwrap_unchecked() }
                 }
                 .get_tone(scheme)
             },
         )
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             Some(if scheme.platform == Platform::Phone {
-                ColorSpec2025::tertiary()
+                Self::tertiary()
             } else {
-                unsafe { ColorSpec2025::tertiary_dim().unwrap_unchecked() }
+                unsafe { Self::tertiary_dim().unwrap_unchecked() }
             })
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone {
                 get_contrast_curve(6.0)
             } else {
                 get_contrast_curve(7.0)
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::on_tertiary().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn tertiary_container() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn tertiary_container() -> DynamicColor {
+        DynamicColor::background_color(
             "tertiary_container",
-            |_, scheme| &scheme.tertiary_palette,
-            |_, scheme| {
+            |scheme| &scheme.tertiary_palette,
+            |scheme| {
                 if scheme.platform == Platform::Watch {
                     if scheme.variant == Variant::TonalSpot {
                         t_max_c(&scheme.tertiary_palette, 0.0, 90.0, 1.0)
@@ -1484,29 +1314,25 @@ impl ColorSpec2025 {
                 }
             },
         )
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             if scheme.platform == Platform::Phone {
-                Some(if scheme.is_dark {
-                    ColorSpec2025::surface_bright()
-                } else {
-                    ColorSpec2025::surface_dim()
-                })
+                Some(if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() })
             } else {
                 None
             }
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone && scheme.contrast_level > 0.0 {
                 get_contrast_curve(1.5)
             } else {
                 None
             }
         })
-        .with_tone_delta_pair(|_, scheme| {
+        .with_tone_delta_pair(|scheme| {
             if scheme.platform == Platform::Watch {
                 Some(ToneDeltaPair::new(
-                    ColorSpec2025::tertiary_container(),
-                    unsafe { ColorSpec2025::tertiary_dim().unwrap_unchecked() },
+                    Self::tertiary_container(),
+                    unsafe { Self::tertiary_dim().unwrap_unchecked() },
                     10.0,
                     TonePolarity::Darker,
                     true,
@@ -1515,38 +1341,30 @@ impl ColorSpec2025 {
             } else {
                 None
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::tertiary_container().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn on_tertiary_container() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn on_tertiary_container() -> DynamicColor {
+        DynamicColor::foreground_color(
             "on_tertiary_container",
-            |_, scheme| &scheme.tertiary_palette,
-            |_, scheme| ColorSpec2025::tertiary_container().get_tone(scheme),
+            |scheme| &scheme.tertiary_palette,
+            |scheme| Self::tertiary_container().get_tone(scheme),
         )
-        .with_background(|_, _| Some(ColorSpec2025::tertiary_container()))
-        .with_contrast_curve(|_, scheme| {
+        .with_background(|_| Some(Self::tertiary_container()))
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone {
                 get_contrast_curve(6.0)
             } else {
                 get_contrast_curve(7.0)
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::on_tertiary_container().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn error() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn error() -> DynamicColor {
+        DynamicColor::background_color(
             "error",
-            |_, scheme| &scheme.error_palette,
-            |_, scheme| {
+            |scheme| &scheme.error_palette,
+            |scheme| {
                 if scheme.platform == Platform::Phone {
                     if scheme.is_dark {
                         t_min_c(&scheme.error_palette, 0.0, 98.0)
@@ -1558,29 +1376,25 @@ impl ColorSpec2025 {
                 }
             },
         )
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             Some(if scheme.platform == Platform::Phone {
-                if scheme.is_dark {
-                    ColorSpec2025::surface_bright()
-                } else {
-                    ColorSpec2025::surface_dim()
-                }
+                if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() }
             } else {
-                ColorSpec2025::surface_container_high()
+                Self::surface_container_high()
             })
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone {
                 get_contrast_curve(4.5)
             } else {
                 get_contrast_curve(7.0)
             }
         })
-        .with_tone_delta_pair(|_, scheme| {
+        .with_tone_delta_pair(|scheme| {
             if scheme.platform == Platform::Phone {
                 Some(ToneDeltaPair::new(
-                    ColorSpec2025::error_container(),
-                    ColorSpec2025::error(),
+                    Self::error_container(),
+                    Self::error(),
                     5.0,
                     TonePolarity::RelativeLighter,
                     true,
@@ -1589,73 +1403,61 @@ impl ColorSpec2025 {
             } else {
                 None
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::error().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn error_dim() -> Option<&'static DynamicColor> {
-        static COLOR: DynamicColor = DynamicColor::background_color(
-            "error_dim",
-            |_, scheme| &scheme.error_palette,
-            |_, scheme| t_min_c(&scheme.error_palette, 0.0, 100.0),
+    pub const fn error_dim() -> Option<DynamicColor> {
+        Some(
+            DynamicColor::background_color("error_dim", |scheme| &scheme.error_palette, |scheme| t_min_c(&scheme.error_palette, 0.0, 100.0))
+                .with_background(|_| Some(Self::surface_container_high()))
+                .with_contrast_curve(|_| get_contrast_curve(4.5))
+                .with_tone_delta_pair(|_| {
+                    Some(ToneDeltaPair::new(
+                        unsafe { Self::error_dim().unwrap_unchecked() },
+                        Self::error(),
+                        5.0,
+                        TonePolarity::Darker,
+                        true,
+                        DeltaConstraint::Farther,
+                    ))
+                }),
         )
-        .with_background(|_, _| Some(ColorSpec2025::surface_container_high()))
-        .with_contrast_curve(|_, _| get_contrast_curve(4.5))
-        .with_tone_delta_pair(|_, _| {
-            Some(ToneDeltaPair::new(
-                unsafe { ColorSpec2025::error_dim().unwrap_unchecked() },
-                ColorSpec2025::error(),
-                5.0,
-                TonePolarity::Darker,
-                true,
-                DeltaConstraint::Farther,
-            ))
-        });
-
-        Some(&COLOR)
     }
 
-    pub const fn on_error() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn on_error() -> DynamicColor {
+        DynamicColor::foreground_color(
             "on_error",
-            |_, scheme| &scheme.error_palette,
-            |_, scheme| {
+            |scheme| &scheme.error_palette,
+            |scheme| {
                 if scheme.platform == Platform::Phone {
-                    ColorSpec2025::error()
+                    Self::error()
                 } else {
-                    unsafe { ColorSpec2025::error_dim().unwrap_unchecked() }
+                    unsafe { Self::error_dim().unwrap_unchecked() }
                 }
                 .get_tone(scheme)
             },
         )
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             Some(if scheme.platform == Platform::Phone {
-                ColorSpec2025::error()
+                Self::error()
             } else {
-                unsafe { ColorSpec2025::error_dim().unwrap_unchecked() }
+                unsafe { Self::error_dim().unwrap_unchecked() }
             })
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone {
                 get_contrast_curve(6.0)
             } else {
                 get_contrast_curve(7.0)
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::on_error().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn error_container() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn error_container() -> DynamicColor {
+        DynamicColor::background_color(
             "error_container",
-            |_, scheme| &scheme.error_palette,
-            |_, scheme| {
+            |scheme| &scheme.error_palette,
+            |scheme| {
                 if scheme.platform == Platform::Watch {
                     30.0
                 } else if scheme.is_dark {
@@ -1665,29 +1467,25 @@ impl ColorSpec2025 {
                 }
             },
         )
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             if scheme.platform == Platform::Phone {
-                Some(if scheme.is_dark {
-                    ColorSpec2025::surface_bright()
-                } else {
-                    ColorSpec2025::surface_dim()
-                })
+                Some(if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() })
             } else {
                 None
             }
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone && scheme.contrast_level > 0.0 {
                 get_contrast_curve(1.5)
             } else {
                 None
             }
         })
-        .with_tone_delta_pair(|_, scheme| {
+        .with_tone_delta_pair(|scheme| {
             if scheme.platform == Platform::Watch {
                 Some(ToneDeltaPair::new(
-                    ColorSpec2025::error_container(),
-                    unsafe { ColorSpec2025::error_dim().unwrap_unchecked() },
+                    Self::error_container(),
+                    unsafe { Self::error_dim().unwrap_unchecked() },
                     10.0,
                     TonePolarity::Darker,
                     true,
@@ -1696,292 +1494,224 @@ impl ColorSpec2025 {
             } else {
                 None
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::error_container().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn on_error_container() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn on_error_container() -> DynamicColor {
+        DynamicColor::foreground_color(
             "on_error_container",
-            |_, scheme| &scheme.error_palette,
-            |_, scheme| ColorSpec2025::error_container().get_tone(scheme),
+            |scheme| &scheme.error_palette,
+            |scheme| Self::error_container().get_tone(scheme),
         )
-        .with_background(|_, _| Some(ColorSpec2025::error_container()))
-        .with_contrast_curve(|_, scheme| {
+        .with_background(|_| Some(Self::error_container()))
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone {
                 get_contrast_curve(4.5)
             } else {
                 get_contrast_curve(7.0)
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::on_error_container().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn primary_fixed() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn primary_fixed() -> DynamicColor {
+        DynamicColor::background_color(
             "primary_fixed",
-            |_, scheme| &scheme.primary_palette,
-            |_, scheme| {
+            |scheme| &scheme.primary_palette,
+            |scheme| {
                 let mut temp_scheme = scheme.clone();
 
                 temp_scheme.is_dark = false;
                 temp_scheme.contrast_level = 0.0;
 
-                ColorSpec2025::primary_container().get_tone(&temp_scheme)
+                Self::primary_container().get_tone(&temp_scheme)
             },
         )
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             if scheme.platform == Platform::Phone {
-                Some(if scheme.is_dark {
-                    ColorSpec2025::surface_bright()
-                } else {
-                    ColorSpec2025::surface_dim()
-                })
+                Some(if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() })
             } else {
                 None
             }
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone && scheme.contrast_level > 0.0 {
                 get_contrast_curve(1.5)
             } else {
                 None
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::primary_fixed().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn primary_fixed_dim() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn primary_fixed_dim() -> DynamicColor {
+        DynamicColor::background_color(
             "primary_fixed_dim",
-            |_, scheme| &scheme.primary_palette,
-            |_, scheme| ColorSpec2025::primary_fixed().get_tone(scheme),
+            |scheme| &scheme.primary_palette,
+            |scheme| Self::primary_fixed().get_tone(scheme),
         )
-        .with_tone_delta_pair(|_, _| {
+        .with_tone_delta_pair(|_| {
             Some(ToneDeltaPair::new(
-                ColorSpec2025::primary_fixed_dim(),
-                ColorSpec2025::primary_fixed(),
+                Self::primary_fixed_dim(),
+                Self::primary_fixed(),
                 5.0,
                 TonePolarity::Darker,
                 true,
                 DeltaConstraint::Exact,
             ))
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::primary_fixed_dim().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn on_primary_fixed() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn on_primary_fixed() -> DynamicColor {
+        DynamicColor::foreground_color(
             "on_primary_fixed",
-            |_, scheme| &scheme.primary_palette,
-            |_, scheme| ColorSpec2025::primary_fixed_dim().get_tone(scheme),
+            |scheme| &scheme.primary_palette,
+            |scheme| Self::primary_fixed_dim().get_tone(scheme),
         )
-        .with_background(|_, _| Some(ColorSpec2025::primary_fixed_dim()))
-        .with_contrast_curve(|_, _scheme| get_contrast_curve(7.0));
-
-        static COLOR: DynamicColor = ColorSpec2021::on_primary_fixed().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        .with_background(|_| Some(Self::primary_fixed_dim()))
+        .with_contrast_curve(|_| get_contrast_curve(7.0))
     }
 
-    pub const fn on_primary_fixed_variant() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn on_primary_fixed_variant() -> DynamicColor {
+        DynamicColor::foreground_color(
             "on_primary_fixed_variant",
-            |_, scheme| &scheme.primary_palette,
-            |_, scheme| ColorSpec2025::primary_fixed_dim().get_tone(scheme),
+            |scheme| &scheme.primary_palette,
+            |scheme| Self::primary_fixed_dim().get_tone(scheme),
         )
-        .with_background(|_, _| Some(ColorSpec2025::primary_fixed_dim()))
-        .with_contrast_curve(|_, _scheme| get_contrast_curve(4.5));
-
-        static COLOR: DynamicColor = ColorSpec2021::on_primary_fixed_variant().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        .with_background(|_| Some(Self::primary_fixed_dim()))
+        .with_contrast_curve(|_| get_contrast_curve(4.5))
     }
 
-    pub const fn secondary_fixed() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn secondary_fixed() -> DynamicColor {
+        DynamicColor::background_color(
             "secondary_fixed",
-            |_, scheme| &scheme.secondary_palette,
-            |_, scheme| {
+            |scheme| &scheme.secondary_palette,
+            |scheme| {
                 let mut temp_scheme = scheme.clone();
 
                 temp_scheme.is_dark = false;
                 temp_scheme.contrast_level = 0.0;
 
-                ColorSpec2025::secondary_container().get_tone(&temp_scheme)
+                Self::secondary_container().get_tone(&temp_scheme)
             },
         )
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             if scheme.platform == Platform::Phone {
-                Some(if scheme.is_dark {
-                    ColorSpec2025::surface_bright()
-                } else {
-                    ColorSpec2025::surface_dim()
-                })
+                Some(if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() })
             } else {
                 None
             }
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone && scheme.contrast_level > 0.0 {
                 get_contrast_curve(1.5)
             } else {
                 None
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::secondary_fixed().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn secondary_fixed_dim() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn secondary_fixed_dim() -> DynamicColor {
+        DynamicColor::background_color(
             "secondary_fixed_dim",
-            |_, scheme| &scheme.secondary_palette,
-            |_, scheme| ColorSpec2025::secondary_fixed().get_tone(scheme),
+            |scheme| &scheme.secondary_palette,
+            |scheme| Self::secondary_fixed().get_tone(scheme),
         )
-        .with_tone_delta_pair(|_, _| {
+        .with_tone_delta_pair(|_| {
             Some(ToneDeltaPair::new(
-                ColorSpec2025::secondary_fixed_dim(),
-                ColorSpec2025::secondary_fixed(),
+                Self::secondary_fixed_dim(),
+                Self::secondary_fixed(),
                 5.0,
                 TonePolarity::Darker,
                 true,
                 DeltaConstraint::Exact,
             ))
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::secondary_fixed_dim().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn on_secondary_fixed() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn on_secondary_fixed() -> DynamicColor {
+        DynamicColor::foreground_color(
             "on_secondary_fixed",
-            |_, scheme| &scheme.secondary_palette,
-            |_, scheme| ColorSpec2025::secondary_fixed_dim().get_tone(scheme),
+            |scheme| &scheme.secondary_palette,
+            |scheme| Self::secondary_fixed_dim().get_tone(scheme),
         )
-        .with_background(|_, _| Some(ColorSpec2025::secondary_fixed_dim()))
-        .with_contrast_curve(|_, _scheme| get_contrast_curve(7.0));
-
-        static COLOR: DynamicColor = ColorSpec2021::on_secondary_fixed().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        .with_background(|_| Some(Self::secondary_fixed_dim()))
+        .with_contrast_curve(|_| get_contrast_curve(7.0))
     }
 
-    pub const fn on_secondary_fixed_variant() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn on_secondary_fixed_variant() -> DynamicColor {
+        DynamicColor::foreground_color(
             "on_secondary_fixed_variant",
-            |_, scheme| &scheme.secondary_palette,
-            |_, scheme| ColorSpec2025::secondary_fixed_dim().get_tone(scheme),
+            |scheme| &scheme.secondary_palette,
+            |scheme| Self::secondary_fixed_dim().get_tone(scheme),
         )
-        .with_background(|_, _| Some(ColorSpec2025::secondary_fixed_dim()))
-        .with_contrast_curve(|_, _scheme| get_contrast_curve(4.5));
-
-        static COLOR: DynamicColor = ColorSpec2021::on_secondary_fixed_variant().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        .with_background(|_| Some(Self::secondary_fixed_dim()))
+        .with_contrast_curve(|_| get_contrast_curve(4.5))
     }
 
-    pub const fn tertiary_fixed() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn tertiary_fixed() -> DynamicColor {
+        DynamicColor::background_color(
             "tertiary_fixed",
-            |_, scheme| &scheme.tertiary_palette,
-            |_, scheme| {
+            |scheme| &scheme.tertiary_palette,
+            |scheme| {
                 let mut temp_scheme = scheme.clone();
 
                 temp_scheme.is_dark = false;
                 temp_scheme.contrast_level = 0.0;
 
-                ColorSpec2025::tertiary_container().get_tone(&temp_scheme)
+                Self::tertiary_container().get_tone(&temp_scheme)
             },
         )
-        .with_background(|_, scheme| {
+        .with_background(|scheme| {
             if scheme.platform == Platform::Phone {
-                Some(if scheme.is_dark {
-                    ColorSpec2025::surface_bright()
-                } else {
-                    ColorSpec2025::surface_dim()
-                })
+                Some(if scheme.is_dark { Self::surface_bright() } else { Self::surface_dim() })
             } else {
                 None
             }
         })
-        .with_contrast_curve(|_, scheme| {
+        .with_contrast_curve(|scheme| {
             if scheme.platform == Platform::Phone && scheme.contrast_level > 0.0 {
                 get_contrast_curve(1.5)
             } else {
                 None
             }
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::tertiary_fixed().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn tertiary_fixed_dim() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::background_color(
+    pub const fn tertiary_fixed_dim() -> DynamicColor {
+        DynamicColor::background_color(
             "tertiary_fixed_dim",
-            |_, scheme| &scheme.tertiary_palette,
-            |_, scheme| ColorSpec2025::tertiary_fixed().get_tone(scheme),
+            |scheme| &scheme.tertiary_palette,
+            |scheme| Self::tertiary_fixed().get_tone(scheme),
         )
-        .with_tone_delta_pair(|_, _| {
+        .with_tone_delta_pair(|_| {
             Some(ToneDeltaPair::new(
-                ColorSpec2025::tertiary_fixed_dim(),
-                ColorSpec2025::tertiary_fixed(),
+                Self::tertiary_fixed_dim(),
+                Self::tertiary_fixed(),
                 5.0,
                 TonePolarity::Darker,
                 true,
                 DeltaConstraint::Exact,
             ))
-        });
-
-        static COLOR: DynamicColor = ColorSpec2021::tertiary_fixed_dim().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        })
     }
 
-    pub const fn on_tertiary_fixed() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn on_tertiary_fixed() -> DynamicColor {
+        DynamicColor::foreground_color(
             "on_tertiary_fixed",
-            |_, scheme| &scheme.tertiary_palette,
-            |_, scheme| ColorSpec2025::tertiary_fixed_dim().get_tone(scheme),
+            |scheme| &scheme.tertiary_palette,
+            |scheme| Self::tertiary_fixed_dim().get_tone(scheme),
         )
-        .with_background(|_, _| Some(ColorSpec2025::tertiary_fixed_dim()))
-        .with_contrast_curve(|_, _scheme| get_contrast_curve(7.0));
-
-        static COLOR: DynamicColor = ColorSpec2021::on_tertiary_fixed().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        .with_background(|_| Some(Self::tertiary_fixed_dim()))
+        .with_contrast_curve(|_| get_contrast_curve(7.0))
     }
 
-    pub const fn on_tertiary_fixed_variant() -> &'static DynamicColor {
-        static COLOR_2025: DynamicColor = DynamicColor::foreground_color(
+    pub const fn on_tertiary_fixed_variant() -> DynamicColor {
+        DynamicColor::foreground_color(
             "on_tertiary_fixed_variant",
-            |_, scheme| &scheme.tertiary_palette,
-            |_, scheme| ColorSpec2025::tertiary_fixed_dim().get_tone(scheme),
+            |scheme| &scheme.tertiary_palette,
+            |scheme| Self::tertiary_fixed_dim().get_tone(scheme),
         )
-        .with_background(|_, _| Some(ColorSpec2025::tertiary_fixed_dim()))
-        .with_contrast_curve(|_, _scheme| get_contrast_curve(4.5));
-
-        static COLOR: DynamicColor = ColorSpec2021::on_tertiary_fixed_variant().extend_spec_version(SpecVersion::Spec2025, &COLOR_2025);
-
-        &COLOR
+        .with_background(|_| Some(Self::tertiary_fixed_dim()))
+        .with_contrast_curve(|_| get_contrast_curve(4.5))
     }
 
     pub fn get_hct(&self, scheme: &DynamicScheme, color: &DynamicColor) -> Hct {
@@ -1989,13 +1719,13 @@ impl ColorSpec2025 {
         let tone = self.get_tone(scheme, color);
         let chroma_multiplier = color.chroma_multiplier(scheme).unwrap_or(1.0);
 
-        if chroma_multiplier == 1.0 {
+        if (chroma_multiplier - 1.0).abs() < 0.001 {
             return palette.get_hct(tone);
         }
 
         let chroma = palette.chroma() * chroma_multiplier;
 
-        if tone == 99.0 && Hct::is_yellow(palette.hue()) {
+        if (tone - 99.0).abs() < 0.001 && Hct::is_yellow(palette.hue()) {
             return TonalPalette::from_hue_and_chroma(palette.hue(), chroma).get_hct(tone);
         }
 
@@ -2117,20 +1847,15 @@ impl ColorSpec2025 {
                     let dark_option = darker(lower, desired_ratio);
 
                     // Tones suitable for the foreground.
-                    let mut availables = vec![];
-
-                    if let Some(light_option) = light_option {
-                        availables.push(light_option);
-                    }
-
-                    if let Some(dark_option) = dark_option {
-                        availables.push(dark_option);
-                    }
+                    let first_available = light_option.or(dark_option);
+                    let second_available = light_option.and(dark_option);
 
                     if DynamicColor::tone_prefers_light_foreground(bg_tone1) || DynamicColor::tone_prefers_light_foreground(bg_tone2) {
                         light_option.unwrap_or(100.0)
-                    } else if availables.len() == 1 {
-                        availables[0]
+                    } else if let Some(first) = first_available
+                        && second_available.is_none()
+                    {
+                        first
                     } else {
                         dark_option.unwrap_or(0.0)
                     }
@@ -2289,239 +2014,239 @@ impl ColorSpec2025 {
 }
 
 impl ColorSpec for ColorSpec2025 {
-    fn primary_palette_key_color(&self) -> &'static DynamicColor {
+    fn primary_palette_key_color(&self) -> DynamicColor {
         const { Self::primary_palette_key_color() }
     }
 
-    fn secondary_palette_key_color(&self) -> &'static DynamicColor {
+    fn secondary_palette_key_color(&self) -> DynamicColor {
         const { Self::secondary_palette_key_color() }
     }
 
-    fn tertiary_palette_key_color(&self) -> &'static DynamicColor {
+    fn tertiary_palette_key_color(&self) -> DynamicColor {
         const { Self::tertiary_palette_key_color() }
     }
 
-    fn neutral_palette_key_color(&self) -> &'static DynamicColor {
+    fn neutral_palette_key_color(&self) -> DynamicColor {
         const { Self::neutral_palette_key_color() }
     }
 
-    fn neutral_variant_palette_key_color(&self) -> &'static DynamicColor {
+    fn neutral_variant_palette_key_color(&self) -> DynamicColor {
         const { Self::neutral_variant_palette_key_color() }
     }
 
-    fn error_palette_key_color(&self) -> &'static DynamicColor {
+    fn error_palette_key_color(&self) -> DynamicColor {
         const { Self::error_palette_key_color() }
     }
 
-    fn background(&self) -> &'static DynamicColor {
+    fn background(&self) -> DynamicColor {
         const { Self::background() }
     }
 
-    fn on_background(&self) -> &'static DynamicColor {
+    fn on_background(&self) -> DynamicColor {
         const { Self::on_background() }
     }
 
-    fn surface(&self) -> &'static DynamicColor {
+    fn surface(&self) -> DynamicColor {
         const { Self::surface() }
     }
 
-    fn surface_dim(&self) -> &'static DynamicColor {
+    fn surface_dim(&self) -> DynamicColor {
         const { Self::surface_dim() }
     }
 
-    fn surface_bright(&self) -> &'static DynamicColor {
+    fn surface_bright(&self) -> DynamicColor {
         const { Self::surface_bright() }
     }
 
-    fn surface_container_lowest(&self) -> &'static DynamicColor {
+    fn surface_container_lowest(&self) -> DynamicColor {
         const { Self::surface_container_lowest() }
     }
 
-    fn surface_container_low(&self) -> &'static DynamicColor {
+    fn surface_container_low(&self) -> DynamicColor {
         const { Self::surface_container_low() }
     }
 
-    fn surface_container(&self) -> &'static DynamicColor {
+    fn surface_container(&self) -> DynamicColor {
         const { Self::surface_container() }
     }
 
-    fn surface_container_high(&self) -> &'static DynamicColor {
+    fn surface_container_high(&self) -> DynamicColor {
         const { Self::surface_container_high() }
     }
 
-    fn surface_container_highest(&self) -> &'static DynamicColor {
+    fn surface_container_highest(&self) -> DynamicColor {
         const { Self::surface_container_highest() }
     }
 
-    fn on_surface(&self) -> &'static DynamicColor {
+    fn on_surface(&self) -> DynamicColor {
         const { Self::on_surface() }
     }
 
-    fn surface_variant(&self) -> &'static DynamicColor {
+    fn surface_variant(&self) -> DynamicColor {
         const { Self::surface_variant() }
     }
 
-    fn on_surface_variant(&self) -> &'static DynamicColor {
+    fn on_surface_variant(&self) -> DynamicColor {
         const { Self::on_surface_variant() }
     }
 
-    fn inverse_surface(&self) -> &'static DynamicColor {
+    fn inverse_surface(&self) -> DynamicColor {
         const { Self::inverse_surface() }
     }
 
-    fn inverse_on_surface(&self) -> &'static DynamicColor {
+    fn inverse_on_surface(&self) -> DynamicColor {
         const { Self::inverse_on_surface() }
     }
 
-    fn outline(&self) -> &'static DynamicColor {
+    fn outline(&self) -> DynamicColor {
         const { Self::outline() }
     }
 
-    fn outline_variant(&self) -> &'static DynamicColor {
+    fn outline_variant(&self) -> DynamicColor {
         const { Self::outline_variant() }
     }
 
-    fn shadow(&self) -> &'static DynamicColor {
+    fn shadow(&self) -> DynamicColor {
         const { Self::shadow() }
     }
 
-    fn scrim(&self) -> &'static DynamicColor {
+    fn scrim(&self) -> DynamicColor {
         const { Self::scrim() }
     }
 
-    fn surface_tint(&self) -> &'static DynamicColor {
+    fn surface_tint(&self) -> DynamicColor {
         const { Self::surface_tint() }
     }
 
-    fn primary(&self) -> &'static DynamicColor {
+    fn primary(&self) -> DynamicColor {
         const { Self::primary() }
     }
 
-    fn primary_dim(&self) -> Option<&'static DynamicColor> {
+    fn primary_dim(&self) -> Option<DynamicColor> {
         const { Self::primary_dim() }
     }
 
-    fn on_primary(&self) -> &'static DynamicColor {
+    fn on_primary(&self) -> DynamicColor {
         const { Self::on_primary() }
     }
 
-    fn primary_container(&self) -> &'static DynamicColor {
+    fn primary_container(&self) -> DynamicColor {
         const { Self::primary_container() }
     }
 
-    fn on_primary_container(&self) -> &'static DynamicColor {
+    fn on_primary_container(&self) -> DynamicColor {
         const { Self::on_primary_container() }
     }
 
-    fn inverse_primary(&self) -> &'static DynamicColor {
+    fn inverse_primary(&self) -> DynamicColor {
         const { Self::inverse_primary() }
     }
 
-    fn secondary(&self) -> &'static DynamicColor {
+    fn secondary(&self) -> DynamicColor {
         const { Self::secondary() }
     }
 
-    fn secondary_dim(&self) -> Option<&'static DynamicColor> {
+    fn secondary_dim(&self) -> Option<DynamicColor> {
         const { Self::secondary_dim() }
     }
 
-    fn on_secondary(&self) -> &'static DynamicColor {
+    fn on_secondary(&self) -> DynamicColor {
         const { Self::on_secondary() }
     }
 
-    fn secondary_container(&self) -> &'static DynamicColor {
+    fn secondary_container(&self) -> DynamicColor {
         const { Self::secondary_container() }
     }
 
-    fn on_secondary_container(&self) -> &'static DynamicColor {
+    fn on_secondary_container(&self) -> DynamicColor {
         const { Self::on_secondary_container() }
     }
 
-    fn tertiary(&self) -> &'static DynamicColor {
+    fn tertiary(&self) -> DynamicColor {
         const { Self::tertiary() }
     }
 
-    fn tertiary_dim(&self) -> Option<&'static DynamicColor> {
+    fn tertiary_dim(&self) -> Option<DynamicColor> {
         const { Self::tertiary_dim() }
     }
 
-    fn on_tertiary(&self) -> &'static DynamicColor {
+    fn on_tertiary(&self) -> DynamicColor {
         const { Self::on_tertiary() }
     }
 
-    fn tertiary_container(&self) -> &'static DynamicColor {
+    fn tertiary_container(&self) -> DynamicColor {
         const { Self::tertiary_container() }
     }
 
-    fn on_tertiary_container(&self) -> &'static DynamicColor {
+    fn on_tertiary_container(&self) -> DynamicColor {
         const { Self::on_tertiary_container() }
     }
 
-    fn error(&self) -> &'static DynamicColor {
+    fn error(&self) -> DynamicColor {
         const { Self::error() }
     }
 
-    fn error_dim(&self) -> Option<&'static DynamicColor> {
+    fn error_dim(&self) -> Option<DynamicColor> {
         const { Self::error_dim() }
     }
 
-    fn on_error(&self) -> &'static DynamicColor {
+    fn on_error(&self) -> DynamicColor {
         const { Self::on_error() }
     }
 
-    fn error_container(&self) -> &'static DynamicColor {
+    fn error_container(&self) -> DynamicColor {
         const { Self::error_container() }
     }
 
-    fn on_error_container(&self) -> &'static DynamicColor {
+    fn on_error_container(&self) -> DynamicColor {
         const { Self::on_error_container() }
     }
 
-    fn primary_fixed(&self) -> &'static DynamicColor {
+    fn primary_fixed(&self) -> DynamicColor {
         const { Self::primary_fixed() }
     }
 
-    fn primary_fixed_dim(&self) -> &'static DynamicColor {
+    fn primary_fixed_dim(&self) -> DynamicColor {
         const { Self::primary_fixed_dim() }
     }
 
-    fn on_primary_fixed(&self) -> &'static DynamicColor {
+    fn on_primary_fixed(&self) -> DynamicColor {
         const { Self::on_primary_fixed() }
     }
 
-    fn on_primary_fixed_variant(&self) -> &'static DynamicColor {
+    fn on_primary_fixed_variant(&self) -> DynamicColor {
         const { Self::on_primary_fixed_variant() }
     }
 
-    fn secondary_fixed(&self) -> &'static DynamicColor {
+    fn secondary_fixed(&self) -> DynamicColor {
         const { Self::secondary_fixed() }
     }
 
-    fn secondary_fixed_dim(&self) -> &'static DynamicColor {
+    fn secondary_fixed_dim(&self) -> DynamicColor {
         const { Self::secondary_fixed_dim() }
     }
 
-    fn on_secondary_fixed(&self) -> &'static DynamicColor {
+    fn on_secondary_fixed(&self) -> DynamicColor {
         const { Self::on_secondary_fixed() }
     }
 
-    fn on_secondary_fixed_variant(&self) -> &'static DynamicColor {
+    fn on_secondary_fixed_variant(&self) -> DynamicColor {
         const { Self::on_secondary_fixed_variant() }
     }
 
-    fn tertiary_fixed(&self) -> &'static DynamicColor {
+    fn tertiary_fixed(&self) -> DynamicColor {
         const { Self::tertiary_fixed() }
     }
 
-    fn tertiary_fixed_dim(&self) -> &'static DynamicColor {
+    fn tertiary_fixed_dim(&self) -> DynamicColor {
         const { Self::tertiary_fixed_dim() }
     }
 
-    fn on_tertiary_fixed(&self) -> &'static DynamicColor {
+    fn on_tertiary_fixed(&self) -> DynamicColor {
         const { Self::on_tertiary_fixed() }
     }
 
-    fn on_tertiary_fixed_variant(&self) -> &'static DynamicColor {
+    fn on_tertiary_fixed_variant(&self) -> DynamicColor {
         const { Self::on_tertiary_fixed_variant() }
     }
 

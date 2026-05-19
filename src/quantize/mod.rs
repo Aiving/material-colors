@@ -6,10 +6,10 @@ pub use quantizer_map::QuantizerMap;
 pub use quantizer_wsmeans::QuantizerWsmeans;
 pub use quantizer_wu::QuantizerWu;
 
-pub mod point_provider;
-pub mod point_provider_lab;
-pub mod quantizer;
-pub mod quantizer_celebi;
-pub mod quantizer_map;
-pub mod quantizer_wsmeans;
-pub mod quantizer_wu;
+mod point_provider;
+mod point_provider_lab;
+mod quantizer;
+mod quantizer_celebi;
+mod quantizer_map;
+mod quantizer_wsmeans;
+mod quantizer_wu;

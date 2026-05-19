@@ -222,11 +222,6 @@ impl FromRef<Hct> for Rgb {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(not(feature = "std"))] use alloc::format;
-    use core::hash::{Hash, Hasher};
-    #[cfg(feature = "std")] use std::format;
-
-    use ahash::AHasher;
     use float_cmp::{approx_eq, assert_approx_eq};
 
     use super::{Cam16, Hct, ViewingConditions};
@@ -239,14 +234,6 @@ mod tests {
     const BLUE: Rgb = Rgb::from_u32(0x0000FF);
     const MIDGRAY: Rgb = Rgb::from_u32(0x777777);
 
-    fn hash_value<T: Hash>(value: T) -> u64 {
-        let mut hasher = AHasher::default();
-
-        value.hash(&mut hasher);
-
-        hasher.finish()
-    }
-
     const fn color_is_on_boundary(rgb: Rgb) -> bool {
         rgb.red == 0 || rgb.red == 255 || rgb.green == 0 || rgb.green == 255 || rgb.blue == 0 || rgb.blue == 255
     }
@@ -257,7 +244,6 @@ mod tests {
         let b: Hct = Rgb::from_u32(123).into();
 
         assert_eq!(a, b);
-        assert_eq!(hash_value(a), hash_value(b));
     }
 
     #[test]
@@ -287,60 +273,60 @@ mod tests {
     fn test_cam_red() {
         let cam = Cam16::from(RED);
 
-        assert_approx_eq!(f64, 46.445, cam.j, epsilon = 0.001);
+        assert_approx_eq!(f64, 46.445, cam.lightness, epsilon = 0.001);
         assert_approx_eq!(f64, 113.357, cam.chroma, epsilon = 0.001);
         assert_approx_eq!(f64, 27.408, cam.hue, epsilon = 0.001);
-        assert_approx_eq!(f64, 89.494, cam.m, epsilon = 0.001);
-        assert_approx_eq!(f64, 91.889, cam.s, epsilon = 0.001);
-        assert_approx_eq!(f64, 105.988, cam.q, epsilon = 0.001);
+        assert_approx_eq!(f64, 89.494, cam.colorfulness, epsilon = 0.001);
+        assert_approx_eq!(f64, 91.889, cam.saturation, epsilon = 0.001);
+        assert_approx_eq!(f64, 105.988, cam.brightness, epsilon = 0.001);
     }
 
     #[test]
     fn test_cam_green() {
         let cam = Cam16::from(GREEN);
 
-        assert_approx_eq!(f64, 79.331, cam.j, epsilon = 0.001);
+        assert_approx_eq!(f64, 79.331, cam.lightness, epsilon = 0.001);
         assert_approx_eq!(f64, 108.410, cam.chroma, epsilon = 0.001);
         assert_approx_eq!(f64, 142.139, cam.hue, epsilon = 0.001);
-        assert_approx_eq!(f64, 85.587, cam.m, epsilon = 0.001);
-        assert_approx_eq!(f64, 78.604, cam.s, epsilon = 0.001);
-        assert_approx_eq!(f64, 138.520, cam.q, epsilon = 0.001);
+        assert_approx_eq!(f64, 85.587, cam.colorfulness, epsilon = 0.001);
+        assert_approx_eq!(f64, 78.604, cam.saturation, epsilon = 0.001);
+        assert_approx_eq!(f64, 138.520, cam.brightness, epsilon = 0.001);
     }
 
     #[test]
     fn test_cam_blue() {
         let cam = Cam16::from(BLUE);
 
-        assert_approx_eq!(f64, 25.465, cam.j, epsilon = 0.001);
+        assert_approx_eq!(f64, 25.465, cam.lightness, epsilon = 0.001);
         assert_approx_eq!(f64, 87.230, cam.chroma, epsilon = 0.001);
         assert_approx_eq!(f64, 282.788, cam.hue, epsilon = 0.001);
-        assert_approx_eq!(f64, 68.867, cam.m, epsilon = 0.001);
-        assert_approx_eq!(f64, 93.674, cam.s, epsilon = 0.001);
-        assert_approx_eq!(f64, 78.481, cam.q, epsilon = 0.001);
+        assert_approx_eq!(f64, 68.867, cam.colorfulness, epsilon = 0.001);
+        assert_approx_eq!(f64, 93.674, cam.saturation, epsilon = 0.001);
+        assert_approx_eq!(f64, 78.481, cam.brightness, epsilon = 0.001);
     }
 
     #[test]
     fn test_cam_black() {
         let cam = Cam16::from(BLACK);
 
-        assert_approx_eq!(f64, 0.0, cam.j, epsilon = 0.001);
+        assert_approx_eq!(f64, 0.0, cam.lightness, epsilon = 0.001);
         assert_approx_eq!(f64, 0.0, cam.chroma, epsilon = 0.001);
         assert_approx_eq!(f64, 0.0, cam.hue, epsilon = 0.001);
-        assert_approx_eq!(f64, 0.0, cam.m, epsilon = 0.001);
-        assert_approx_eq!(f64, 0.0, cam.s, epsilon = 0.001);
-        assert_approx_eq!(f64, 0.0, cam.q, epsilon = 0.001);
+        assert_approx_eq!(f64, 0.0, cam.colorfulness, epsilon = 0.001);
+        assert_approx_eq!(f64, 0.0, cam.saturation, epsilon = 0.001);
+        assert_approx_eq!(f64, 0.0, cam.brightness, epsilon = 0.001);
     }
 
     #[test]
     fn test_cam_white() {
         let cam = Cam16::from(WHITE);
 
-        assert_approx_eq!(f64, 100.0, cam.j, epsilon = 0.001);
+        assert_approx_eq!(f64, 100.0, cam.lightness, epsilon = 0.001);
         assert_approx_eq!(f64, 2.869, cam.chroma, epsilon = 0.001);
         assert_approx_eq!(f64, 209.492, cam.hue, epsilon = 0.001);
-        assert_approx_eq!(f64, 2.265, cam.m, epsilon = 0.001);
-        assert_approx_eq!(f64, 12.068, cam.s, epsilon = 0.001);
-        assert_approx_eq!(f64, 155.521, cam.q, epsilon = 0.001);
+        assert_approx_eq!(f64, 2.265, cam.colorfulness, epsilon = 0.001);
+        assert_approx_eq!(f64, 12.068, cam.saturation, epsilon = 0.001);
+        assert_approx_eq!(f64, 155.521, cam.brightness, epsilon = 0.001);
     }
 
     #[test]
@@ -402,32 +388,31 @@ mod tests {
         for hue in (15..361).step_by(30) {
             for chroma in (0..100).step_by(10) {
                 for tone in (20..80).step_by(10) {
-                    let hct_request_description = format!("H{hue} C{chroma} T{tone}");
                     let hct_color = Hct::from(f64::from(hue), f64::from(chroma), f64::from(tone));
 
                     if chroma > 0 {
                         assert!(
                             approx_eq!(f64, hct_color.get_hue(), f64::from(hue), epsilon = 4.0),
-                            "Hue should be close for {hct_request_description}"
+                            "Hue should be close for H{hue} C{chroma} T{tone}"
                         );
                     }
 
                     assert!(
                         (0.0..(f64::from(chroma) + 2.5)).contains(&hct_color.get_chroma()),
-                        "Chroma should be close or less for {hct_request_description}"
+                        "Chroma should be close or less for H{hue} C{chroma} T{tone}"
                     );
 
                     if hct_color.get_chroma() < f64::from(chroma) - 2.5 {
                         assert!(
                             color_is_on_boundary(hct_color.into()),
-                            "HCT request for non-sRGB color should return a color on the boundary of the sRGB cube for {hct_request_description}, but got {} instead",
-                            Rgb::from(hct_color).to_hex_with_pound()
+                            "HCT request for non-sRGB color should return a color on the boundary of the sRGB cube for H{hue} C{chroma} T{tone}, but got #{} instead",
+                            Rgb::from(hct_color).as_hex()
                         );
                     }
 
                     assert!(
                         approx_eq!(f64, hct_color.get_tone(), f64::from(tone), epsilon = 0.5),
-                        "Tone should be close for {hct_request_description}"
+                        "Tone should be close for H{hue} C{chroma} T{tone}"
                     );
                 }
             }

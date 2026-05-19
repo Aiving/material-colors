@@ -121,7 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 0.1.6 (February 2nd, 2024)
 
 - **added:** Implement `trait:IntoIterator` for the `struct:Scheme`
-- **fixed:** Fix incorrect proportion calcuation in `mod:score`
+- **fixed:** Fix incorrect proportion calculation in `mod:score`
 - **fixed:** Update the description of `struct:Random` in `mod:utils/random`
 
 ## 0.1.5 (February 2nd, 2024)
@@ -129,7 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **added:** Add partial LCG algorithm implementation in `mod:utils/random`
 - **changed:** Remove small F.A.Q. from `README`
 - **changed:** Now functions in `mod:utils/color` and `mod:utils/string` require only references to colors
-- **fixed:** Fix how cluster indicies fill in `struct:QuantizerWu`
+- **fixed:** Fix how cluster indices fill in `struct:QuantizerWu`
 - **fixed:** Fix sorting of scored colors in `mod:score`
 
 ## 0.1.4 (January 30th, 2024)

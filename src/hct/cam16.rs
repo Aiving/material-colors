@@ -48,16 +48,16 @@ pub struct Cam16 {
     pub chroma: f64,
 
     /// Lightness
-    pub j: f64,
+    pub lightness: f64,
 
     /// Brightness; ratio of lightness to white point's lightness
-    pub q: f64,
+    pub brightness: f64,
 
     /// Colorfulness
-    pub m: f64,
+    pub colorfulness: f64,
 
     /// Saturation; ratio of chroma to white point's chroma
-    pub s: f64,
+    pub saturation: f64,
 
     /// CAM16-UCS J coordinate
     pub jstar: f64,
@@ -146,9 +146,9 @@ impl Cam16 {
         let ac = p2 * viewing_conditions.nbb;
 
         // CAM16 lightness and brightness
-        let j = 100.0 * (ac / viewing_conditions.aw).powf(viewing_conditions.c * viewing_conditions.z);
+        let lightness = 100.0 * (ac / viewing_conditions.aw).powf(viewing_conditions.c * viewing_conditions.z);
 
-        let q = (4.0 / viewing_conditions.c) * (j / 100.0).sqrt() * (viewing_conditions.aw + 4.0) * (viewing_conditions.f_lroot);
+        let brightness = (4.0 / viewing_conditions.c) * (lightness / 100.0).sqrt() * (viewing_conditions.aw + 4.0) * (viewing_conditions.f_lroot);
 
         let hue_prime = if hue < 20.14 { hue + 360.0 } else { hue };
         let e_hue = (1.0 / 4.0) * ((hue_prime.to_radians() + 2.0).cos() + 3.8);
@@ -158,22 +158,25 @@ impl Cam16 {
         let alpha = t.powf(0.9) * (1.64 - 0.29f64.powf(viewing_conditions.background_ytowhite_point_y)).powf(0.73);
 
         // CAM16 chroma, colorfulness, chroma
-        let c = alpha * (j / 100.0).sqrt();
-        let m = c * viewing_conditions.f_lroot;
-        let s = 50.0 * ((alpha * viewing_conditions.c) / (viewing_conditions.aw + 4.0)).sqrt();
+        let chroma = alpha * (lightness / 100.0).sqrt();
+        let colorfulness = chroma * viewing_conditions.f_lroot;
+        let saturation = 50.0 * ((alpha * viewing_conditions.c) / (viewing_conditions.aw + 4.0)).sqrt();
 
         // CAM16-UCS components
-        let (jstar, mstar) = (100.0f64.mul_add(0.007, 1.0) * j / 0.007f64.mul_add(j, 1.0), (0.0228 * m).ln_1p() / 0.0228);
+        let (jstar, mstar) = (
+            100.0f64.mul_add(0.007, 1.0) * lightness / 0.007f64.mul_add(lightness, 1.0),
+            (0.0228 * colorfulness).ln_1p() / 0.0228,
+        );
 
         let (astar, bstar) = (mstar * hue_radians.cos(), mstar * hue_radians.sin());
 
         Self {
             hue,
-            chroma: c,
-            j,
-            q,
-            m,
-            s,
+            chroma,
+            lightness,
+            brightness,
+            colorfulness,
+            saturation,
             jstar,
             astar,
             bstar,
@@ -188,27 +191,27 @@ impl Cam16 {
 
     /// Create a CAM16 color from lightness `j`, chroma `c`, and hue `h`,
     /// in `viewing_conditions`.
-    pub fn from_jch_in_viewing_conditions(j: f64, c: f64, h: f64, viewing_conditions: &ViewingConditions) -> Self {
-        let q = (4.0 / viewing_conditions.c) * (j / 100.0).sqrt() * (viewing_conditions.aw + 4.0) * (viewing_conditions.f_lroot);
-        let m = c * viewing_conditions.f_lroot;
-        let alpha = c / (j / 100.0).sqrt();
-        let s = 50.0 * ((alpha * viewing_conditions.c) / (viewing_conditions.aw + 4.0)).sqrt();
+    pub fn from_jch_in_viewing_conditions(lightness: f64, chroma: f64, hue: f64, viewing_conditions: &ViewingConditions) -> Self {
+        let brightness = (4.0 / viewing_conditions.c) * (lightness / 100.0).sqrt() * (viewing_conditions.aw + 4.0) * (viewing_conditions.f_lroot);
+        let colorfulness = chroma * viewing_conditions.f_lroot;
+        let alpha = chroma / (lightness / 100.0).sqrt();
+        let saturation = 50.0 * ((alpha * viewing_conditions.c) / (viewing_conditions.aw + 4.0)).sqrt();
 
-        let hue_radians = h.to_radians();
+        let hue_radians = hue.to_radians();
         let (jstar, mstar) = (
-            100.0_f64.mul_add(0.007, 1.0) * j / 0.007_f64.mul_add(j, 1.0),
-            1.0 / 0.0228 * 0.0228_f64.mul_add(m, 1.0).ln(),
+            100.0_f64.mul_add(0.007, 1.0) * lightness / 0.007_f64.mul_add(lightness, 1.0),
+            1.0 / 0.0228 * 0.0228_f64.mul_add(colorfulness, 1.0).ln(),
         );
 
         let (astar, bstar) = (mstar * hue_radians.cos(), mstar * hue_radians.sin());
 
         Self {
-            hue: h,
-            chroma: c,
-            j,
-            q,
-            m,
-            s,
+            hue,
+            chroma,
+            lightness,
+            brightness,
+            colorfulness,
+            saturation,
             jstar,
             astar,
             bstar,
@@ -227,14 +230,14 @@ impl Cam16 {
     pub fn from_ucs_in_viewing_conditions(jstar: f64, astar: f64, bstar: f64, viewing_conditions: &ViewingConditions) -> Self {
         let a = astar;
         let b = bstar;
-        let m = a.hypot(b);
-        let m = (m * 0.0228).exp_m1() / 0.0228;
-        let c = m / viewing_conditions.f_lroot;
-        let h = b.atan2(a) * (180.0 / PI);
-        let h = if h < 0.0 { h + 360.0 } else { h };
-        let j = jstar / (jstar - 100.0).mul_add(-0.007, 1.0);
+        let chroma = a.hypot(b);
+        let chroma = (chroma * 0.0228).exp_m1() / 0.0228;
+        let chroma = chroma / viewing_conditions.f_lroot;
+        let hue = b.atan2(a) * (180.0 / PI);
+        let hue = if hue < 0.0 { hue + 360.0 } else { hue };
+        let lightness = jstar / (jstar - 100.0).mul_add(-0.007, 1.0);
 
-        Self::from_jch_in_viewing_conditions(j, c, h, viewing_conditions)
+        Self::from_jch_in_viewing_conditions(lightness, chroma, hue, viewing_conditions)
     }
 
     /// Rgb representation of a color, given the color was viewed in
@@ -247,17 +250,17 @@ impl Cam16 {
 
     /// Xyz representation of CAM16 seen in `viewing_conditions`.
     pub fn xyz_in_viewing_conditions(&self, viewing_conditions: &ViewingConditions) -> Xyz {
-        let alpha = if self.chroma == 0.0 || self.j == 0.0 {
+        let alpha = if self.chroma == 0.0 || self.lightness == 0.0 {
             0.0
         } else {
-            self.chroma / (self.j / 100.0).sqrt()
+            self.chroma / (self.lightness / 100.0).sqrt()
         };
 
         let t = (alpha / (1.64 - 0.29_f64.powf(viewing_conditions.background_ytowhite_point_y)).powf(0.73)).powf(1.0 / 0.9);
         let h_rad = self.hue.to_radians();
 
         let e_hue = 0.25 * ((h_rad + 2.0).cos() + 3.8);
-        let ac = viewing_conditions.aw * (self.j / 100.0).powf(1.0 / viewing_conditions.c / viewing_conditions.z);
+        let ac = viewing_conditions.aw * (self.lightness / 100.0).powf(1.0 / viewing_conditions.c / viewing_conditions.z);
         let p1 = e_hue * (50000.0 / 13.0) * viewing_conditions.n_c * viewing_conditions.ncb;
 
         let p2 = ac / viewing_conditions.nbb;
@@ -333,82 +336,82 @@ mod tests {
         let result9 = Cam16::from(Rgb::from_str("9DA476").unwrap());
 
         assert_approx_eq!(f64, result0.hue, 311.42806917590127, epsilon = 1e-7);
-        assert_approx_eq!(f64, result0.j, 39.80957637025326, epsilon = 1e-7);
-        assert_approx_eq!(f64, result0.q, 98.12583617460575, epsilon = 1e-7);
-        assert_approx_eq!(f64, result0.m, 64.10143150621671, epsilon = 1e-7);
-        assert_approx_eq!(f64, result0.s, 80.82434221770161, epsilon = 1e-7);
+        assert_approx_eq!(f64, result0.lightness, 39.80957637025326, epsilon = 1e-7);
+        assert_approx_eq!(f64, result0.brightness, 98.12583617460575, epsilon = 1e-7);
+        assert_approx_eq!(f64, result0.colorfulness, 64.10143150621671, epsilon = 1e-7);
+        assert_approx_eq!(f64, result0.saturation, 80.82434221770161, epsilon = 1e-7);
         assert_approx_eq!(f64, result0.jstar, 52.927210914635715, epsilon = 1e-7);
         assert_approx_eq!(f64, result0.astar, 26.14144025259719, epsilon = 1e-7);
         assert_approx_eq!(f64, result0.bstar, -29.622376253821233, epsilon = 1e-7);
         assert_approx_eq!(f64, result1.hue, 355.0503461678604, epsilon = 1e-7);
-        assert_approx_eq!(f64, result1.j, 52.56866623390567, epsilon = 1e-7);
-        assert_approx_eq!(f64, result1.q, 112.75948188554017, epsilon = 1e-7);
-        assert_approx_eq!(f64, result1.m, 64.2339418261725, epsilon = 1e-7);
-        assert_approx_eq!(f64, result1.s, 75.4754569748874, epsilon = 1e-7);
+        assert_approx_eq!(f64, result1.lightness, 52.56866623390567, epsilon = 1e-7);
+        assert_approx_eq!(f64, result1.brightness, 112.75948188554017, epsilon = 1e-7);
+        assert_approx_eq!(f64, result1.colorfulness, 64.2339418261725, epsilon = 1e-7);
+        assert_approx_eq!(f64, result1.saturation, 75.4754569748874, epsilon = 1e-7);
         assert_approx_eq!(f64, result1.jstar, 65.32748230521139, epsilon = 1e-7);
         assert_approx_eq!(f64, result1.astar, 39.413992608446186, epsilon = 1e-7);
         assert_approx_eq!(f64, result1.bstar, -3.413381791164169, epsilon = 1e-7);
         assert_approx_eq!(f64, result2.hue, 145.62456894249067, epsilon = 1e-7);
-        assert_approx_eq!(f64, result2.j, 53.54270205682524, epsilon = 1e-7);
-        assert_approx_eq!(f64, result2.q, 113.79933774011006, epsilon = 1e-7);
-        assert_approx_eq!(f64, result2.m, 45.67944977111023, epsilon = 1e-7);
-        assert_approx_eq!(f64, result2.s, 63.35641059229854, epsilon = 1e-7);
+        assert_approx_eq!(f64, result2.lightness, 53.54270205682524, epsilon = 1e-7);
+        assert_approx_eq!(f64, result2.brightness, 113.79933774011006, epsilon = 1e-7);
+        assert_approx_eq!(f64, result2.colorfulness, 45.67944977111023, epsilon = 1e-7);
+        assert_approx_eq!(f64, result2.saturation, 63.35641059229854, epsilon = 1e-7);
         assert_approx_eq!(f64, result2.jstar, 66.20793233348957, epsilon = 1e-7);
         assert_approx_eq!(f64, result2.astar, -25.83510432830831, epsilon = 1e-7);
         assert_approx_eq!(f64, result2.bstar, 17.67339768662175, epsilon = 1e-7);
         assert_approx_eq!(f64, result3.hue, 89.18218954198817, epsilon = 1e-7);
-        assert_approx_eq!(f64, result3.j, 64.64864806089051, epsilon = 1e-7);
-        assert_approx_eq!(f64, result3.q, 125.04585955071941, epsilon = 1e-7);
-        assert_approx_eq!(f64, result3.m, 31.023158944993195, epsilon = 1e-7);
-        assert_approx_eq!(f64, result3.s, 49.809060584658496, epsilon = 1e-7);
+        assert_approx_eq!(f64, result3.lightness, 64.64864806089051, epsilon = 1e-7);
+        assert_approx_eq!(f64, result3.brightness, 125.04585955071941, epsilon = 1e-7);
+        assert_approx_eq!(f64, result3.colorfulness, 31.023158944993195, epsilon = 1e-7);
+        assert_approx_eq!(f64, result3.saturation, 49.809060584658496, epsilon = 1e-7);
         assert_approx_eq!(f64, result3.jstar, 75.66239905009027, epsilon = 1e-7);
         assert_approx_eq!(f64, result3.astar, 0.3348706268561027, epsilon = 1e-7);
         assert_approx_eq!(f64, result3.bstar, 23.45943416825876, epsilon = 1e-7);
         assert_approx_eq!(f64, result4.hue, 154.90292039856698, epsilon = 1e-7);
-        assert_approx_eq!(f64, result4.j, 79.40954826675019, epsilon = 1e-7);
-        assert_approx_eq!(f64, result4.q, 138.58810463022758, epsilon = 1e-7);
-        assert_approx_eq!(f64, result4.m, 24.01419462632291, epsilon = 1e-7);
-        assert_approx_eq!(f64, result4.s, 41.62660916534058, epsilon = 1e-7);
+        assert_approx_eq!(f64, result4.lightness, 79.40954826675019, epsilon = 1e-7);
+        assert_approx_eq!(f64, result4.brightness, 138.58810463022758, epsilon = 1e-7);
+        assert_approx_eq!(f64, result4.colorfulness, 24.01419462632291, epsilon = 1e-7);
+        assert_approx_eq!(f64, result4.saturation, 41.62660916534058, epsilon = 1e-7);
         assert_approx_eq!(f64, result4.jstar, 86.76592929927428, epsilon = 1e-7);
         assert_approx_eq!(f64, result4.astar, -17.343486416766375, epsilon = 1e-7);
         assert_approx_eq!(f64, result4.bstar, 8.123204738848699, epsilon = 1e-7);
         assert_approx_eq!(f64, result5.hue, 119.29861501791848, epsilon = 1e-7);
-        assert_approx_eq!(f64, result5.j, 76.65379834326399, epsilon = 1e-7);
-        assert_approx_eq!(f64, result5.q, 136.16216008227642, epsilon = 1e-7);
-        assert_approx_eq!(f64, result5.m, 18.68775872501647, epsilon = 1e-7);
-        assert_approx_eq!(f64, result5.s, 37.04677374071979, epsilon = 1e-7);
+        assert_approx_eq!(f64, result5.lightness, 76.65379834326399, epsilon = 1e-7);
+        assert_approx_eq!(f64, result5.brightness, 136.16216008227642, epsilon = 1e-7);
+        assert_approx_eq!(f64, result5.colorfulness, 18.68775872501647, epsilon = 1e-7);
+        assert_approx_eq!(f64, result5.saturation, 37.04677374071979, epsilon = 1e-7);
         assert_approx_eq!(f64, result5.jstar, 84.80635340083987, epsilon = 1e-7);
         assert_approx_eq!(f64, result5.astar, -7.617941092812117, epsilon = 1e-7);
         assert_approx_eq!(f64, result5.bstar, 13.575780288737059, epsilon = 1e-7);
         assert_approx_eq!(f64, result6.hue, 327.9022451708669, epsilon = 1e-7);
-        assert_approx_eq!(f64, result6.j, 25.207401197509327, epsilon = 1e-7);
-        assert_approx_eq!(f64, result6.q, 78.0824855218106, epsilon = 1e-7);
-        assert_approx_eq!(f64, result6.m, 53.16273184281286, epsilon = 1e-7);
-        assert_approx_eq!(f64, result6.s, 82.51384599304502, epsilon = 1e-7);
+        assert_approx_eq!(f64, result6.lightness, 25.207401197509327, epsilon = 1e-7);
+        assert_approx_eq!(f64, result6.brightness, 78.0824855218106, epsilon = 1e-7);
+        assert_approx_eq!(f64, result6.colorfulness, 53.16273184281286, epsilon = 1e-7);
+        assert_approx_eq!(f64, result6.saturation, 82.51384599304502, epsilon = 1e-7);
         assert_approx_eq!(f64, result6.jstar, 36.425276182524954, epsilon = 1e-7);
         assert_approx_eq!(f64, result6.astar, 29.499403055932383, epsilon = 1e-7);
         assert_approx_eq!(f64, result6.bstar, -18.50332986780255, epsilon = 1e-7);
         assert_approx_eq!(f64, result7.hue, 355.279570048603, epsilon = 1e-7);
-        assert_approx_eq!(f64, result7.j, 33.2614419664756, epsilon = 1e-7);
-        assert_approx_eq!(f64, result7.q, 89.69332605634818, epsilon = 1e-7);
-        assert_approx_eq!(f64, result7.m, 64.28874467824023, epsilon = 1e-7);
-        assert_approx_eq!(f64, result7.s, 84.6617825549819, epsilon = 1e-7);
+        assert_approx_eq!(f64, result7.lightness, 33.2614419664756, epsilon = 1e-7);
+        assert_approx_eq!(f64, result7.brightness, 89.69332605634818, epsilon = 1e-7);
+        assert_approx_eq!(f64, result7.colorfulness, 64.28874467824023, epsilon = 1e-7);
+        assert_approx_eq!(f64, result7.saturation, 84.6617825549819, epsilon = 1e-7);
         assert_approx_eq!(f64, result7.jstar, 45.865567063105644, epsilon = 1e-7);
         assert_approx_eq!(f64, result7.astar, 39.449488663086846, epsilon = 1e-7);
         assert_approx_eq!(f64, result7.bstar, -3.257500355999049, epsilon = 1e-7);
         assert_approx_eq!(f64, result8.hue, 261.1968416808902, epsilon = 1e-7);
-        assert_approx_eq!(f64, result8.j, 40.7183615122085, epsilon = 1e-7);
-        assert_approx_eq!(f64, result8.q, 99.23953929867855, epsilon = 1e-7);
-        assert_approx_eq!(f64, result8.m, 49.66881860103603, epsilon = 1e-7);
-        assert_approx_eq!(f64, result8.s, 70.74561810312906, epsilon = 1e-7);
+        assert_approx_eq!(f64, result8.lightness, 40.7183615122085, epsilon = 1e-7);
+        assert_approx_eq!(f64, result8.brightness, 99.23953929867855, epsilon = 1e-7);
+        assert_approx_eq!(f64, result8.colorfulness, 49.66881860103603, epsilon = 1e-7);
+        assert_approx_eq!(f64, result8.saturation, 70.74561810312906, epsilon = 1e-7);
         assert_approx_eq!(f64, result8.jstar, 53.86745346363419, epsilon = 1e-7);
         assert_approx_eq!(f64, result8.astar, -5.083026592209834, epsilon = 1e-7);
         assert_approx_eq!(f64, result8.bstar, -32.82238686945024, epsilon = 1e-7);
         assert_approx_eq!(f64, result9.hue, 119.84832142132542, epsilon = 1e-7);
-        assert_approx_eq!(f64, result9.j, 56.17844931089786, epsilon = 1e-7);
-        assert_approx_eq!(f64, result9.q, 116.56669043770763, epsilon = 1e-7);
-        assert_approx_eq!(f64, result9.m, 17.906925043592874, epsilon = 1e-7);
-        assert_approx_eq!(f64, result9.s, 39.19433269789186, epsilon = 1e-7);
+        assert_approx_eq!(f64, result9.lightness, 56.17844931089786, epsilon = 1e-7);
+        assert_approx_eq!(f64, result9.brightness, 116.56669043770763, epsilon = 1e-7);
+        assert_approx_eq!(f64, result9.colorfulness, 17.906925043592874, epsilon = 1e-7);
+        assert_approx_eq!(f64, result9.saturation, 39.19433269789186, epsilon = 1e-7);
         assert_approx_eq!(f64, result9.jstar, 68.547225856322, epsilon = 1e-7);
         assert_approx_eq!(f64, result9.astar, -7.47360894560527, epsilon = 1e-7);
         assert_approx_eq!(f64, result9.bstar, 13.024174399350978, epsilon = 1e-7);

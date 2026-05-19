@@ -1,8 +1,7 @@
 #![allow(clippy::too_many_arguments)]
 
-#[cfg(not(feature = "std"))] use alloc::{vec, vec::Vec};
+use alloc::{vec, vec::Vec};
 use core::fmt;
-#[cfg(feature = "std")] use std::{vec, vec::Vec};
 
 use super::{Quantizer, QuantizerMap, QuantizerResult};
 #[cfg(all(not(feature = "std"), feature = "libm"))]
@@ -472,8 +471,7 @@ impl fmt::Display for Cube {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(not(feature = "std"))] use alloc::vec::Vec;
-    #[cfg(feature = "std")] use std::vec::Vec;
+    use alloc::vec::Vec;
 
     use super::{Quantizer, QuantizerWu};
     use crate::color::Rgb;
@@ -481,8 +479,6 @@ mod tests {
     const RED: Rgb = Rgb::from_u32(0xFF0000);
     const GREEN: Rgb = Rgb::from_u32(0x00FF00);
     const BLUE: Rgb = Rgb::from_u32(0x0000FF);
-    // const WHITE: Rgb = Rgb::from_u32(0xffffffff);
-    // const RANDOM: Rgb = Rgb::from_u32(0xff426088);
     const MAX_COLORS: usize = 256;
 
     #[test]

@@ -35,9 +35,7 @@ impl SchemeContent {
                 source_color_hct.get_hue(),
                 (source_color_hct.get_chroma() - 32.0).max(source_color_hct.get_chroma() * 0.5),
             ),
-            Palette::Tertiary => TonalPalette::from_hct(fix_if_disliked(
-                *TemperatureCache::new(*source_color_hct).analogous(Some(3), Some(6)).last().unwrap(),
-            )),
+            Palette::Tertiary => TonalPalette::from_hct(fix_if_disliked(TemperatureCache::new(*source_color_hct).analogous_generic::<3, 6>()[2])),
             Palette::Error => TonalPalette::of(25.0, 84.0),
             Palette::Neutral => TonalPalette::of(source_color_hct.get_hue(), source_color_hct.get_chroma() / 8.0),
             Palette::NeutralVariant => TonalPalette::of(source_color_hct.get_hue(), source_color_hct.get_chroma() / 8.0 + 4.0),

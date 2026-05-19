@@ -29,14 +29,14 @@ fn ratio_of_ys(y1: f64, y2: f64) -> f64 {
 /// - `ratio`: Contrast ratio of return value and `tone`. Range is 1 to 21,
 ///   invalid values have undefined behavior.
 pub fn lighter(tone: f64, ratio: f64) -> Option<f64> {
-    if !(0.0..=100.0).contains(&tone)  {
+    if !(0.0..=100.0).contains(&tone) {
         return None;
     }
 
     let dark_y = y_from_lstar(tone);
     let light_y = ratio.mul_add(dark_y + 5.0, -5.0);
 
-    if !(0.0..=100.0).contains(&light_y)  {
+    if !(0.0..=100.0).contains(&light_y) {
         return None;
     }
 
@@ -51,11 +51,7 @@ pub fn lighter(tone: f64, ratio: f64) -> Option<f64> {
     // the correct ratio by darkening slightly.
     let return_value = lstar_from_y(light_y) + 0.4;
 
-    if (0.0..=100.0).contains(&return_value)  {
-        Some(return_value)
-    } else {
-        None
-    }
+    if (0.0..=100.0).contains(&return_value) { Some(return_value) } else { None }
 }
 
 /// Returns a tone <= `tone` that ensures `ratio`. Return value is between 0 and
@@ -73,7 +69,7 @@ pub fn darker(tone: f64, ratio: f64) -> Option<f64> {
     let light_y = y_from_lstar(tone);
     let dark_y = ((light_y + 5.0) / ratio) - 5.0;
 
-    if !(0.0..=100.0).contains(&dark_y)  {
+    if !(0.0..=100.0).contains(&dark_y) {
         return None;
     }
 
@@ -89,11 +85,7 @@ pub fn darker(tone: f64, ratio: f64) -> Option<f64> {
     // the correct ratio by darkening slightly.
     let return_value = lstar_from_y(dark_y) - 0.4;
 
-    if (0.0..=100.0).contains(&return_value)  {
-        Some(return_value)
-    } else {
-        None
-    }
+    if (0.0..=100.0).contains(&return_value) { Some(return_value) } else { None }
 }
 
 /// Returns a tone >= `tone` that ensures `ratio`. Return value is between 0 and

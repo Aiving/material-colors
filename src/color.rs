@@ -1,7 +1,4 @@
-#[cfg(not(feature = "std"))]
-use alloc::{format, string::String};
 use core::{fmt, str::FromStr};
-#[cfg(feature = "std")] use std::{format, string::String};
 
 #[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
@@ -23,7 +20,7 @@ pub const WHITE_POINT_D65: [f64; 3] = [95.047, 100.0, 108.883];
 ///
 /// ## Examples:
 /// ```rust
-/// use std::str::FromStr;
+/// use core::str::FromStr;
 ///
 /// use material_colors::color::Rgb;
 ///
@@ -235,18 +232,29 @@ impl Rgb {
         116.0f64.mul_add(lab_f(Xyz::from(*self).y / 100.0), -16.0)
     }
 
-    fn hex(number: u8) -> String {
-        let string = format!("{number:x}");
-
-        if string.len() == 1 { String::from("0") + &string } else { string }
+    #[must_use]
+    pub const fn as_u32(&self) -> u32 {
+        ((self.red as u32) << 16) | ((self.green as u32) << 8) | (self.blue as u32)
     }
 
-    pub fn to_hex(&self) -> String {
-        format!("{}{}{}", Self::hex(self.red), Self::hex(self.green), Self::hex(self.blue))
+    #[must_use]
+    pub const fn as_argb_u32(&self) -> u32 {
+        0xFF000000 | ((self.red as u32) << 16) | ((self.green as u32) << 8) | (self.blue as u32)
     }
 
-    pub fn to_hex_with_pound(&self) -> String {
-        format!("#{}{}{}", Self::hex(self.red), Self::hex(self.green), Self::hex(self.blue))
+    #[must_use]
+    pub const fn as_hex(&self) -> HexFmt<'_> {
+        HexFmt { color: self }
+    }
+}
+
+pub struct HexFmt<'a> {
+    color: &'a Rgb,
+}
+
+impl fmt::Display for HexFmt<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:02x}{:02x}{:02x}", self.color.red, self.color.green, self.color.blue)
     }
 }
 
@@ -333,31 +341,28 @@ const fn lab_invf(ft: f64) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(not(feature = "std"))] use alloc::vec::Vec;
-    #[cfg(feature = "std")] use std::vec::Vec;
-
     use float_cmp::assert_approx_eq;
 
     use super::Lab;
     use crate::color::{Rgb, Xyz, delinearized, linearized, lstar_from_y, y_from_lstar};
 
-    fn range(start: f64, stop: f64, case_count: i64) -> Vec<f64> {
-        let step_size = (stop - start) / (case_count as f64 - 1.0);
+    fn range<const N: usize>(start: f64, stop: f64) -> [f64; N] {
+        let step_size = (stop - start) / (N as f64 - 1.0);
 
-        (0..case_count).map(|index| step_size.mul_add(index as f64, start)).collect()
+        core::array::from_fn(|index| step_size.mul_add(index as f64, start))
     }
 
-    fn rgb_range() -> Vec<u8> {
-        range(0.0, 255.0, 8).into_iter().map(|element| element.round() as u8).collect()
+    fn rgb_range() -> [u8; 8] {
+        range::<8>(0.0, 255.0).map(|element| element.round() as u8)
     }
 
-    fn full_rgb_range() -> Vec<u8> {
-        (0..=255).collect()
+    fn full_rgb_range() -> [u8; 256] {
+        core::array::from_fn(|i| i as u8)
     }
 
     #[test]
     fn test_range_integrity() {
-        let range = range(3.0, 9999.0, 1234);
+        let range = range::<1234>(3.0, 9999.0);
 
         for (i, value) in range.into_iter().enumerate().take(1234) {
             assert_approx_eq!(f64, value, 8.1070559611f64.mul_add(i as f64, 3.0), epsilon = 1e-5);
@@ -366,7 +371,7 @@ mod tests {
 
     #[test]
     fn test_y_to_lstar_to_y() {
-        for y in range(0.0, 100.0, 1001) {
+        for y in range::<1001>(0.0, 100.0) {
             let result = y_from_lstar(lstar_from_y(y));
 
             assert_approx_eq!(f64, result, y, epsilon = 1e-5);
@@ -375,7 +380,7 @@ mod tests {
 
     #[test]
     fn test_lstar_to_y_to_lstar() {
-        for lstar in range(0.0, 100.0, 1001) {
+        for lstar in range::<1001>(0.0, 100.0) {
             let result = lstar_from_y(y_from_lstar(lstar));
 
             assert_approx_eq!(f64, result, lstar, epsilon = 1e-5);
@@ -519,7 +524,7 @@ mod tests {
 
     #[test]
     fn test_lstar_to_rgb_to_ycommutes() {
-        for lstar in range(0.0, 100.0, 1001) {
+        for lstar in range::<1001>(0.0, 100.0) {
             let rgb = Rgb::from_lstar(lstar);
             let y = Xyz::from(rgb).y;
             let y2 = y_from_lstar(lstar);

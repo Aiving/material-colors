@@ -462,11 +462,11 @@ impl HctSolver {
         [f64::midpoint(a[0], b[0]), f64::midpoint(a[1], b[1]), f64::midpoint(a[2], b[2])]
     }
 
-    const fn critical_plane_below(x: f64) -> i16 {
+    fn critical_plane_below(x: f64) -> i16 {
         (x - 0.5).floor() as i16
     }
 
-    const fn critical_plane_above(x: f64) -> i16 {
+    fn critical_plane_above(x: f64) -> i16 {
         (x - 0.5).ceil() as i16
     }
 

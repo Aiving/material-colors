@@ -1,7 +1,3 @@
-#[cfg(not(feature = "std"))]
-use alloc::{string::String, vec::Vec};
-#[cfg(feature = "std")] use std::{string::String, vec::Vec};
-
 #[allow(deprecated)]
 use crate::{
     blend::harmonize,
@@ -16,7 +12,6 @@ use crate::{
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CustomColor {
     pub value: Rgb,
-    pub name: String,
     pub blend: bool,
 }
 
@@ -36,15 +31,15 @@ pub struct ColorGroup {
 pub struct CustomColorGroup {
     pub color: CustomColor,
     pub value: Rgb,
-    pub light: ColorGroup,
     pub dark: ColorGroup,
+    pub light: ColorGroup,
 }
 
 impl CustomColorGroup {
     /// Generate custom color group from source and target color
     ///
     /// @link <https://m3.material.io/styles/color/the-color-system/color-roles>
-    fn new(source: Rgb, color: CustomColor) -> Self {
+    pub fn new(source: Rgb, color: CustomColor) -> Self {
         let mut value = color.value;
 
         if color.blend {
@@ -93,7 +88,9 @@ pub struct Palettes {
     pub error: TonalPalette,
 }
 
-pub struct ThemeBuilder {
+pub struct ThemeBuilder
+// <const C: usize>
+{
     source: Rgb,
     variant: Variant,
     color_match: bool,
@@ -103,7 +100,6 @@ pub struct ThemeBuilder {
     error: Option<Rgb>,
     neutral: Option<Rgb>,
     neutral_variant: Option<Rgb>,
-    custom_colors: Vec<CustomColor>,
 }
 
 impl ThemeBuilder {
@@ -120,7 +116,6 @@ impl ThemeBuilder {
             error: None,
             neutral: None,
             neutral_variant: None,
-            custom_colors: Vec::new(),
         }
     }
 
@@ -177,16 +172,6 @@ impl ThemeBuilder {
     #[must_use]
     pub const fn neutral_variant(mut self, color: Rgb) -> Self {
         self.neutral_variant = Some(color);
-
-        self
-    }
-
-    /// Sets the custom colors, used as complementary tones.
-    ///
-    /// Custom colors are also known as extended colors.
-    #[must_use]
-    pub fn custom_colors(mut self, custom_colors: Vec<CustomColor>) -> Self {
-        self.custom_colors = custom_colors;
 
         self
     }
@@ -267,7 +252,6 @@ impl ThemeBuilder {
                 neutral_variant: palette.neutral_variant,
                 error: palette.error,
             },
-            custom_colors: self.custom_colors.into_iter().map(|color| CustomColorGroup::new(self.source, color)).collect(),
         }
     }
 }
@@ -278,5 +262,4 @@ pub struct Theme {
     pub source: Rgb,
     pub schemes: Schemes,
     pub palettes: Palettes,
-    pub custom_colors: Vec<CustomColorGroup>,
 }

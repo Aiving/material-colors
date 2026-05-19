@@ -1,5 +1,4 @@
-#[cfg(not(feature = "std"))] use alloc::{vec, vec::Vec};
-#[cfg(feature = "std")] use std::{vec, vec::Vec};
+use alloc::{vec, vec::Vec};
 
 #[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
@@ -52,7 +51,7 @@ impl Score {
     ///   Google Blue. The default number of colors returned is 4, simply
     ///   because thats the # of colors display in Android 12's wallpaper
     ///   picker.
-    pub fn score(colors_to_population: &IndexMap<Rgb, u32>, desired: Option<i32>, fallback_color_rgb: Option<Rgb>, filter: Option<bool>) -> Vec<Rgb> {
+    pub fn score(colors_to_population: &IndexMap<Rgb, u32>, desired: Option<usize>, fallback_color_rgb: Option<Rgb>, filter: Option<bool>) -> Vec<Rgb> {
         let desired = desired.unwrap_or(4);
         let fallback_color_rgb = fallback_color_rgb.unwrap_or(Rgb::new(66, 133, 244));
         let filter = filter.unwrap_or(true);
@@ -136,12 +135,12 @@ impl Score {
                     chosen_colors.push(hct);
                 }
 
-                if chosen_colors.len() >= desired as usize {
+                if chosen_colors.len() >= desired {
                     break;
                 }
             }
 
-            if chosen_colors.len() >= desired as usize {
+            if chosen_colors.len() >= desired {
                 break;
             }
         }
@@ -304,23 +303,6 @@ mod tests {
     }
 
     #[test]
-    fn test_generated_scenario_six() {
-        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
-            (Rgb::from_u32(0x18EA8F), 93),
-            (Rgb::from_u32(0x327593), 18),
-            (Rgb::from_u32(0x066A18), 74),
-            (Rgb::from_u32(0xFA8A23), 62),
-            (Rgb::from_u32(0x04CA1F), 65),
-        ]);
-
-        let ranked = Score::score(&rgb_to_population, Some(2), Some(Rgb::from_u32(0x4C377A)), Some(false));
-
-        assert_eq!(ranked.len(), 2);
-        assert_eq!(ranked[0], Rgb::from_u32(0x18EA8F));
-        assert_eq!(ranked[1], Rgb::from_u32(0xFA8A23));
-    }
-
-    #[test]
     fn test_generated_scenario_seven() {
         let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
             (Rgb::from_u32(0x2E05ED), 23),
@@ -335,6 +317,23 @@ mod tests {
         assert_eq!(ranked.len(), 2);
         assert_eq!(ranked[0], Rgb::from_u32(0x2E05ED));
         assert_eq!(ranked[1], Rgb::from_u32(0x9AB220));
+    }
+
+    #[test]
+    fn test_generated_scenario_six() {
+        let rgb_to_population: IndexMap<Rgb, u32> = IndexMap::from_iter([
+            (Rgb::from_u32(0x18EA8F), 93),
+            (Rgb::from_u32(0x327593), 18),
+            (Rgb::from_u32(0x066A18), 74),
+            (Rgb::from_u32(0xFA8A23), 62),
+            (Rgb::from_u32(0x04CA1F), 65),
+        ]);
+
+        let ranked = Score::score(&rgb_to_population, Some(2), Some(Rgb::from_u32(0x4C377A)), Some(false));
+
+        assert_eq!(ranked.len(), 2);
+        assert_eq!(ranked[0], Rgb::from_u32(0x18EA8F));
+        assert_eq!(ranked[1], Rgb::from_u32(0xFA8A23));
     }
 
     #[test]

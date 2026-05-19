@@ -1,9 +1,7 @@
-#![allow(clippy::too_many_arguments, deprecated)]
-#[cfg(not(feature = "std"))] use alloc::string::String;
+#![allow(clippy::too_many_arguments)]
 use core::{array::IntoIter, fmt};
-#[cfg(feature = "std")] use std::string::String;
 
-use crate::{Map, color::Rgb, dynamic_color::DynamicScheme, palette::CorePalette};
+use crate::{color::Rgb, dynamic_color::DynamicScheme};
 
 pub mod variant;
 
@@ -230,198 +228,62 @@ impl From<DynamicScheme> for Scheme {
 }
 
 impl IntoIterator for Scheme {
-    type IntoIter = IntoIter<(String, Rgb), 49>;
-    type Item = (String, Rgb);
+    type IntoIter = IntoIter<(&'static str, Rgb), 49>;
+    type Item = (&'static str, Rgb);
 
     fn into_iter(self) -> Self::IntoIter {
         [
-            ("primary".into(), self.primary),
-            ("on_primary".into(), self.on_primary),
-            ("primary_container".into(), self.primary_container),
-            ("on_primary_container".into(), self.on_primary_container),
-            ("inverse_primary".into(), self.inverse_primary),
-            ("primary_fixed".into(), self.primary_fixed),
-            ("primary_fixed_dim".into(), self.primary_fixed_dim),
-            ("on_primary_fixed".into(), self.on_primary_fixed),
-            ("on_primary_fixed_variant".into(), self.on_primary_fixed_variant),
-            ("secondary".into(), self.secondary),
-            ("on_secondary".into(), self.on_secondary),
-            ("secondary_container".into(), self.secondary_container),
-            ("on_secondary_container".into(), self.on_secondary_container),
-            ("secondary_fixed".into(), self.secondary_fixed),
-            ("secondary_fixed_dim".into(), self.secondary_fixed_dim),
-            ("on_secondary_fixed".into(), self.on_secondary_fixed),
-            ("on_secondary_fixed_variant".into(), self.on_secondary_fixed_variant),
-            ("tertiary".into(), self.tertiary),
-            ("on_tertiary".into(), self.on_tertiary),
-            ("tertiary_container".into(), self.tertiary_container),
-            ("on_tertiary_container".into(), self.on_tertiary_container),
-            ("tertiary_fixed".into(), self.tertiary_fixed),
-            ("tertiary_fixed_dim".into(), self.tertiary_fixed_dim),
-            ("on_tertiary_fixed".into(), self.on_tertiary_fixed),
-            ("on_tertiary_fixed_variant".into(), self.on_tertiary_fixed_variant),
-            ("error".into(), self.error),
-            ("on_error".into(), self.on_error),
-            ("error_container".into(), self.error_container),
-            ("on_error_container".into(), self.on_error_container),
-            ("surface_dim".into(), self.surface_dim),
-            ("surface".into(), self.surface),
-            ("surface_tint".into(), self.surface_tint),
-            ("surface_bright".into(), self.surface_bright),
-            ("surface_container_lowest".into(), self.surface_container_lowest),
-            ("surface_container_low".into(), self.surface_container_low),
-            ("surface_container".into(), self.surface_container),
-            ("surface_container_high".into(), self.surface_container_high),
-            ("surface_container_highest".into(), self.surface_container_highest),
-            ("on_surface".into(), self.on_surface),
-            ("on_surface_variant".into(), self.on_surface_variant),
-            ("outline".into(), self.outline),
-            ("outline_variant".into(), self.outline_variant),
-            ("inverse_surface".into(), self.inverse_surface),
-            ("inverse_on_surface".into(), self.inverse_on_surface),
-            ("surface_variant".into(), self.surface_variant),
-            ("background".into(), self.background),
-            ("on_background".into(), self.on_background),
-            ("shadow".into(), self.shadow),
-            ("scrim".into(), self.scrim),
+            ("primary", self.primary),
+            ("on_primary", self.on_primary),
+            ("primary_container", self.primary_container),
+            ("on_primary_container", self.on_primary_container),
+            ("inverse_primary", self.inverse_primary),
+            ("primary_fixed", self.primary_fixed),
+            ("primary_fixed_dim", self.primary_fixed_dim),
+            ("on_primary_fixed", self.on_primary_fixed),
+            ("on_primary_fixed_variant", self.on_primary_fixed_variant),
+            ("secondary", self.secondary),
+            ("on_secondary", self.on_secondary),
+            ("secondary_container", self.secondary_container),
+            ("on_secondary_container", self.on_secondary_container),
+            ("secondary_fixed", self.secondary_fixed),
+            ("secondary_fixed_dim", self.secondary_fixed_dim),
+            ("on_secondary_fixed", self.on_secondary_fixed),
+            ("on_secondary_fixed_variant", self.on_secondary_fixed_variant),
+            ("tertiary", self.tertiary),
+            ("on_tertiary", self.on_tertiary),
+            ("tertiary_container", self.tertiary_container),
+            ("on_tertiary_container", self.on_tertiary_container),
+            ("tertiary_fixed", self.tertiary_fixed),
+            ("tertiary_fixed_dim", self.tertiary_fixed_dim),
+            ("on_tertiary_fixed", self.on_tertiary_fixed),
+            ("on_tertiary_fixed_variant", self.on_tertiary_fixed_variant),
+            ("error", self.error),
+            ("on_error", self.on_error),
+            ("error_container", self.error_container),
+            ("on_error_container", self.on_error_container),
+            ("surface_dim", self.surface_dim),
+            ("surface", self.surface),
+            ("surface_tint", self.surface_tint),
+            ("surface_bright", self.surface_bright),
+            ("surface_container_lowest", self.surface_container_lowest),
+            ("surface_container_low", self.surface_container_low),
+            ("surface_container", self.surface_container),
+            ("surface_container_high", self.surface_container_high),
+            ("surface_container_highest", self.surface_container_highest),
+            ("on_surface", self.on_surface),
+            ("on_surface_variant", self.on_surface_variant),
+            ("outline", self.outline),
+            ("outline_variant", self.outline_variant),
+            ("inverse_surface", self.inverse_surface),
+            ("inverse_on_surface", self.inverse_on_surface),
+            ("surface_variant", self.surface_variant),
+            ("background", self.background),
+            ("on_background", self.on_background),
+            ("shadow", self.shadow),
+            ("scrim", self.scrim),
         ]
         .into_iter()
-    }
-}
-
-impl From<Scheme> for Map<String, String> {
-    fn from(value: Scheme) -> Self {
-        let map: Map<String, Rgb> = Map::from_iter(value);
-
-        map.into_iter().map(|(key, value)| (key, value.to_hex_with_pound())).collect()
-    }
-}
-
-/// This is similar to `MaterialLightColorSchemeFromPalette` and
-/// `MaterialDarkColorSchemeFromPalette` in the C++ implementation of Material
-/// Color Utilities.
-///
-/// We use this to test scheme generation from a core palette.
-#[derive(PartialEq, Eq, Debug)]
-pub struct SchemeFromPalette {
-    pub primary: Rgb,
-    pub on_primary: Rgb,
-    pub primary_container: Rgb,
-    pub on_primary_container: Rgb,
-    pub secondary: Rgb,
-    pub on_secondary: Rgb,
-    pub secondary_container: Rgb,
-    pub on_secondary_container: Rgb,
-    pub tertiary: Rgb,
-    pub on_tertiary: Rgb,
-    pub tertiary_container: Rgb,
-    pub on_tertiary_container: Rgb,
-    pub error: Rgb,
-    pub on_error: Rgb,
-    pub error_container: Rgb,
-    pub on_error_container: Rgb,
-    pub surface: Rgb,
-    pub on_surface: Rgb,
-    pub surface_variant: Rgb,
-    pub on_surface_variant: Rgb,
-    pub outline: Rgb,
-    pub outline_variant: Rgb,
-    pub background: Rgb,
-    pub on_background: Rgb,
-    pub shadow: Rgb,
-    pub scrim: Rgb,
-    pub inverse_surface: Rgb,
-    pub inverse_on_surface: Rgb,
-    pub inverse_primary: Rgb,
-}
-
-impl SchemeFromPalette {
-    /// Generates a light color scheme from a core palette.
-    /// This has less fields than [`Scheme`]
-    pub fn light_from_palette(palette: &CorePalette) -> Self {
-        Self {
-            primary: palette.primary.tone(40),
-            on_primary: palette.primary.tone(100),
-            primary_container: palette.primary.tone(90),
-            on_primary_container: palette.primary.tone(10),
-            secondary: palette.secondary.tone(40),
-            on_secondary: palette.secondary.tone(100),
-            secondary_container: palette.secondary.tone(90),
-            on_secondary_container: palette.secondary.tone(10),
-            tertiary: palette.tertiary.tone(40),
-            on_tertiary: palette.tertiary.tone(100),
-            tertiary_container: palette.tertiary.tone(90),
-            on_tertiary_container: palette.tertiary.tone(10),
-            error: palette.error.tone(40),
-            on_error: palette.error.tone(100),
-            error_container: palette.error.tone(90),
-            on_error_container: palette.error.tone(10),
-            background: palette.neutral.tone(99),
-            on_background: palette.neutral.tone(10),
-            surface: palette.neutral.tone(99),
-            on_surface: palette.neutral.tone(10),
-            surface_variant: palette.neutral_variant.tone(90),
-            on_surface_variant: palette.neutral_variant.tone(30),
-            outline: palette.neutral_variant.tone(50),
-            outline_variant: palette.neutral_variant.tone(80),
-            shadow: palette.neutral.tone(0),
-            scrim: palette.neutral.tone(0),
-            inverse_surface: palette.neutral.tone(20),
-            inverse_on_surface: palette.neutral.tone(95),
-            inverse_primary: palette.primary.tone(80),
-        }
-    }
-
-    /// Generates a dark color scheme from a core palette.
-    /// This has less fields than [`Scheme`]
-    pub fn dark_from_palette(palette: &CorePalette) -> Self {
-        Self {
-            primary: palette.primary.tone(80),
-            on_primary: palette.primary.tone(20),
-            primary_container: palette.primary.tone(30),
-            on_primary_container: palette.primary.tone(90),
-            secondary: palette.secondary.tone(80),
-            on_secondary: palette.secondary.tone(20),
-            secondary_container: palette.secondary.tone(30),
-            on_secondary_container: palette.secondary.tone(90),
-            tertiary: palette.tertiary.tone(80),
-            on_tertiary: palette.tertiary.tone(20),
-            tertiary_container: palette.tertiary.tone(30),
-            on_tertiary_container: palette.tertiary.tone(90),
-            error: palette.error.tone(80),
-            on_error: palette.error.tone(20),
-            error_container: palette.error.tone(30),
-            on_error_container: palette.error.tone(80),
-            background: palette.neutral.tone(10),
-            on_background: palette.neutral.tone(90),
-            surface: palette.neutral.tone(10),
-            on_surface: palette.neutral.tone(90),
-            surface_variant: palette.neutral_variant.tone(30),
-            on_surface_variant: palette.neutral_variant.tone(80),
-            outline: palette.neutral_variant.tone(60),
-            outline_variant: palette.neutral_variant.tone(30),
-            shadow: palette.neutral.tone(0),
-            scrim: palette.neutral.tone(0),
-            inverse_surface: palette.neutral.tone(90),
-            inverse_on_surface: palette.neutral.tone(20),
-            inverse_primary: palette.primary.tone(40),
-        }
-    }
-
-    pub fn light(rgb: Rgb) -> Self {
-        Self::light_from_palette(&CorePalette::of(rgb))
-    }
-
-    pub fn light_content(rgb: Rgb) -> Self {
-        Self::light_from_palette(&CorePalette::content_of(rgb))
-    }
-
-    pub fn dark(rgb: Rgb) -> Self {
-        Self::dark_from_palette(&CorePalette::of(rgb))
-    }
-
-    pub fn dark_content(rgb: Rgb) -> Self {
-        Self::dark_from_palette(&CorePalette::content_of(rgb))
     }
 }
 
@@ -429,7 +291,137 @@ impl SchemeFromPalette {
 mod tests {
     use float_cmp::assert_approx_eq;
 
-    use crate::{color::Rgb, scheme::SchemeFromPalette};
+    #[allow(deprecated)]
+    use crate::{color::Rgb, palette::CorePalette};
+
+    /// This is similar to `MaterialLightColorSchemeFromPalette` and
+    /// `MaterialDarkColorSchemeFromPalette` in the C++ implementation of
+    /// Material Color Utilities.
+    ///
+    /// We use this to test scheme generation from a core palette.
+    #[derive(PartialEq, Eq, Debug)]
+    struct SchemeFromPalette {
+        primary: Rgb,
+        on_primary: Rgb,
+        primary_container: Rgb,
+        on_primary_container: Rgb,
+        secondary: Rgb,
+        on_secondary: Rgb,
+        secondary_container: Rgb,
+        on_secondary_container: Rgb,
+        tertiary: Rgb,
+        on_tertiary: Rgb,
+        tertiary_container: Rgb,
+        on_tertiary_container: Rgb,
+        error: Rgb,
+        on_error: Rgb,
+        error_container: Rgb,
+        on_error_container: Rgb,
+        surface: Rgb,
+        on_surface: Rgb,
+        surface_variant: Rgb,
+        on_surface_variant: Rgb,
+        outline: Rgb,
+        outline_variant: Rgb,
+        background: Rgb,
+        on_background: Rgb,
+        shadow: Rgb,
+        scrim: Rgb,
+        inverse_surface: Rgb,
+        inverse_on_surface: Rgb,
+        inverse_primary: Rgb,
+    }
+
+    #[allow(deprecated)]
+    impl SchemeFromPalette {
+        /// Generates a light color scheme from a core palette.
+        /// This has less fields than [`Scheme`]
+        fn light_from_palette(palette: &CorePalette) -> Self {
+            Self {
+                primary: palette.primary.tone(40),
+                on_primary: palette.primary.tone(100),
+                primary_container: palette.primary.tone(90),
+                on_primary_container: palette.primary.tone(10),
+                secondary: palette.secondary.tone(40),
+                on_secondary: palette.secondary.tone(100),
+                secondary_container: palette.secondary.tone(90),
+                on_secondary_container: palette.secondary.tone(10),
+                tertiary: palette.tertiary.tone(40),
+                on_tertiary: palette.tertiary.tone(100),
+                tertiary_container: palette.tertiary.tone(90),
+                on_tertiary_container: palette.tertiary.tone(10),
+                error: palette.error.tone(40),
+                on_error: palette.error.tone(100),
+                error_container: palette.error.tone(90),
+                on_error_container: palette.error.tone(10),
+                background: palette.neutral.tone(99),
+                on_background: palette.neutral.tone(10),
+                surface: palette.neutral.tone(99),
+                on_surface: palette.neutral.tone(10),
+                surface_variant: palette.neutral_variant.tone(90),
+                on_surface_variant: palette.neutral_variant.tone(30),
+                outline: palette.neutral_variant.tone(50),
+                outline_variant: palette.neutral_variant.tone(80),
+                shadow: palette.neutral.tone(0),
+                scrim: palette.neutral.tone(0),
+                inverse_surface: palette.neutral.tone(20),
+                inverse_on_surface: palette.neutral.tone(95),
+                inverse_primary: palette.primary.tone(80),
+            }
+        }
+
+        /// Generates a dark color scheme from a core palette.
+        /// This has less fields than [`Scheme`]
+        fn dark_from_palette(palette: &CorePalette) -> Self {
+            Self {
+                primary: palette.primary.tone(80),
+                on_primary: palette.primary.tone(20),
+                primary_container: palette.primary.tone(30),
+                on_primary_container: palette.primary.tone(90),
+                secondary: palette.secondary.tone(80),
+                on_secondary: palette.secondary.tone(20),
+                secondary_container: palette.secondary.tone(30),
+                on_secondary_container: palette.secondary.tone(90),
+                tertiary: palette.tertiary.tone(80),
+                on_tertiary: palette.tertiary.tone(20),
+                tertiary_container: palette.tertiary.tone(30),
+                on_tertiary_container: palette.tertiary.tone(90),
+                error: palette.error.tone(80),
+                on_error: palette.error.tone(20),
+                error_container: palette.error.tone(30),
+                on_error_container: palette.error.tone(80),
+                background: palette.neutral.tone(10),
+                on_background: palette.neutral.tone(90),
+                surface: palette.neutral.tone(10),
+                on_surface: palette.neutral.tone(90),
+                surface_variant: palette.neutral_variant.tone(30),
+                on_surface_variant: palette.neutral_variant.tone(80),
+                outline: palette.neutral_variant.tone(60),
+                outline_variant: palette.neutral_variant.tone(30),
+                shadow: palette.neutral.tone(0),
+                scrim: palette.neutral.tone(0),
+                inverse_surface: palette.neutral.tone(90),
+                inverse_on_surface: palette.neutral.tone(20),
+                inverse_primary: palette.primary.tone(40),
+            }
+        }
+
+        fn light(rgb: Rgb) -> Self {
+            Self::light_from_palette(&CorePalette::of(rgb))
+        }
+
+        fn light_content(rgb: Rgb) -> Self {
+            Self::light_from_palette(&CorePalette::content_of(rgb))
+        }
+
+        fn dark(rgb: Rgb) -> Self {
+            Self::dark_from_palette(&CorePalette::of(rgb))
+        }
+
+        fn dark_content(rgb: Rgb) -> Self {
+            Self::dark_from_palette(&CorePalette::content_of(rgb))
+        }
+    }
 
     #[test]
     fn test_surface_tones() {
@@ -449,8 +441,8 @@ mod tests {
         let light = SchemeFromPalette::light(c);
         let dark = SchemeFromPalette::dark(c);
 
-        assert_eq!(light.primary.to_hex(), "343dff");
-        assert_eq!(dark.primary.to_hex(), "bec2ff");
+        assert_eq!(light.primary.as_u32(), 0x343DFF);
+        assert_eq!(dark.primary.as_u32(), 0xBEC2FF);
     }
 
     #[test]

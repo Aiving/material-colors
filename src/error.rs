@@ -1,11 +1,10 @@
-use core::fmt;
-#[cfg(feature = "std")] use std::error::Error as Err;
+use core::{error::Error as Err, fmt};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {
     /// Error returned when RGB color parsing with the [`Rgb::from_str`] fails
     ///
-    /// [`Rgb::from_str`]: std::str::FromStr
+    /// [`Rgb::from_str`]: core::str::FromStr
     ParseRGB,
 }
 
@@ -17,7 +16,6 @@ impl fmt::Display for Error {
     }
 }
 
-#[cfg(feature = "std")]
 impl Err for Error {
     fn description(&self) -> &str {
         match self {

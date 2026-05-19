@@ -31,9 +31,12 @@ From image:
 > ⚠️ Before obtaining an array of RGB pixels for the image, **it is recommended** (but not necessary if your image is already small in size or you just don't mind about execution time) to adjust its dimensions to 128x128 by `func:resize` from `struct:Image` provided by `struct:ImageReader`. The reason is described [**here**](https://github.com/material-foundation/material-color-utilities/blob/main/extract_colors.md).
 
 ```rust
+use std::io::Cursor;
+
+use image::{ImageReader, imageops::FilterType};
 use material_colors::{
-    image::{FilterType, ImageReader},
-    theme::ThemeBuilder,
+    color::Rgb, image::extract_color,
+    theme::ThemeBuilder
 };
 
 #[tokio::main(flavor = "current_thread")]
@@ -44,13 +47,30 @@ async fn main() -> Result<(), reqwest::Error> {
         .await?
         .to_vec();
 
-    let mut data = ImageReader::read(image).expect("failed to read image");
+    let data = ImageReader::new(Cursor::new(image))
+        .with_guessed_format()
+        .expect("failed to guess image format")
+        .decode()
+        .expect("failed to decode image")
+        // Lancsoz3 takes a little longer, but provides the best pixels
+        // for color extraction.
+        // 
+        // However, if you don't like the results, you can always try
+        // other FilterType values.
+        .resize(128, 128, FilterType::Lanczos3)
+        .into_rgb8()
+        .into_raw()
+        .chunks_exact(3)
+        .map(|color| {
+            let &[red, green, blue] = color else {
+                unreachable!();
+            };
 
-    // Lancsoz3 takes a little longer, but provides the best pixels for color extraction.
-    // However, if you don't like the results, you can always try other FilterType values.
-    data.resize(128, 128, FilterType::Lanczos3);
+            Rgb::new(red, green, blue)
+        })
+        .collect::<Vec<_>>();
 
-    let theme = ThemeBuilder::with_source(ImageReader::extract_color(&data)).build();
+    let theme = ThemeBuilder::with_source(extract_color(&data)).build();
 
     // Do whatever you want...
 

@@ -1,7 +1,5 @@
 #![allow(clippy::too_many_arguments)]
 
-#[cfg(not(feature = "std"))] use alloc::{vec, vec::Vec};
-
 pub use contrast_curve::ContrastCurve;
 pub use dynamic_scheme::DynamicScheme;
 pub use tone_delta_pair::{ToneDeltaPair, TonePolarity};
@@ -28,8 +26,8 @@ pub mod material_dynamic_colors;
 pub mod tone_delta_pair;
 pub mod variant;
 
-type DynamicSchemeFn<T> = fn(Option<ExtendedColorData>, &DynamicScheme) -> T;
-type DynamicSchemeFnRef<T> = for<'a> fn(Option<ExtendedColorData>, &'a DynamicScheme) -> &'a T;
+type DynamicSchemeFn<T> = fn(&DynamicScheme) -> T;
+type DynamicSchemeFnRef<T> = for<'a> fn(&'a DynamicScheme) -> &'a T;
 
 #[derive(Clone, Copy)]
 pub struct ExtendedColorData {
@@ -59,14 +57,14 @@ pub struct ExtendedColorData {
 /// unnecessary. See the default constructor for more information.
 #[derive(Clone, Copy)]
 pub struct DynamicColor {
-    extended_data: Option<ExtendedColorData>,
+    // extended_data: Option<ExtendedColorData>,
     pub name: &'static str,
     palette_: DynamicSchemeFnRef<TonalPalette>,
     tone_: DynamicSchemeFn<f64>,
     is_background: bool,
     chroma_multiplier_: DynamicSchemeFn<Option<f64>>,
-    background_: DynamicSchemeFn<Option<&'static Self>>,
-    second_background_: DynamicSchemeFn<Option<&'static Self>>,
+    background_: DynamicSchemeFn<Option<Self>>,
+    second_background_: DynamicSchemeFn<Option<Self>>,
     contrast_curve_: DynamicSchemeFn<Option<ContrastCurve>>,
     tone_delta_pair_: DynamicSchemeFn<Option<ToneDeltaPair>>,
     opacity_: DynamicSchemeFn<Option<f64>>,
@@ -114,66 +112,66 @@ impl DynamicColor {
     /// tone distance.
     pub const fn foreground_color(name: &'static str, palette: DynamicSchemeFnRef<TonalPalette>, tone: DynamicSchemeFn<f64>) -> Self {
         Self {
-            extended_data: None,
+            // extended_data: None,
             name,
             palette_: palette,
             tone_: tone,
             is_background: false,
-            chroma_multiplier_: |_, _| None,
-            background_: |_, _| None,
-            second_background_: |_, _| None,
-            contrast_curve_: |_, _| None,
-            tone_delta_pair_: |_, _| None,
-            opacity_: |_, _| None,
+            chroma_multiplier_: |_| None,
+            background_: |_| None,
+            second_background_: |_| None,
+            contrast_curve_: |_| None,
+            tone_delta_pair_: |_| None,
+            opacity_: |_| None,
         }
     }
 
     pub const fn background_color(name: &'static str, palette: DynamicSchemeFnRef<TonalPalette>, tone: DynamicSchemeFn<f64>) -> Self {
         Self {
-            extended_data: None,
+            // extended_data: None,
             name,
             palette_: palette,
             tone_: tone,
             is_background: true,
-            chroma_multiplier_: |_, _| None,
-            background_: |_, _| None,
-            second_background_: |_, _| None,
-            contrast_curve_: |_, _| None,
-            tone_delta_pair_: |_, _| None,
-            opacity_: |_, _| None,
+            chroma_multiplier_: |_| None,
+            background_: |_| None,
+            second_background_: |_| None,
+            contrast_curve_: |_| None,
+            tone_delta_pair_: |_| None,
+            opacity_: |_| None,
         }
     }
 
     pub fn tone(&self, scheme: &DynamicScheme) -> f64 {
-        (self.tone_)(self.extended_data, scheme)
+        (self.tone_)(scheme)
     }
 
     pub fn palette<'a>(&self, scheme: &'a DynamicScheme) -> &'a TonalPalette {
-        (self.palette_)(self.extended_data, scheme)
+        (self.palette_)(scheme)
     }
 
-    pub fn background(&self, scheme: &DynamicScheme) -> Option<&'static Self> {
-        (self.background_)(self.extended_data, scheme)
+    pub fn background(&self, scheme: &DynamicScheme) -> Option<Self> {
+        (self.background_)(scheme)
     }
 
-    pub fn second_background(&self, scheme: &DynamicScheme) -> Option<&'static Self> {
-        (self.second_background_)(self.extended_data, scheme)
+    pub fn second_background(&self, scheme: &DynamicScheme) -> Option<Self> {
+        (self.second_background_)(scheme)
     }
 
     pub fn contrast_curve(&self, scheme: &DynamicScheme) -> Option<ContrastCurve> {
-        (self.contrast_curve_)(self.extended_data, scheme)
+        (self.contrast_curve_)(scheme)
     }
 
     pub fn tone_delta_pair(&self, scheme: &DynamicScheme) -> Option<ToneDeltaPair> {
-        (self.tone_delta_pair_)(self.extended_data, scheme)
+        (self.tone_delta_pair_)(scheme)
     }
 
     pub fn chroma_multiplier(&self, scheme: &DynamicScheme) -> Option<f64> {
-        (self.chroma_multiplier_)(self.extended_data, scheme)
+        (self.chroma_multiplier_)(scheme)
     }
 
     pub fn opacity(&self, scheme: &DynamicScheme) -> Option<f64> {
-        (self.opacity_)(self.extended_data, scheme)
+        (self.opacity_)(scheme)
     }
 
     #[must_use]
@@ -198,14 +196,14 @@ impl DynamicColor {
     }
 
     #[must_use]
-    pub const fn with_background(mut self, func: DynamicSchemeFn<Option<&'static Self>>) -> Self {
+    pub const fn with_background(mut self, func: DynamicSchemeFn<Option<Self>>) -> Self {
         self.background_ = func;
 
         self
     }
 
     #[must_use]
-    pub const fn with_second_background(mut self, func: DynamicSchemeFn<Option<&'static Self>>) -> Self {
+    pub const fn with_second_background(mut self, func: DynamicSchemeFn<Option<Self>>) -> Self {
         self.second_background_ = func;
 
         self
@@ -303,119 +301,120 @@ impl DynamicColor {
         }
     }
 
-    const fn validate_extended_color(&self, _: SpecVersion, extended_color: &'static Self) {
-        const fn eq_str(left: &str, right: &str) -> bool {
-            let left = left.as_bytes();
-            let right = right.as_bytes();
+    // const fn validate_extended_color(&self, _: SpecVersion, extended_color:
+    // &'static Self) {     const fn eq_str(left: &str, right: &str) -> bool {
+    //         let left = left.as_bytes();
+    //         let right = right.as_bytes();
 
-            if left.len() != right.len() {
-                return false;
-            }
+    //         if left.len() != right.len() {
+    //             return false;
+    //         }
 
-            let mut i = 0;
+    //         let mut i = 0;
 
-            while i != left.len() {
-                if left[i] != right[i] {
-                    return false;
-                }
+    //         while i != left.len() {
+    //             if left[i] != right[i] {
+    //                 return false;
+    //             }
 
-                i += 1;
-            }
+    //             i += 1;
+    //         }
 
-            true
-        }
+    //         true
+    //     }
 
-        debug_assert!(eq_str(self.name, extended_color.name));
-        debug_assert!(self.is_background == extended_color.is_background);
-    }
+    //     debug_assert!(eq_str(self.name, extended_color.name));
+    //     debug_assert!(self.is_background == extended_color.is_background);
+    // }
 
-    #[must_use]
-    pub const fn extend_spec_version(&'static self, spec_version: SpecVersion, extended_color: &'static Self) -> Self {
-        self.validate_extended_color(spec_version, extended_color);
+    // #[must_use]
+    // pub const fn extend_spec_version(&'static self, spec_version: SpecVersion,
+    // extended_color: &'static Self) -> Self {
+    //     self.validate_extended_color(spec_version, extended_color);
 
-        Self {
-            extended_data: Some(ExtendedColorData {
-                spec_version,
-                it: self,
-                extended_color,
-            }),
-            name: self.name,
-            palette_: |data, scheme| {
-                let data = unsafe { data.unwrap_unchecked() };
+    //     Self {
+    //         extended_data: Some(ExtendedColorData {
+    //             spec_version,
+    //             it: self,
+    //             extended_color,
+    //         }),
+    //         name: self.name,
+    //         palette_: |data, scheme| {
+    //             let data = unsafe { data.unwrap_unchecked() };
 
-                if scheme.spec_version >= data.spec_version {
-                    data.extended_color.palette(scheme)
-                } else {
-                    data.it.palette(scheme)
-                }
-            },
-            tone_: |data, scheme| {
-                let data = unsafe { data.unwrap_unchecked() };
+    //             if scheme.spec_version >= data.spec_version {
+    //                 data.extended_color.palette(scheme)
+    //             } else {
+    //                 data.it.palette(scheme)
+    //             }
+    //         },
+    //         tone_: |data, scheme| {
+    //             let data = unsafe { data.unwrap_unchecked() };
 
-                if scheme.spec_version >= data.spec_version {
-                    data.extended_color.tone(scheme)
-                } else {
-                    data.it.tone(scheme)
-                }
-            },
-            is_background: self.is_background,
-            chroma_multiplier_: |data, scheme| {
-                let data = unsafe { data.unwrap_unchecked() };
+    //             if scheme.spec_version >= data.spec_version {
+    //                 data.extended_color.tone(scheme)
+    //             } else {
+    //                 data.it.tone(scheme)
+    //             }
+    //         },
+    //         is_background: self.is_background,
+    //         chroma_multiplier_: |data, scheme| {
+    //             let data = unsafe { data.unwrap_unchecked() };
 
-                if scheme.spec_version >= data.spec_version {
-                    data.extended_color.chroma_multiplier(scheme)
-                } else {
-                    data.it.chroma_multiplier(scheme)
-                }
-                .or(Some(1.0))
-            },
-            background_: |data, scheme| {
-                let data = unsafe { data.unwrap_unchecked() };
+    //             if scheme.spec_version >= data.spec_version {
+    //                 data.extended_color.chroma_multiplier(scheme)
+    //             } else {
+    //                 data.it.chroma_multiplier(scheme)
+    //             }
+    //             .or(Some(1.0))
+    //         },
+    //         background_: |data, scheme| {
+    //             let data = unsafe { data.unwrap_unchecked() };
 
-                if scheme.spec_version >= data.spec_version {
-                    data.extended_color.background(scheme)
-                } else {
-                    data.it.background(scheme)
-                }
-            },
-            second_background_: |data, scheme| {
-                let data = unsafe { data.unwrap_unchecked() };
+    //             if scheme.spec_version >= data.spec_version {
+    //                 data.extended_color.background(scheme)
+    //             } else {
+    //                 data.it.background(scheme)
+    //             }
+    //         },
+    //         second_background_: |data, scheme| {
+    //             let data = unsafe { data.unwrap_unchecked() };
 
-                if scheme.spec_version >= data.spec_version {
-                    data.extended_color.second_background(scheme)
-                } else {
-                    data.it.second_background(scheme)
-                }
-            },
-            contrast_curve_: |data, scheme| {
-                let data = unsafe { data.unwrap_unchecked() };
+    //             if scheme.spec_version >= data.spec_version {
+    //                 data.extended_color.second_background(scheme)
+    //             } else {
+    //                 data.it.second_background(scheme)
+    //             }
+    //         },
+    //         contrast_curve_: |data, scheme| {
+    //             let data = unsafe { data.unwrap_unchecked() };
 
-                if scheme.spec_version >= data.spec_version {
-                    data.extended_color.contrast_curve(scheme)
-                } else {
-                    data.it.contrast_curve(scheme)
-                }
-            },
-            tone_delta_pair_: |data, scheme| {
-                let data = unsafe { data.unwrap_unchecked() };
+    //             if scheme.spec_version >= data.spec_version {
+    //                 data.extended_color.contrast_curve(scheme)
+    //             } else {
+    //                 data.it.contrast_curve(scheme)
+    //             }
+    //         },
+    //         tone_delta_pair_: |data, scheme| {
+    //             let data = unsafe { data.unwrap_unchecked() };
 
-                if scheme.spec_version >= data.spec_version {
-                    data.extended_color.tone_delta_pair(scheme)
-                } else {
-                    data.it.tone_delta_pair(scheme)
-                }
-            },
-            opacity_: |data, scheme| {
-                let data = unsafe { data.unwrap_unchecked() };
+    //             if scheme.spec_version >= data.spec_version {
+    //                 data.extended_color.tone_delta_pair(scheme)
+    //             } else {
+    //                 data.it.tone_delta_pair(scheme)
+    //             }
+    //         },
+    //         opacity_: |data, scheme| {
+    //             let data = unsafe { data.unwrap_unchecked() };
 
-                if scheme.spec_version >= data.spec_version {
-                    data.extended_color.opacity(scheme)
-                } else {
-                    data.it.opacity(scheme)
-                }
-            },
-        }
-    }
+    //             if scheme.spec_version >= data.spec_version {
+    //                 data.extended_color.opacity(scheme)
+    //             } else {
+    //                 data.it.opacity(scheme)
+    //             }
+    //         },
+    //     }
+    // }
 
     /// Adjusts a tone such that white has 4.5 contrast, if the tone is
     /// reasonably close to supporting it.
@@ -460,9 +459,8 @@ impl DynamicColor {
 mod tests {
     use float_cmp::assert_approx_eq;
 
-    use super::{DynamicColor, material_dynamic_colors::MaterialDynamicColors};
+    use super::material_dynamic_colors::MaterialDynamicColors;
     use crate::{
-        Map,
         color::Rgb,
         contrast::ratio_of_tones,
         hct::Hct,
@@ -480,32 +478,18 @@ mod tests {
 
         let contrast_levels = [-1.0, -0.5, 0.0, 0.5, 1.0];
 
-        let mut _colors: Map<&str, &'static DynamicColor> = Map::from_iter([
+        let colors = [
             ("background", MaterialDynamicColors::background()),
             ("onBackground", MaterialDynamicColors::on_background()),
-            ("surface", MaterialDynamicColors::surface()),
             ("surfaceDim", MaterialDynamicColors::surface_dim()),
             ("surfaceBright", MaterialDynamicColors::surface_bright()),
-            ("surfaceContainerLowest", MaterialDynamicColors::surface_container_lowest()),
-            ("surfaceContainerLow", MaterialDynamicColors::surface_container_low()),
-            ("surfaceContainer", MaterialDynamicColors::surface_container()),
-            ("surfaceContainerHigh", MaterialDynamicColors::surface_container_high()),
-            ("surfaceContainerHighest", MaterialDynamicColors::surface_container_highest()),
             ("onSurface", MaterialDynamicColors::on_surface()),
             ("surfaceVariant", MaterialDynamicColors::surface_variant()),
             ("onSurfaceVariant", MaterialDynamicColors::on_surface_variant()),
-            ("inverseSurface", MaterialDynamicColors::inverse_surface()),
-            ("inverseOnSurface", MaterialDynamicColors::inverse_on_surface()),
-            ("outline", MaterialDynamicColors::outline()),
-            ("outlineVariant", MaterialDynamicColors::outline_variant()),
-            ("shadow", MaterialDynamicColors::shadow()),
-            ("scrim", MaterialDynamicColors::scrim()),
-            ("surfaceTint", MaterialDynamicColors::surface_tint()),
             ("primary", MaterialDynamicColors::primary()),
             ("onPrimary", MaterialDynamicColors::on_primary()),
             ("primaryContainer", MaterialDynamicColors::primary_container()),
             ("onPrimaryContainer", MaterialDynamicColors::on_primary_container()),
-            ("inversePrimary", MaterialDynamicColors::inverse_primary()),
             ("secondary", MaterialDynamicColors::secondary()),
             ("onSecondary", MaterialDynamicColors::on_secondary()),
             ("secondaryContainer", MaterialDynamicColors::secondary_container()),
@@ -518,21 +502,17 @@ mod tests {
             ("onError", MaterialDynamicColors::on_error()),
             ("errorContainer", MaterialDynamicColors::error_container()),
             ("onErrorContainer", MaterialDynamicColors::on_error_container()),
-        ]);
+        ];
 
         for color in seed_colors {
             for contrast_level in contrast_levels {
                 for is_dark in [false, true] {
-                    #[allow(unused_variables)]
-                    for (scheme_name, scheme) in [
-                        ("SchemeContent", SchemeContent::new(color, is_dark, Some(contrast_level)).scheme),
-                        ("SchemeMonochrome", SchemeMonochrome::new(color, is_dark, Some(contrast_level)).scheme),
-                        ("SchemeTonalSpot", SchemeTonalSpot::new(color, is_dark, Some(contrast_level)).scheme),
-                        ("SchemeFidelity", SchemeFidelity::new(color, is_dark, Some(contrast_level)).scheme),
+                    for scheme in [
+                        SchemeContent::new(color, is_dark, Some(contrast_level)).scheme,
+                        SchemeMonochrome::new(color, is_dark, Some(contrast_level)).scheme,
+                        SchemeTonalSpot::new(color, is_dark, Some(contrast_level)).scheme,
+                        SchemeFidelity::new(color, is_dark, Some(contrast_level)).scheme,
                     ] {
-                        #[cfg(feature = "std")]
-                        std::println!("Scheme: {scheme_name}; Seed color: {color}; Contrast level: {contrast_level}; Dark: {is_dark}");
-
                         for (fg_name, bg_name) in [
                             ("onPrimary", "primary"),
                             ("onPrimaryContainer", "primaryContainer"),
@@ -546,8 +526,8 @@ mod tests {
                             ("onSurfaceVariant", "surfaceBright"),
                             ("onSurfaceVariant", "surfaceDim"),
                         ] {
-                            let foreground_tone = _colors.get_mut(fg_name).unwrap().get_hct(&scheme).get_tone();
-                            let background_tone = _colors.get_mut(bg_name).unwrap().get_hct(&scheme).get_tone();
+                            let foreground_tone = colors.iter().find(|(color, _)| *color == fg_name).unwrap().1.get_hct(&scheme).get_tone();
+                            let background_tone = colors.iter().find(|(color, _)| *color == bg_name).unwrap().1.get_hct(&scheme).get_tone();
                             let contrast = ratio_of_tones(foreground_tone, background_tone);
 
                             let minimum_requirement = if contrast_level >= 0.0 { 4.5 } else { 3.0 };

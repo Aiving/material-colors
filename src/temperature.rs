@@ -1,16 +1,17 @@
-#[cfg(not(feature = "std"))] use alloc::{vec, vec::Vec};
-use core::cmp::Ordering;
-#[cfg(feature = "std")] use std::{vec, vec::Vec};
-
 #[cfg(all(not(feature = "std"), feature = "libm"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 use crate::{
-    Map,
     color::{Lab, Rgb},
     hct::Hct,
     utils::{FromRef, math::sanitize_degrees_double},
 };
+
+#[derive(Debug, Clone, Copy)]
+struct HctWithTemp {
+    color: Hct,
+    temp: f64,
+}
 
 /// Design utilities using color temperature theory.
 ///
@@ -19,14 +20,12 @@ use crate::{
 pub struct TemperatureCache {
     input: Hct,
 
-    /// HCTs for all hues, with the same chroma/tone as the input.
-    /// Sorted from coldest first to warmest last.
-    hcts_by_temp: [Hct; 362],
+    warmest: HctWithTemp,
+    coldest: HctWithTemp,
+
     /// HCTs for all hues, with the same chroma/tone as the input.
     /// Sorted ascending, hue 0 to 360.
-    hcts_by_hue: [Hct; 362],
-    /// A Map with keys of HCTs in `hcts_by_temp`, values of raw temperature.
-    temps_by_hct: Map<Hct, f64>,
+    hcts_by_hue: [HctWithTemp; 362],
     /// Relative temperature of the input color. See [`relative_temperature`].
     ///
     /// [`relative_temperature`]: Self::relative_temperature
@@ -35,61 +34,44 @@ pub struct TemperatureCache {
 }
 
 impl TemperatureCache {
-    /// # Panics
-    ///
-    /// Will panic if there is no warmest HCT
-    pub const fn warmest(&self) -> &Hct {
-        &self.hcts_by_temp[361]
-    }
-
-    /// # Panics
-    ///
-    /// Will panic if there is no coldest HCT
-    pub const fn coldest(&self) -> &Hct {
-        &self.hcts_by_temp[0]
-    }
-
     pub fn new(input: Hct) -> Self {
         let chroma = input.get_chroma();
         let tone = input.get_tone();
 
-        let hcts_by_hue = core::array::from_fn(|index| {
-            if index == 361 {
-                input
-            } else {
-                Hct::from(f64::from(index as i32), chroma, tone)
-            }
-        });
+        let input_temp = Self::raw_temperature(&input);
+        let mut hcts_by_hue = [HctWithTemp {
+            color: input,
+            temp: input_temp,
+        }; 362];
 
-        let temps_by_hct = hcts_by_hue.iter().map(|e| (*e, Self::raw_temperature(e))).collect();
+        for (index, item) in hcts_by_hue.iter_mut().enumerate().take(361) {
+            let color = Hct::from(index as f64, chroma, tone);
+            let temp = Self::raw_temperature(&color);
+
+            *item = HctWithTemp { color, temp };
+        }
 
         let mut hcts_by_temp = hcts_by_hue;
+        let depth = hcts_by_temp.len().ilog2() * 2;
 
-        hcts_by_temp.sort_by(|a, b| Self::sort_by_temp(&temps_by_hct, a, b));
+        introsort_slice(&mut hcts_by_temp, depth);
 
         let mut cache = Self {
             input,
-            hcts_by_temp,
+            warmest: hcts_by_temp[361],
+            coldest: hcts_by_temp[0],
             hcts_by_hue,
-            temps_by_hct,
             input_relative_temperature: -1.0,
             _complement: None,
         };
 
-        cache.input_relative_temperature = {
-            let coldest = cache.coldest();
-            let warmest = cache.warmest();
-            let input = &cache.input;
-
-            let coldest_temp = cache.temps_by_hct[coldest];
-
-            let range = cache.temps_by_hct[warmest] - coldest_temp;
-            let difference_from_coldest = cache.temps_by_hct[input] - coldest_temp;
-
-            if range == 0.0 { 0.5 } else { difference_from_coldest / range }
-        };
+        cache.input_relative_temperature = cache.relative_temperature(input_temp);
 
         cache
+    }
+
+    pub fn analogous(&self) -> [Hct; 5] {
+        self.analogous_generic::<5, 12>()
     }
 
     /// A set of colors with differing hues, equidistant in temperature.
@@ -103,21 +85,21 @@ impl TemperatureCache {
     ///
     /// - `count`: The number of colors to return, includes the input color.
     /// - `divisions`: The number of divisions on the color wheel.
-    pub fn analogous(&self, count: Option<i32>, divisions: Option<i32>) -> Vec<Hct> {
-        let count = count.unwrap_or(5);
-        let divisions = divisions.unwrap_or(12);
-        let start_hue = self.input.get_hue().round() as i32;
+    pub fn analogous_generic<const C: usize, const D: usize>(&self) -> [Hct; C] {
+        // let count = count.unwrap_or(5);
+        // let divisions = divisions.unwrap_or(12);
+        let start_hue = self.input.get_hue().round() as usize;
 
-        let start_hct = self.hcts_by_hue[start_hue as usize];
-        let mut last_temp = self.relative_temperature(&start_hct);
-        let mut all_colors = vec![start_hct];
+        let start_hct = self.hcts_by_hue[start_hue];
+        let mut last_temp = self.relative_temperature(self.hcts_by_hue[start_hue].temp);
+        let mut all_colors = [start_hct; D];
+        let mut all_colors_len = 1;
 
         let mut absolute_total_temp_delta = 0.0;
 
         for i in 0..360 {
-            let hue = sanitize_degrees_double((start_hue + i).into());
-            let hct = self.hcts_by_hue[hue as usize];
-            let temp = self.relative_temperature(&hct);
+            let hue = sanitize_degrees_double((start_hue + i) as f64);
+            let temp = self.relative_temperature(self.hcts_by_hue[hue as usize].temp);
             let temp_delta = (temp - last_temp).abs();
 
             last_temp = temp;
@@ -125,21 +107,21 @@ impl TemperatureCache {
         }
 
         let mut hue_addend = 1;
-        let temp_step = absolute_total_temp_delta / f64::from(divisions);
+        let temp_step = absolute_total_temp_delta / D as f64;
 
         let mut total_temp_delta = 0.0;
 
-        last_temp = self.relative_temperature(&start_hct);
+        last_temp = self.relative_temperature(self.hcts_by_hue[start_hue].temp);
 
-        while all_colors.len() < divisions as usize {
-            let hue = sanitize_degrees_double((start_hue + hue_addend).into());
+        while all_colors_len < D {
+            let hue = sanitize_degrees_double((start_hue + hue_addend) as f64);
             let hct = self.hcts_by_hue[hue as usize];
-            let temp = self.relative_temperature(&hct);
+            let temp = self.relative_temperature(self.hcts_by_hue[hue as usize].temp);
             let temp_delta = (temp - last_temp).abs();
 
             total_temp_delta += temp_delta;
 
-            let desired_total_temp_delta_for_index = all_colors.len() as f64 * temp_step;
+            let desired_total_temp_delta_for_index = all_colors_len as f64 * temp_step;
 
             let mut index_satisfied = total_temp_delta >= desired_total_temp_delta_for_index;
             let mut index_addend = 1;
@@ -152,10 +134,11 @@ impl TemperatureCache {
             // For example, white and black have no analogues: there are no other
             // colors at T100/T0. Therefore, they should just be added to the array
             // as answers.
-            while index_satisfied && all_colors.len() < divisions as usize {
-                all_colors.push(hct);
+            while index_satisfied && all_colors_len < D {
+                all_colors[all_colors_len] = hct;
+                all_colors_len += 1;
 
-                let desired_total_temp_delta_for_index = (all_colors.len() + index_addend) as f64 * temp_step;
+                let desired_total_temp_delta_for_index = (all_colors_len + index_addend) as f64 * temp_step;
 
                 index_satisfied = total_temp_delta >= desired_total_temp_delta_for_index;
                 index_addend += 1;
@@ -165,18 +148,20 @@ impl TemperatureCache {
             hue_addend += 1;
 
             if hue_addend > 360 {
-                while all_colors.len() < divisions as usize {
-                    all_colors.push(hct);
+                while all_colors_len < D {
+                    all_colors[all_colors_len] = hct;
+                    all_colors_len += 1;
                 }
 
                 break;
             }
         }
 
-        let mut answers = vec![self.input];
+        let mut answers = [self.input; C];
+        let mut answers_len = 1;
 
         // First, generate analogues from rotating counter-clockwise.
-        let increase_hue_count = ((f64::from(count) - 1.0) / 2.0).floor() as isize;
+        let increase_hue_count = (C as isize - 1) / 2;
 
         for i in 1..=increase_hue_count {
             let mut index = 0_isize - i;
@@ -189,11 +174,12 @@ impl TemperatureCache {
                 index %= all_colors.len() as isize;
             }
 
-            answers.insert(0, all_colors[index as usize]);
+            answers[increase_hue_count as usize - answers_len] = all_colors[index as usize].color;
+            answers_len += 1;
         }
 
         // Second, generate analogues from rotating clockwise.
-        let decrease_hue_count = (count - (increase_hue_count as i32) - 1) as isize;
+        let decrease_hue_count = C as isize - increase_hue_count - 1;
 
         for i in 1..=decrease_hue_count {
             let mut index = i;
@@ -206,7 +192,8 @@ impl TemperatureCache {
                 index %= all_colors.len() as isize;
             }
 
-            answers.push(all_colors[index as usize]);
+            answers[answers_len] = all_colors[index as usize].color;
+            answers_len += 1;
         }
 
         answers
@@ -226,26 +213,21 @@ impl TemperatureCache {
             return complement;
         }
 
-        let coldest_hct = self.coldest();
-        let warmest_hct = self.warmest();
+        let (coldest_hue, coldest_temp) = (self.coldest.color.get_hue(), self.coldest.temp);
+        let (warmest_hue, warmest_temp) = (self.warmest.color.get_hue(), self.warmest.temp);
 
-        let coldest_hue = coldest_hct.get_hue();
-        let coldest_temp = self.temps_by_hct[coldest_hct];
+        let temp_range = warmest_temp - coldest_temp;
+        let warmest_to_coldest = Self::is_between(self.input.get_hue(), coldest_hue, warmest_hue);
 
-        let warmest_hue = warmest_hct.get_hue();
-        let warmest_temp = self.temps_by_hct[warmest_hct];
-
-        let range = warmest_temp - coldest_temp;
-        let start_hue_is_coldest_to_warmest = Self::is_between(self.input.get_hue(), coldest_hue, warmest_hue);
-
-        let start_hue = if start_hue_is_coldest_to_warmest { warmest_hue } else { coldest_hue };
-
-        let end_hue = if start_hue_is_coldest_to_warmest { coldest_hue } else { warmest_hue };
+        let [start_hue, end_hue] = if warmest_to_coldest {
+            [warmest_hue, coldest_hue]
+        } else {
+            [coldest_hue, warmest_hue]
+        };
 
         let direction_of_rotation = 1.0_f64;
         let mut smallest_error = 1000.0;
-        let hue = self.input.get_hue().round();
-        let mut answer = self.hcts_by_hue[hue as usize];
+        let mut answer = &self.hcts_by_hue[self.input.get_hue().round() as usize];
 
         let complement_relative_temp = 1.0 - self.input_relative_temperature;
 
@@ -259,14 +241,16 @@ impl TemperatureCache {
             }
 
             let possible_answer = &self.hcts_by_hue[hue.round() as usize];
-            let relative_temp = (self.temps_by_hct[possible_answer] - coldest_temp) / range;
+            let relative_temp = (possible_answer.temp - coldest_temp) / temp_range;
             let error = (complement_relative_temp - relative_temp).abs();
 
             if error < smallest_error {
                 smallest_error = error;
-                answer = *possible_answer;
+                answer = possible_answer;
             }
         }
+
+        let answer = answer.color;
 
         self._complement = Some(answer);
 
@@ -275,27 +259,20 @@ impl TemperatureCache {
 
     /// Temperature relative to all colors with the same chroma and tone.
     /// Value on a scale from 0 to 1.
-    pub fn relative_temperature(&self, hct: &Hct) -> f64 {
-        let coldest = self.coldest();
-        let warmest = self.warmest();
+    pub const fn relative_temperature(&self, temp: f64) -> f64 {
+        let coldest = self.coldest;
+        let warmest = self.warmest;
 
-        let range = self.temps_by_hct[warmest] - self.temps_by_hct[coldest];
-        let difference_from_coldest = self.temps_by_hct[hct] - self.temps_by_hct[coldest];
+        let range = warmest.temp - coldest.temp;
+        let difference_from_coldest = temp - coldest.temp;
 
         // Handle when there's no difference in temperature between warmest and
         // coldest: for example, at T100, only one color is available, white.
         if range == 0.0 { 0.5 } else { difference_from_coldest / range }
     }
 
-    fn sort_by_temp(temps_by_hct: &Map<Hct, f64>, this: &Hct, that: &Hct) -> Ordering {
-        let a = &temps_by_hct[this];
-        let b = &temps_by_hct[that];
-
-        a.partial_cmp(b).unwrap()
-    }
-
     /// Determines if an angle is between two other angles, rotating clockwise.
-    pub fn is_between(angle: f64, a: f64, b: f64) -> bool {
+    pub const fn is_between(angle: f64, a: f64, b: f64) -> bool {
         if a < b { a <= angle && angle <= b } else { a <= angle || angle <= b }
     }
 
@@ -323,6 +300,121 @@ impl TemperatureCache {
         let chroma = lab.a.hypot(lab.b);
 
         (0.02 * chroma.powf(1.07)).mul_add((sanitize_degrees_double(hue - 50.0).to_radians()).cos(), -0.5)
+    }
+}
+
+const fn insertion_sort_slice(slice: &mut [HctWithTemp]) {
+    let n = slice.len();
+
+    if n <= 1 {
+        return;
+    }
+
+    let mut i = 1;
+
+    while i < n {
+        let mut j = i;
+
+        while j > 0 && (slice[j - 1].temp > slice[j].temp) {
+            (slice[j - 1], slice[j]) = (slice[j], slice[j - 1]);
+
+            j -= 1;
+        }
+
+        i += 1;
+    }
+}
+
+const fn max_heapify_slice(slice: &mut [HctWithTemp], n: usize, i: usize) {
+    let mut largest = i;
+    let l = 2 * i + 1;
+    let r = l + 1;
+
+    if l < n && (slice[l].temp > slice[largest].temp) {
+        largest = l;
+    }
+
+    if r < n && (slice[r].temp > slice[largest].temp) {
+        largest = r;
+    }
+
+    if largest != i {
+        (slice[i], slice[largest]) = (slice[largest], slice[i]);
+
+        max_heapify_slice(slice, n, largest);
+    }
+}
+
+const fn heapsort_slice(slice: &mut [HctWithTemp]) {
+    let n = slice.len();
+
+    if n <= 1 {
+        return;
+    }
+
+    let mut i = n / 2 - 1;
+
+    while i > 0 {
+        max_heapify_slice(slice, n, i);
+
+        i -= 1;
+    }
+
+    max_heapify_slice(slice, n, i);
+
+    let mut i = n - 1;
+
+    while i > 0 {
+        (slice[0], slice[i]) = (slice[i], slice[0]);
+
+        max_heapify_slice(slice, i, 0);
+
+        i -= 1;
+    }
+}
+
+const fn introsort_slice(slice: &mut [HctWithTemp], recursion_depth: u32) {
+    if slice.len() <= 1 {
+    } else if slice.len() <= 16 {
+        insertion_sort_slice(slice);
+    } else if recursion_depth == 0 {
+        heapsort_slice(slice);
+    } else {
+        let (pivot, rest) = slice.split_first_mut().expect("slice is not empty, as verified above");
+        let mut left = 0;
+        let mut right = rest.len() - 1;
+
+        while left <= right {
+            if rest[left].temp <= pivot.temp {
+                left += 1;
+            } else if rest[right].temp > pivot.temp {
+                if right == 0 {
+                    break;
+                }
+
+                right -= 1;
+            } else {
+                (rest[left], rest[right]) = (rest[right], rest[left]);
+
+                left += 1;
+
+                if right == 0 {
+                    break;
+                }
+
+                right -= 1;
+            }
+        }
+
+        (slice[0], slice[left]) = (slice[left], slice[0]);
+
+        let (left, right) = slice.split_at_mut(left);
+
+        introsort_slice(left, recursion_depth - 1);
+
+        if let Some((_pivot, right)) = right.split_first_mut() {
+            introsort_slice(right, recursion_depth - 1);
+        }
     }
 }
 
@@ -371,56 +463,61 @@ mod tests {
 
     #[test]
     fn test_blue_analogous() {
-        let analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(0x0000FF))).analogous(None, None);
+        let analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(0x0000FF))).analogous();
 
         assert_eq!(Rgb::from_u32(0x00590C), analogous[0].into());
         assert_eq!(Rgb::from_u32(0x00564E), analogous[1].into());
         assert_eq!(Rgb::from_u32(0x0000FF), analogous[2].into());
         assert_eq!(Rgb::from_u32(0x6700CC), analogous[3].into());
         assert_eq!(Rgb::from_u32(0x81009F), analogous[4].into());
+        assert_eq!(5, analogous.len());
     }
 
     #[test]
     fn test_red_analogous() {
-        let analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(0xFF0000))).analogous(None, None);
+        let analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(0xFF0000))).analogous();
 
         assert_eq!(Rgb::from_u32(0xF60082), analogous[0].into());
         assert_eq!(Rgb::from_u32(0xFC004C), analogous[1].into());
         assert_eq!(Rgb::from_u32(0xFF0000), analogous[2].into());
         assert_eq!(Rgb::from_u32(0xD95500), analogous[3].into());
         assert_eq!(Rgb::from_u32(0xAF7200), analogous[4].into());
+        assert_eq!(5, analogous.len());
     }
 
     #[test]
     fn test_green_analogous() {
-        let green_analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(0x00FF00))).analogous(None, None);
+        let analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(0x00FF00))).analogous();
 
-        assert_eq!(Rgb::from_u32(0xCEE900), green_analogous[0].into());
-        assert_eq!(Rgb::from_u32(0x92F500), green_analogous[1].into());
-        assert_eq!(Rgb::from_u32(0x00FF00), green_analogous[2].into());
-        assert_eq!(Rgb::from_u32(0x00FD6F), green_analogous[3].into());
-        assert_eq!(Rgb::from_u32(0x00FAB3), green_analogous[4].into());
+        assert_eq!(Rgb::from_u32(0xCEE900), analogous[0].into());
+        assert_eq!(Rgb::from_u32(0x92F500), analogous[1].into());
+        assert_eq!(Rgb::from_u32(0x00FF00), analogous[2].into());
+        assert_eq!(Rgb::from_u32(0x00FD6F), analogous[3].into());
+        assert_eq!(Rgb::from_u32(0x00FAB3), analogous[4].into());
+        assert_eq!(5, analogous.len());
     }
 
     #[test]
     fn test_white_analogous() {
-        let analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(0xFFFFFF))).analogous(None, None);
+        let analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(0xFFFFFF))).analogous();
 
         assert_eq!(Rgb::from_u32(0xFFFFFF), analogous[0].into());
         assert_eq!(Rgb::from_u32(0xFFFFFF), analogous[1].into());
         assert_eq!(Rgb::from_u32(0xFFFFFF), analogous[2].into());
         assert_eq!(Rgb::from_u32(0xFFFFFF), analogous[3].into());
         assert_eq!(Rgb::from_u32(0xFFFFFF), analogous[4].into());
+        assert_eq!(5, analogous.len());
     }
 
     #[test]
     fn test_black_analogous() {
-        let analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(0x000000))).analogous(None, None);
+        let analogous = TemperatureCache::new(Hct::new(Rgb::from_u32(0x000000))).analogous();
 
         assert_eq!(Rgb::from_u32(0x000000), analogous[0].into());
         assert_eq!(Rgb::from_u32(0x000000), analogous[1].into());
         assert_eq!(Rgb::from_u32(0x000000), analogous[2].into());
         assert_eq!(Rgb::from_u32(0x000000), analogous[3].into());
         assert_eq!(Rgb::from_u32(0x000000), analogous[4].into());
+        assert_eq!(5, analogous.len());
     }
 }

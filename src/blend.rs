@@ -62,6 +62,6 @@ mod tests {
     fn test_red_to_blue() {
         let blended = hct_hue(Rgb::from_str("ff0000").unwrap(), Rgb::from_str("0000ff").unwrap(), 0.8);
 
-        assert_eq!(blended.to_hex(), "905eff");
+        assert_eq!(blended.as_u32(), 0x905EFF);
     }
 }

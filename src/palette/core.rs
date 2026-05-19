@@ -94,19 +94,7 @@ pub struct CorePalettes {
 
 #[cfg(test)]
 mod tests {
-    use core::hash::{Hash, Hasher};
-
-    use ahash::AHasher;
-
     use crate::{color::Rgb, palette::CorePalette};
-
-    fn hash_value<T: Hash>(value: &T) -> u64 {
-        let mut hasher = AHasher::default();
-
-        value.hash(&mut hasher);
-
-        hasher.finish()
-    }
 
     #[test]
     fn test_equals_and_hash() {
@@ -115,10 +103,7 @@ mod tests {
         let core_palette_c = CorePalette::of(Rgb::from_u32(0x123456));
 
         assert_eq!(core_palette_a, core_palette_b);
-        assert!(core_palette_b != core_palette_c);
-
-        assert_eq!(hash_value(&core_palette_a), hash_value(&core_palette_b));
-        assert!(hash_value(&core_palette_b) != hash_value(&core_palette_c));
+        assert_ne!(core_palette_b, core_palette_c);
     }
 
     #[test]

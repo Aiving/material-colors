@@ -6,7 +6,6 @@ use core::{
 
 use super::Palette;
 use crate::{
-    Map,
     color::Rgb,
     dynamic_color::Variant,
     hct::Hct,
@@ -127,17 +126,17 @@ pub struct KeyColor {
     hue: f64,
     requested_chroma: f64,
     /// Cache that maps tone to max chroma to avoid duplicated HCT calculation.
-    chroma_cache: Map<i32, f64>,
+    chroma_cache: [f64; 100],
 }
 
 impl KeyColor {
     const MAX_CHROMA_VALUE: f64 = 200.0;
 
-    pub fn new(hue: f64, requested_chroma: f64) -> Self {
+    pub const fn new(hue: f64, requested_chroma: f64) -> Self {
         Self {
             hue,
             requested_chroma,
-            chroma_cache: Map::default(),
+            chroma_cache: [-1.0; 100],
         }
     }
 
@@ -160,17 +159,18 @@ impl KeyColor {
         let mut upper_tone = 100;
 
         while lower_tone < upper_tone {
-            let mid_tone = i32::midpoint(lower_tone, upper_tone);
-            let is_ascending = self.max_chroma(mid_tone) < self.max_chroma(mid_tone + tone_step_size);
-            let sufficient_chroma = self.max_chroma(mid_tone) >= self.requested_chroma - epsilon;
+            let mid_tone = usize::midpoint(lower_tone, upper_tone);
+            let mid_tone_max_chroma = self.max_chroma(mid_tone);
+            let is_ascending = mid_tone_max_chroma < self.max_chroma(mid_tone + tone_step_size);
+            let sufficient_chroma = mid_tone_max_chroma >= self.requested_chroma - epsilon;
 
             if sufficient_chroma {
                 // Either range [lowerTone, midTone] or [midTone, upperTone] has answer, so
                 // search in the range that is closer the pivot tone.
-                if (lower_tone - pivot_tone).abs() < (upper_tone - pivot_tone).abs() {
+                if (lower_tone as isize - pivot_tone).abs() < (upper_tone as isize - pivot_tone).abs() {
                     upper_tone = mid_tone;
                 } else if lower_tone == mid_tone {
-                    return Hct::from(self.hue, self.requested_chroma, f64::from(lower_tone));
+                    return Hct::from(self.hue, self.requested_chroma, lower_tone as f64);
                 } else {
                     lower_tone = mid_tone;
                 }
@@ -184,17 +184,19 @@ impl KeyColor {
             }
         }
 
-        Hct::from(self.hue, self.requested_chroma, f64::from(lower_tone))
+        Hct::from(self.hue, self.requested_chroma, lower_tone as f64)
     }
 
-    fn max_chroma(&mut self, tone: i32) -> f64 {
-        if let Some(chroma) = self.chroma_cache.get(&tone) {
-            *chroma
+    fn max_chroma(&mut self, tone: usize) -> f64 {
+        let chroma = self.chroma_cache[tone];
+
+        if chroma < 0.0 {
+            let chroma = Hct::from(self.hue, Self::MAX_CHROMA_VALUE, tone as f64).get_chroma();
+
+            self.chroma_cache[tone] = chroma;
+
+            chroma
         } else {
-            let chroma = Hct::from(self.hue, Self::MAX_CHROMA_VALUE, f64::from(tone)).get_chroma();
-
-            self.chroma_cache.insert(tone, chroma);
-
             chroma
         }
     }
@@ -272,6 +274,6 @@ mod tests {
         let tones_c = TonalPalette::of(hct_c.get_hue(), hct_c.get_chroma());
 
         assert_eq!(tones_a, tones_b);
-        assert!(tones_b != tones_c);
+        assert_ne!(tones_b, tones_c);
     }
 }

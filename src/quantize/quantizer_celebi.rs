@@ -1,5 +1,4 @@
-#[cfg(not(feature = "std"))] use alloc::vec::Vec;
-#[cfg(feature = "std")] use std::vec::Vec;
+use alloc::vec::Vec;
 
 use super::{Quantizer, QuantizerResult, QuantizerWsmeans, QuantizerWu};
 use crate::color::Rgb;
@@ -17,8 +16,7 @@ impl Quantizer for QuantizerCelebi {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(not(feature = "std"))] use alloc::vec::Vec;
-    #[cfg(feature = "std")] use std::vec::Vec;
+    use alloc::vec::Vec;
 
     use super::QuantizerCelebi;
     use crate::{color::Rgb, quantize::Quantizer};
