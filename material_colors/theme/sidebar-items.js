@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["ColorGroup","CustomColor","CustomColorGroup","Palettes","Schemes","Theme","ThemeBuilder"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["BITS_TO_REMOVE","INDEX_BITS","SIDE_LENGTH","TOTAL_SIZE"],"enum":["Direction"],"struct":["CreateBoxesResult","Cube","MaximizeResult","QuantizerWu"]};

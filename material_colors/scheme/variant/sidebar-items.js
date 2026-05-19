@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["content","expressive","fidelity","fruit_salad","monochrome","neutral","rainbow","tonal_spot","vibrant"],"struct":["SchemeContent","SchemeExpressive","SchemeFidelity","SchemeFruitSalad","SchemeMonochrome","SchemeNeutral","SchemeRainbow","SchemeTonalSpot","SchemeVibrant"]};

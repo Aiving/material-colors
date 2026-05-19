@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["find_best_tone_for_chroma","get_contrast_curve","get_expressive_neutral_chroma","get_expressive_neutral_hue","get_vibrant_neutral_chroma","get_vibrant_neutral_hue","t_max_c","t_min_c"],"struct":["ColorSpec2025"]};
