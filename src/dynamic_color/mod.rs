@@ -382,7 +382,7 @@ type RoleTones = RoleMap<Cell<f64>>;
 type PeakTones = [Cell<f64>; PEAK_SLOTS];
 
 /// Per-scheme memo of resolved role tones and of palette chroma peaks.
-/// `NaN` marks an empty slot. Plain stack memory, no allocation.
+/// `NaN` marks an empty slot.
 ///
 /// Only valid for one scheme;
 /// [`SchemeResolver`] enforces that by owning both.
@@ -505,14 +505,14 @@ impl<'a> Context<'a> {
     }
 
     /// Tone with the highest chroma in `palette`, searched from tone 100 down,
-    /// clamped to `[lower_bound, upper_bound]`.
+    /// clamped to `lower_bound..=upper_bound`.
     #[inline]
     pub fn t_max_c(self, palette: SchemePalette, lower_bound: f64, upper_bound: f64) -> f64 {
         coerce_in(self.peak(palette, true), lower_bound, upper_bound)
     }
 
     /// Tone with the highest chroma in `palette`, searched from tone 0 up,
-    /// clamped to `[lower_bound, upper_bound]`.
+    /// clamped to `lower_bound..=upper_bound`.
     #[inline]
     pub fn t_min_c(self, palette: SchemePalette, lower_bound: f64, upper_bound: f64) -> f64 {
         coerce_in(self.peak(palette, false), lower_bound, upper_bound)
@@ -582,8 +582,6 @@ pub(super) const fn abs(x: f64) -> f64 {
     if x < 0.0 { -x } else { x }
 }
 
-/// Round half up for the tone range. Casts saturate
-/// and truncate toward zero; the correction makes it a floor.
 #[inline]
 const fn round_to_int(x: f64) -> i64 {
     let y = x + 0.5;
