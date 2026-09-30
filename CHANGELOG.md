@@ -55,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **added**: Add `func:as_u32` and `func:as_argb_u32` to `struct:Rgb`, and implement `Hash`, `PartialEq`, `Eq`, `PartialOrd` and `Ord` for it
 - **added**: Add `func:is_blue`, `func:is_yellow` and `func:is_cyan` to `struct:Hct`, and implement `Default` for it
 - **added**: Add `trait:FromRef`
-- **added**: Add `spec_version` and `platform` fields and functions to `struct:ThemeBuilder`
+- **added**: Add `spec_version`, `platform` and `contrast_level` functions to `struct:ThemeBuilder`
 - **added**: Implement `Deserialize` for every type that implements `Serialize`, and `Clone` for the theme and scheme types
 - **added**: Add the `alloc` and `quantize` features
 - **added**: Add `image` and `theme` examples

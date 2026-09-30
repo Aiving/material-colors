@@ -91,6 +91,7 @@ pub struct Palettes {
 
 pub struct ThemeBuilder {
     source: Rgb,
+    contrast_level: Option<f64>,
     spec_version: SpecVersion,
     platform: Platform,
     variant: Variant,
@@ -109,6 +110,7 @@ impl ThemeBuilder {
     pub const fn with_source(source: Rgb) -> Self {
         Self {
             source,
+            contrast_level: None,
             spec_version: SpecVersion::Spec2021,
             platform: Platform::Phone,
             variant: Variant::TonalSpot,
@@ -120,6 +122,14 @@ impl ThemeBuilder {
             neutral: None,
             neutral_variant: None,
         }
+    }
+
+    /// Sets the theme contrast level.
+    #[must_use]
+    pub const fn contrast_level(mut self, level: f64) -> Self {
+        self.contrast_level = Some(level);
+
+        self
     }
 
     /// Sets the theme color spec version.
@@ -211,8 +221,8 @@ impl ThemeBuilder {
             self.variant = Variant::Fidelity;
         }
 
-        let mut light = DynamicScheme::from_spec(self.source.into(), self.variant, false, None, self.platform, self.spec_version);
-        let mut dark = DynamicScheme::from_spec(self.source.into(), self.variant, true, None, self.platform, self.spec_version);
+        let mut light = DynamicScheme::from_spec(self.source.into(), self.variant, false, self.contrast_level, self.platform, self.spec_version);
+        let mut dark = DynamicScheme::from_spec(self.source.into(), self.variant, true, self.contrast_level, self.platform, self.spec_version);
 
         if let Some(color) = self.primary {
             let palette = TonalPalette::by_variant(&color.into(), &self.variant, &Palette::Primary);
