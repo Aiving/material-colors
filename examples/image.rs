@@ -15,14 +15,10 @@ async fn main() -> Result<(), reqwest::Error> {
         .resize(128, 128, FilterType::Lanczos3)
         .into_rgb8()
         .into_raw()
-        .chunks_exact(3)
-        .map(|color| {
-            let &[red, green, blue] = color else {
-                unreachable!();
-            };
-
-            Rgb::new(red, green, blue)
-        })
+        .as_chunks::<3>()
+        .0
+        .iter()
+        .map(|&[red, green, blue]| Rgb::new(red, green, blue))
         .collect::<Vec<_>>();
 
     _ = ThemeBuilder::with_source(extract_color(&data)).build();
