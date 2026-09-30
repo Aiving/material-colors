@@ -24,8 +24,6 @@ mod tests {
     const RED: Rgb = Rgb::from_u32(0xFF0000);
     const GREEN: Rgb = Rgb::from_u32(0x00FF00);
     const BLUE: Rgb = Rgb::from_u32(0x0000FF);
-    // const WHITE: Rgb = Rgb::from_u32(0xffffffff);
-    // const RANDOM: Rgb = Rgb::from_u32(0xff426088);
     const MAX_COLORS: usize = 256;
 
     const IMAGE_PIXELS: [Rgb; 84] = [

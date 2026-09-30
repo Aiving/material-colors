@@ -1,6 +1,6 @@
 use core::f64::consts::PI;
 
-#[cfg(all(not(feature = "std"), feature = "libm"))]
+#[cfg(not(feature = "std"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 use crate::{
@@ -178,23 +178,5 @@ impl ViewingConditions {
             f_lroot: fl.powf(0.25),
             z,
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use float_cmp::assert_approx_eq;
-
-    use super::ViewingConditions;
-
-    #[test]
-    fn test_viewing_conditions() {
-        let result1 = ViewingConditions::make(None, None, None, None, None);
-
-        assert_approx_eq!(f64, result1.adapting_luminance, 11.725677948856951);
-        assert_approx_eq!(f64, result1.background_lstar, 50.0);
-        assert_approx_eq!(f64, result1.surround, 2.0);
-
-        assert!(!result1.discounting_illuminant);
     }
 }

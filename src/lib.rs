@@ -13,6 +13,7 @@
     clippy::unreadable_literal,
     clippy::used_underscore_binding,
     clippy::similar_names,
+    clippy::unnecessary_wraps,
     // pedantic lints for later
     clippy::doc_markdown,
     clippy::too_many_lines,
@@ -30,9 +31,6 @@ compile_error!("\"quantize\" feature requires \"alloc\" feature");
 
 #[cfg(all(feature = "std", feature = "libm"))]
 compile_error!("features \"std\" and \"libm\" cannot be enabled simultaneously");
-
-#[cfg(all(not(feature = "std"), not(feature = "libm")))]
-compile_error!("\"libm\" feature is required");
 
 #[cfg(feature = "alloc")] extern crate alloc;
 #[cfg(feature = "std")] extern crate std;

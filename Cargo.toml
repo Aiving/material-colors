@@ -2,6 +2,7 @@
 name = "material-colors"
 version = "0.5.0"
 edition = "2024"
+rust-version = "1.97.0"
 description = "Up-to-date material-color-utilities port"
 documentation = "https://docs.rs/material-colors"
 homepage = "https://github.com/Aiving/material-colors"
@@ -12,17 +13,23 @@ keywords = ["no_std", "palette", "color-scheme", "material-you"]
 categories = ["graphics", "no-std"]
 
 [dependencies]
-ahash = { version = "0.8", default-features = false, optional = true }
-indexmap = { version = "2.13", default-features = false, optional = true }
-serde = { version = "1.0", default-features = false, features = [
+ahash = { version = "0.8.12", default-features = false, optional = true }
+indexmap = { version = "2.14.2", default-features = false, optional = true }
+serde = { version = "1.0.229", default-features = false, features = [
     "derive",
 ], optional = true }
-libm = { version = "0.2", optional = true }
+libm = { version = "0.2.16", optional = true }
 
 [features]
 default = ["std"]
 alloc = []
-std = ["alloc", "indexmap?/std", "serde?/std", "ahash?/std", "ahash?/runtime-rng"]
+std = [
+    "alloc",
+    "indexmap?/std",
+    "serde?/std",
+    "ahash?/std",
+    "ahash?/runtime-rng",
+]
 quantize = ["alloc", "dep:ahash", "indexmap"]
 serde = ["dep:serde"]
 libm = ["dep:libm"]
@@ -34,7 +41,11 @@ opt-level = 1
 opt-level = 3
 
 [dev-dependencies]
-float-cmp = "0.10"
-reqwest = "0.13"
-tokio = { version = "1.52", features = ["rt", "macros"] }
-image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
+float-cmp = "0.10.0"
+reqwest = "0.13.5"
+tokio = { version = "1.53.1", features = ["rt", "macros"] }
+image = { version = "0.25.10", default-features = false, features = [
+    "png",
+    "jpeg",
+    "webp",
+] }

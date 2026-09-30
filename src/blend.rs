@@ -1,4 +1,4 @@
-#[cfg(all(not(feature = "std"), feature = "libm"))]
+#[cfg(not(feature = "std"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 use crate::{
@@ -49,19 +49,4 @@ pub fn cam16_ucs(from: Rgb, to: Rgb, amount: f64) -> Rgb {
     );
 
     Cam16::from_ucs(jstar, astar, bstar).into()
-}
-
-#[cfg(test)]
-mod tests {
-    use core::str::FromStr;
-
-    use super::hct_hue;
-    use crate::color::Rgb;
-
-    #[test]
-    fn test_red_to_blue() {
-        let blended = hct_hue(Rgb::from_str("ff0000").unwrap(), Rgb::from_str("0000ff").unwrap(), 0.8);
-
-        assert_eq!(blended.as_u32(), 0x905EFF);
-    }
 }

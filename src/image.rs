@@ -7,7 +7,7 @@ use crate::{
 
 /// Get the source color from an image.
 ///
-/// `image` A struct that implements the [`AsPixels`] trait
+/// `pixels` the image's pixels (downscale large images first)
 ///
 /// Returns source color - the color most suitable for creating a UI theme
 #[cfg(feature = "quantize")]

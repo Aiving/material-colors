@@ -1,6 +1,6 @@
 use super::PointProvider;
 use crate::color::{Lab, Rgb};
-#[cfg(all(not(feature = "std"), feature = "libm"))]
+#[cfg(not(feature = "std"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 

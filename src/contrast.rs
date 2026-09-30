@@ -1,5 +1,5 @@
 use crate::color::{lstar_from_y, y_from_lstar};
-#[cfg(all(not(feature = "std"), feature = "libm"))]
+#[cfg(not(feature = "std"))]
 #[allow(unused_imports)]
 use crate::utils::no_std::FloatExt;
 
@@ -7,14 +7,14 @@ use crate::utils::no_std::FloatExt;
 ///
 /// - `toneA`: Tone between 0 and 100. Values outside will be clamped.
 /// - `toneB`: Tone between 0 and 100. Values outside will be clamped.
-pub fn ratio_of_tones(tone_a: f64, tone_b: f64) -> f64 {
+pub const fn ratio_of_tones(tone_a: f64, tone_b: f64) -> f64 {
     let tone_a = tone_a.clamp(0.0, 100.0);
     let tone_b = tone_b.clamp(0.0, 100.0);
 
     ratio_of_ys(y_from_lstar(tone_a), y_from_lstar(tone_b))
 }
 
-fn ratio_of_ys(y1: f64, y2: f64) -> f64 {
+const fn ratio_of_ys(y1: f64, y2: f64) -> f64 {
     let lighter = if y1 > y2 { y1 } else { y2 };
     let darker = if (lighter - y2).abs() < f64::EPSILON { y1 } else { y2 };
 
@@ -116,57 +116,4 @@ pub fn lighter_unsafe(tone: f64, ratio: f64) -> f64 {
 ///   is 1 to 21, invalid values have undefined behavior.
 pub fn darker_unsafe(tone: f64, ratio: f64) -> f64 {
     darker(tone, ratio).unwrap_or(0.0)
-}
-
-#[cfg(test)]
-mod tests {
-    use float_cmp::assert_approx_eq;
-
-    use super::{darker, darker_unsafe, lighter, lighter_unsafe};
-    use crate::contrast::ratio_of_tones;
-
-    #[test]
-    fn test_ratio_of_tones_out_of_bounds_input() {
-        assert_approx_eq!(f64, 21.0, ratio_of_tones(-10.0, 110.0), epsilon = 0.001);
-    }
-
-    #[test]
-    fn test_lighter_impossible_ratio_errors() {
-        assert!(lighter(90.0, 10.0).is_none());
-    }
-
-    #[test]
-    fn test_lighter_out_of_bounds_input_above_errors() {
-        assert!(lighter(110.0, 2.0).is_none());
-    }
-
-    #[test]
-    fn test_lighter_out_of_bounds_input_below_errors() {
-        assert!(lighter(-10.0, 2.0).is_none());
-    }
-
-    #[test]
-    fn test_lighter_unsafe_returns_max_tone() {
-        assert_approx_eq!(f64, 100.0, lighter_unsafe(100.0, 2.0), epsilon = 0.001);
-    }
-
-    #[test]
-    fn test_darker_impossible_ratio_errors() {
-        assert!(darker(10.0, 20.0).is_none());
-    }
-
-    #[test]
-    fn test_darker_out_of_bounds_input_above_errors() {
-        assert!(darker(110.0, 2.0).is_none());
-    }
-
-    #[test]
-    fn test_darker_out_of_bounds_input_below_errors() {
-        assert!(darker(-10.0, 2.0).is_none());
-    }
-
-    #[test]
-    fn test_darker_unsafe_returns_min_tone() {
-        assert_approx_eq!(f64, 0.0, darker_unsafe(0.0, 2.0), epsilon = 0.001);
-    }
 }

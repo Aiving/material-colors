@@ -1,3 +1,4 @@
+use crate::dynamic_color::{Platform, SpecVersion};
 #[allow(deprecated)]
 use crate::{
     blend::harmonize,
@@ -88,10 +89,10 @@ pub struct Palettes {
     pub error: TonalPalette,
 }
 
-pub struct ThemeBuilder
-// <const C: usize>
-{
+pub struct ThemeBuilder {
     source: Rgb,
+    spec_version: SpecVersion,
+    platform: Platform,
     variant: Variant,
     color_match: bool,
     primary: Option<Rgb>,
@@ -108,6 +109,8 @@ impl ThemeBuilder {
     pub const fn with_source(source: Rgb) -> Self {
         Self {
             source,
+            spec_version: SpecVersion::Spec2021,
+            platform: Platform::Phone,
             variant: Variant::TonalSpot,
             color_match: false,
             primary: None,
@@ -117,6 +120,22 @@ impl ThemeBuilder {
             neutral: None,
             neutral_variant: None,
         }
+    }
+
+    /// Sets the theme color spec version.
+    #[must_use]
+    pub const fn spec_version(mut self, version: SpecVersion) -> Self {
+        self.spec_version = version;
+
+        self
+    }
+
+    /// Sets the theme platform.
+    #[must_use]
+    pub const fn platform(mut self, platform: Platform) -> Self {
+        self.platform = platform;
+
+        self
     }
 
     /// Sets the theme variant.
@@ -192,8 +211,8 @@ impl ThemeBuilder {
             self.variant = Variant::Fidelity;
         }
 
-        let mut light = DynamicScheme::by_variant(self.source, &self.variant, false, None);
-        let mut dark = DynamicScheme::by_variant(self.source, &self.variant, true, None);
+        let mut light = DynamicScheme::from_spec(self.source.into(), self.variant, false, None, self.platform, self.spec_version);
+        let mut dark = DynamicScheme::from_spec(self.source.into(), self.variant, true, None, self.platform, self.spec_version);
 
         if let Some(color) = self.primary {
             let palette = TonalPalette::by_variant(&color.into(), &self.variant, &Palette::Primary);
@@ -261,5 +280,9 @@ impl ThemeBuilder {
 pub struct Theme {
     pub source: Rgb,
     pub schemes: Schemes,
+    #[deprecated(
+        since = "0.5.0",
+        note = "palettes are created using deprecated `CorePalette` API and may be removed in the future along with it"
+    )]
     pub palettes: Palettes,
 }

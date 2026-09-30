@@ -9,10 +9,10 @@ An unofficial port of the `material-color-utilities` library for creating Materi
 
 ## Features
 
-- `std`: enabled by default, disabling makes it possible to use the crate in `no_std` environments, provided there is an allocator available
-- `image`: adds support for extracting colors from images, requires `std` feature enabled
+- `std`: enabled by default, uses the floating-point functions of std; enables `alloc`
+- `libm`: registers the floating-point backend based on [`libm`](https://github.com/rust-lang/libm) for builds without `std` (or register your own, see below); can't be combined with `std`
+- `quantize`: adds support for extracting colors from images (`quantize`, `score`, `image::extract_color`); pulls in `alloc`, `indexmap` and `ahash`
 - `serde`: adds support for JSON serialization of themes and color schemes
-- `libm`: adds the built-in implementation of `FloatExt` trait, which is based on [`libm`](https://github.com/rust-lang/libm)
 
 ## Examples
 
@@ -21,16 +21,16 @@ From HEX color:
 ```rust
 use material_colors::{color::Rgb, theme::ThemeBuilder};
 
-let theme = ThemeBuilder::with_source(Rgb::from_u32(0xffaae5a4)).build();
+let theme = ThemeBuilder::with_source(Rgb::from_u32(0xaae5a4)).build();
 
 // Do whatever you want...
 ```
 
 From image:
 
-> ⚠️ Before obtaining an array of RGB pixels for the image, **it is recommended** (but not necessary if your image is already small in size or you just don't mind about execution time) to adjust its dimensions to 128x128 by `func:resize` from `struct:Image` provided by `struct:ImageReader`. The reason is described [**here**](https://github.com/material-foundation/material-color-utilities/blob/main/extract_colors.md).
+> ⚠️ Before obtaining an array of RGB pixels for the image, **it is recommended** (but not necessary if your image is already small in size or you just don't mind about execution time) to downscale it to fit in 128x128 with [`DynamicImage::resize`](https://docs.rs/image/latest/image/enum.DynamicImage.html#method.resize) (it keeps the aspect ratio, so a 1920x1080 image becomes 128x72): quantization time grows with the number of pixels. The reason is described [**here**](https://github.com/material-foundation/material-color-utilities/blob/main/dev_guide/extracting_colors.md).
 
-```rust
+```rust,ignore
 use std::io::Cursor;
 
 use image::{ImageReader, imageops::FilterType};
@@ -52,11 +52,14 @@ async fn main() -> Result<(), reqwest::Error> {
         .expect("failed to guess image format")
         .decode()
         .expect("failed to decode image")
-        // Lancsoz3 takes a little longer, but provides the best pixels
-        // for color extraction.
-        // 
-        // However, if you don't like the results, you can always try
-        // other FilterType values.
+        // Downscaling leaves far fewer pixels to quantize, so color
+        // extraction finishes much faster.
+        //
+        // The filter only decides how each smaller pixel is computed:
+        // `Nearest` is the fastest and keeps the image's original colors,
+        // while smoothing filters like `Triangle` or `Lanczos3` (the slowest)
+        // blend neighboring pixels. If you don't like the results, try
+        // another `FilterType`.
         .resize(128, 128, FilterType::Lanczos3)
         .into_rgb8()
         .into_raw()
@@ -80,15 +83,41 @@ async fn main() -> Result<(), reqwest::Error> {
 
 ## Current status of `no-std` support
 
-This library **requires** `alloc` because `Quantizer` and `Score` make heavy use of `Vec`, and `DynamicColor` requires `Box` for function storage.
+Only the `quantize` feature requires `alloc`, because `Quantizer` and `Score` make heavy use of `Vec`. Everything else (HCT, palettes, dynamic colors, schemes, themes) works with plain `core`:
 
-It also makes heavy use of various floating point functions, which greatly reduces the number of supported platforms. Yes, we have `libm` as a fallback, but it gives extremely different and inaccurate results, with unexpected consequences, and is also obviously much slower.
+```toml
+# no allocator
+material-colors = { version = "*", default-features = false, features = ["libm"] }
+# with an allocator, including color extraction
+material-colors = { version = "*", default-features = false, features = ["libm", "quantize"] }
+```
 
-In case you have a platform where there are corresponding instructions for operations on floating point numbers, you will have to fork the repository yourself, as I unfortunately don't have any way to create an implementation for every platform that has corresponding instructions. If you have any suggestions, however, I'd be happy to hear them.
+The library also makes heavy use of various floating point functions. Without `std`, they come from the `libm` feature, which gives the same results everywhere (all tests pass in both modes on x86-64). With `std`, functions like `powf`, `sin` or `cbrt` come from the platform's system math library, so results may differ in the last bits between platforms. `libm` can be slower on platforms where `std` uses hardware instructions (for example `mul_add`, `sqrt` or `floor`).
+
+If your platform has faster floating-point functions, build crate without `libm` and register your own backend in your binary. Only 8 functions are required; the rest have defaults:
+
+```rust,ignore
+struct HardwareFloats;
+
+impl material_colors::utils::no_std::FloatBackend for HardwareFloats {
+    fn powf(x: f64, n: f64) -> f64 { /* ... */ }
+    fn sqrt(x: f64) -> f64 { /* ... */ }
+    fn cbrt(x: f64) -> f64 { /* ... */ }
+    fn exp(x: f64) -> f64 { /* ... */ }
+    fn ln(x: f64) -> f64 { /* ... */ }
+    fn sin(x: f64) -> f64 { /* ... */ }
+    fn cos(x: f64) -> f64 { /* ... */ }
+    fn atan2(y: f64, x: f64) -> f64 { /* ... */ }
+}
+
+material_colors::set_float_backend!(HardwareFloats);
+```
+
+Exactly one backend must be registered in the final binary: with none, linking fails with undefined `__material_colors_float_v1_*` symbols; with two (for example `libm` plus your own), it fails with duplicate ones. Libraries depending on this crate should never register a backend.
 
 ## MSRV
 
-The Minimum Supported Rust Version is currently 1.87.0.
+The Minimum Supported Rust Version is currently 1.97.0.
 
 ## License
 

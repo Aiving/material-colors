@@ -1,5 +1,5 @@
 #[cfg(feature = "quantize")]
-#[tokio::test(flavor = "current_thread")]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), reqwest::Error> {
     use std::io::Cursor;
 
@@ -30,4 +30,9 @@ async fn main() -> Result<(), reqwest::Error> {
     // Do whatever you want...
 
     Ok(())
+}
+
+#[cfg(not(feature = "quantize"))]
+fn main() {
+    panic!("image example requires `quantize` feature");
 }
