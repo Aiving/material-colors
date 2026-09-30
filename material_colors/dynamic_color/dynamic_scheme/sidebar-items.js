@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_PLATFORM","DEFAULT_SPEC_VERSION"],"enum":["Platform","SchemePalette"],"fn":["sanitize_degrees"],"macro":[["rgb_getters",1]],"struct":["DynamicScheme"]};

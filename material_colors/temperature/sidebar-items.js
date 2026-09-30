@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["heapsort_slice","insertion_sort_slice","introsort_slice","max_heapify_slice"],"struct":["HctWithTemp","TemperatureCache"]};

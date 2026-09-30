@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["vec_from_fn"],"struct":["DistanceAndIndex","QuantizerWsmeans"]};

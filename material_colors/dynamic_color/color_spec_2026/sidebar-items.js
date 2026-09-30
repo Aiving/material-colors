@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["TABLE"],"fn":["cmf","cmf_chroma","cmf_tone","container_curve","container_pair","fixed_background","fixed_dim_pair","source_container_tone"],"static":["DECLARED"],"struct":["ColorSpec2026"]};

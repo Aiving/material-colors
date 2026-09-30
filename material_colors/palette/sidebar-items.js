@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Palette"],"mod":["core","tonal"],"struct":["CorePalette","CorePalettes","TonalPalette"]};

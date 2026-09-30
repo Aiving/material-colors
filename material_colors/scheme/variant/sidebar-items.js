@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":[["scheme",1]],"mod":["cmf","content","expressive","fidelity","fruit_salad","monochrome","neutral","rainbow","tonal_spot","vibrant"],"struct":["SchemeCmf","SchemeContent","SchemeExpressive","SchemeFidelity","SchemeFruitSalad","SchemeMonochrome","SchemeNeutral","SchemeRainbow","SchemeTonalSpot","SchemeVibrant"]};
