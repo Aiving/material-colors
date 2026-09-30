@@ -143,15 +143,15 @@ impl KeyColor {
     ///
     /// Returns key color in [`Hct`].
     pub fn create(&mut self) -> Hct {
-        // Pivot around T50 because T50 has the most chroma available, on average. Thus
-        // it is most likely to have a direct answer.
+        // Pivot around T50 because T50 has the most chroma available, on
+        // average. Thus it is most likely to have a direct answer.
         let pivot_tone = 50;
         let tone_step_size = 1;
         // Epsilon to accept values slightly higher than the requested chroma.
         let epsilon = 0.01;
 
-        // Binary search to find the tone that can provide a chroma that is closest
-        // to the requested chroma.
+        // Binary search to find the tone that can provide a chroma that is
+        // closest to the requested chroma.
         let mut lower_tone = 0;
         let mut upper_tone = 100;
 
@@ -162,8 +162,9 @@ impl KeyColor {
             let sufficient_chroma = mid_tone_max_chroma >= self.requested_chroma - epsilon;
 
             if sufficient_chroma {
-                // Either range [`lower_tone`, `mid_tone`] or [`mid_tone`, `upper_tone`] has
-                // answer, so search in the range that is closer the pivot tone.
+                // Either range [`lower_tone`, `mid_tone`] or [`mid_tone`,
+                // `upper_tone`] has answer, so search in the
+                // range that is closer the pivot tone.
                 if (lower_tone as isize - pivot_tone).abs() < (upper_tone as isize - pivot_tone).abs() {
                     upper_tone = mid_tone;
                 } else if lower_tone == mid_tone {
@@ -172,8 +173,8 @@ impl KeyColor {
                     lower_tone = mid_tone;
                 }
             } else if is_ascending {
-                // As there is no sufficient chroma in the `mid_tone`, follow the direction to
-                // the chroma peak.
+                // As there is no sufficient chroma in the `mid_tone`, follow
+                // the direction to the chroma peak.
                 lower_tone = mid_tone + tone_step_size;
             } else {
                 // Keep `mid_tone` for potential chroma peak.

@@ -16,9 +16,10 @@ impl PointProvider for PointProviderLab {
     }
 
     fn distance(one: &Lab, two: &Lab) -> f64 {
-        // Standard CIE 1976 delta E formula also takes the square root, unneeded
-        // here. This method is used by quantization algorithms to compare distance,
-        // and the relative ordering is the same, with or without a square root.
+        // Standard CIE 1976 delta E formula also takes the square root,
+        // unneeded here. This method is used by quantization algorithms
+        // to compare distance, and the relative ordering is the same,
+        // with or without a square root.
 
         // This relatively minor optimization is helpful because this method is
         // called at least once for each pixel in an image.

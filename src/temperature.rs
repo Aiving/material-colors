@@ -128,12 +128,12 @@ impl TemperatureCache {
 
             // Keep adding this hue to the answers until its temperature is
             // insufficient. This ensures consistent behavior when there aren't
-            // [divisions] discrete steps between 0 and 360 in hue with [tempStep]
-            // delta in temperature between them.
+            // [divisions] discrete steps between 0 and 360 in hue with
+            // [tempStep] delta in temperature between them.
             //
-            // For example, white and black have no analogues: there are no other
-            // colors at T100/T0. Therefore, they should just be added to the array
-            // as answers.
+            // For example, white and black have no analogues: there are no
+            // other colors at T100/T0. Therefore, they should just
+            // be added to the array as answers.
             while index_satisfied && all_colors_len < D {
                 all_colors[all_colors_len] = hct;
                 all_colors_len += 1;
@@ -231,8 +231,8 @@ impl TemperatureCache {
 
         let complement_relative_temp = 1.0 - self.input_relative_temperature;
 
-        // Find the color in the other section, closest to the inverse percentile
-        // of the input color. This is the complement.
+        // Find the color in the other section, closest to the inverse
+        // percentile of the input color. This is the complement.
         for hue_addend in 0..=360 {
             let hue = sanitize_degrees_double(direction_of_rotation.mul_add(f64::from(hue_addend), start_hue));
 

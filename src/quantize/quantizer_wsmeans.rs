@@ -81,19 +81,23 @@ impl QuantizerWsmeans {
             for _ in 0..additional_clusters_needed {
                 // Use existing points rather than generating random centroids.
                 //
-                // KMeans is extremely sensitive to initial clusters. This quantizer
-                // is meant to be used with a Wu quantizer that provides initial
-                // centroids, but Wu is very slow on unscaled images and when extracting
+                // KMeans is extremely sensitive to initial clusters. This
+                // quantizer is meant to be used with a Wu
+                // quantizer that provides initial centroids,
+                // but Wu is very slow on unscaled images and when extracting
                 // more than 256 colors.
                 //
-                // Here, we can safely assume that more than 256 colors were requested
-                // for extraction. Generating random centroids tends to lead to many
-                // "empty" centroids, as the random centroids are nowhere near any pixels
-                // in the image, and the centroids from Wu are very refined and close
+                // Here, we can safely assume that more than 256 colors were
+                // requested for extraction. Generating random
+                // centroids tends to lead to many
+                // "empty" centroids, as the random centroids are nowhere near
+                // any pixels in the image, and the centroids
+                // from Wu are very refined and close
                 // to pixels in the image.
                 //
-                // Rather than generate random centroids, we'll pick centroids that
-                // are actual pixels in the image, and avoid duplicating centroids.
+                // Rather than generate random centroids, we'll pick centroids
+                // that are actual pixels in the image, and
+                // avoid duplicating centroids.
 
                 let mut index = seed_generator.next_range(points.len() as i32) as usize;
 

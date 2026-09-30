@@ -76,8 +76,9 @@ impl ViewingConditions {
         } else {
             200.0 / PI * y_from_lstar(50.0) / 100.0
         };
-        // A background of pure black is non-physical and leads to infinities that
-        // represent the idea that any color viewed in pure black can't be seen.
+        // A background of pure black is non-physical and leads to infinities
+        // that represent the idea that any color viewed in pure black
+        // can't be seen.
         let background_lstar = (0.1_f64).max(background_lstar);
         // Transform test illuminant white in Xyz to 'cone'/'rgb' responses
         let xyz = white_point;
@@ -87,7 +88,8 @@ impl ViewingConditions {
             xyz[2].mul_add(0.953127, xyz[0].mul_add(-0.002079, xyz[1] * 0.048952)),
         );
 
-        // Scale input surround, domain (0, 2), to CAM16 surround, domain (0.8, 1.0)
+        // Scale input surround, domain (0, 2), to CAM16 surround, domain (0.8,
+        // 1.0)
         assert!((0.0..=2.0).contains(&surround));
 
         let f = 0.8 + (surround / 10.0);
@@ -103,7 +105,8 @@ impl ViewingConditions {
         } else {
             f * (1.0f64 / 3.6f64).mul_add(-((-adapting_luminance - 42.0) / 92.0).exp(), 1.0)
         };
-        // Per Li et al, if D is greater than 1 or less than 0, set it to 1 or 0.
+        // Per Li et al, if D is greater than 1 or less than 0, set it to 1 or
+        // 0.
         let d = d.clamp(0.0, 1.0);
         // chromatic induction factor
         let nc = f;
@@ -113,11 +116,12 @@ impl ViewingConditions {
         // Why use 100.0 instead of the white point's relative luminance?
         //
         // Some papers and implementations, for both CAM02 and CAM16, use the Y
-        // value of the reference white instead of 100. Fairchild's Color Appearance
-        // Models (3rd edition) notes that this is in error: it was included in the
-        // CIE 2004a report on CIECAM02, but, later parts of the conversion process
-        // account for scaling of appearance relative to the white point relative
-        // luminance. This part should simply use 100 as luminance.
+        // value of the reference white instead of 100. Fairchild's Color
+        // Appearance Models (3rd edition) notes that this is in error:
+        // it was included in the CIE 2004a report on CIECAM02, but,
+        // later parts of the conversion process account for scaling of
+        // appearance relative to the white point relative luminance.
+        // This part should simply use 100 as luminance.
         let rgb_d = [
             d.mul_add(100.0 / r_w, 1.0) - d,
             d.mul_add(100.0 / g_w, 1.0) - d,
@@ -131,12 +135,13 @@ impl ViewingConditions {
 
         // Luminance-level adaptation factor
         let fl = k4.mul_add(adapting_luminance, 0.1 * k4_f * k4_f * (5.0 * adapting_luminance).cbrt());
-        // Intermediate factor, ratio of background relative luminance to white relative
-        // luminance
+        // Intermediate factor, ratio of background relative luminance to white
+        // relative luminance
         let n = y_from_lstar(background_lstar) / white_point[1];
 
         // Base exponential nonlinearity
-        // note Schlomer 2018 has a typo and uses 1.58, the correct factor is 1.48
+        // note Schlomer 2018 has a typo and uses 1.58, the correct factor is
+        // 1.48
         let z = 1.48 + n.sqrt();
 
         // Luminance-level induction factors
@@ -144,8 +149,8 @@ impl ViewingConditions {
 
         let ncb = nbb;
 
-        // Discounted cone responses to the white point, adjusted for post-saturationtic
-        // adaptation perceptual nonlinearities.
+        // Discounted cone responses to the white point, adjusted for
+        // post-saturationtic adaptation perceptual nonlinearities.
         let rgb_afactors = [
             (fl * rgb_d[0] * r_w / 100.0).powf(0.42),
             (fl * rgb_d[1] * g_w / 100.0).powf(0.42),

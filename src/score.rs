@@ -55,8 +55,8 @@ impl Score {
         let desired = desired.unwrap_or(4);
         let fallback_color_rgb = fallback_color_rgb.unwrap_or(Rgb::new(66, 133, 244));
         let filter = filter.unwrap_or(true);
-        // Get the HCT color for each Rgb value, while finding the per hue count and
-        // total count.
+        // Get the HCT color for each Rgb value, while finding the per hue count
+        // and total count.
         let mut colors_hct = vec![];
         let mut hue_population = [0; 360];
         let mut population_sum = 0.0;
@@ -72,7 +72,8 @@ impl Score {
             population_sum += f64::from(*population);
         }
 
-        // Hues with more usage in neighboring 30 degree slice get a larger number.
+        // Hues with more usage in neighboring 30 degree slice get a larger
+        // number.
         let mut hue_excited_proportions = [0.0; 360];
 
         for (hue, population) in hue_population.into_iter().enumerate().take(360) {
@@ -116,10 +117,10 @@ impl Score {
         // completely safe
         scored_hcts.sort_by(|a, b| unsafe { b.score.partial_cmp(&a.score).unwrap_unchecked() });
 
-        // Iterates through potential hue differences in degrees in order to select
-        // the colors with the largest distribution of hues possible. Starting at
-        // 90 degrees(maximum difference for 4 colors) then decreasing down to a
-        // 15 degree minimum.
+        // Iterates through potential hue differences in degrees in order to
+        // select the colors with the largest distribution of hues
+        // possible. Starting at 90 degrees(maximum difference for 4
+        // colors) then decreasing down to a 15 degree minimum.
         let mut chosen_colors: Vec<Hct> = vec![];
 
         for difference_degree in (15..=90).rev() {
